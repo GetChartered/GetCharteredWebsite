@@ -3,63 +3,48 @@ import LoginButton from "@/components/LoginButton";
 import LogoutButton from "@/components/LogoutButton";
 import React from 'react'
 import Link from "next/link";
+import Profile from "@/components/Profile";
+import GCProfile from "@/components/GCProfile";
+import Footer from "@/components/Footer";
 
 export default async function Home() {
     const session = await auth0.getSession();
     const user = session?.user;
 
-    const credentials = await session?.tokenSet.accessToken;
-
-    const AWS_API_BASE = "https://mqtt2y9shf.execute-api.eu-west-2.amazonaws.com";
-
-    const url = `${AWS_API_BASE}/GetUserDetails`;
-
-    const response = await fetch(url, {
-        method: "GET",
-        headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${credentials}`,
-        },
-    });
-
-    const userData = await response.json();
-
-    //check StripeAPI for subscription
-
-    //const STRIPE_API_BASE = "";
-
-
     return (
-        <div className="light">
-            <div className="main-card-wrapper">
-                <h1>Get Chartered</h1>
-                <div className="action-card">
-                    {user ? (
-                        <div className="logged-in-section">
-                            <h2>Email: {userData.email}</h2>
-                            <h2>Course: {userData.course}</h2>
-                            <h2>Subscription Type: THIS IS A PLACEHOLDER</h2>
-                            <h2>Expiration Date</h2>
-                            <Link
-                                className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-                                href="/purchase"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                            >
-                                Purchase
-                            </Link>
-                            <LogoutButton />
+
+        <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
+            <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
+                <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
+                    <div className="light">
+                        <div className="main-card-wrapper">
+                            <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
+                                Get Chartered
+                            </h1>
+                            <div className="action-card">
+                                {user ? (
+                                    <div className="logged-in-section">
+                                        <Profile />
+                                        <GCProfile />
+                                        <br></br>
+                                        <LogoutButton />
+                                        <br></br>
+                                    </div>
+                                ) : (
+                                    <>
+                                        <p className="action-text">
+                                            Please log in to access your account details.
+                                        </p>
+                                        <LoginButton />
+                                    </>
+                                )}
+                            </div>
                         </div>
-                    ) : (
-                        <>
-                            <p className="action-text">
-                                Welcome! Please log in to access your protected content.
-                            </p>
-                            <LoginButton />
-                        </>
-                    )}
+                    </div>
                 </div>
-            </div>
+                <br></br>
+                <Footer/>
+            </main>
         </div>
     );
 }

@@ -2,9 +2,12 @@ import { NextResponse } from 'next/server'
 import { headers } from 'next/headers'
 
 import { stripe } from '@/lib/stripe'
+import {auth0} from "../../../lib/auth0";
 
 export async function POST() {
+
     try {
+        const authSession = await auth0.getSession();
         const headersList = await headers()
         const origin = headersList.get('origin')
 
@@ -19,6 +22,7 @@ export async function POST() {
             ],
             mode: 'subscription',
             success_url: `${origin}/success?session_id={CHECKOUT_SESSION_ID}`,
+            customer_email: `${authSession.user.email}`,
         });
         return NextResponse.redirect(session.url, 303)
     } catch (err) {
