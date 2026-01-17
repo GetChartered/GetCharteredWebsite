@@ -16,11 +16,16 @@ export default function Footer(){
             </Link>
             <br></br>
             <Link
-                href="/privacy-policy"
+                href="/privacypolicy.html"
             >
                 Privacy Policy
             </Link>
             <br></br>
+            <Link
+                href="/terms.html"
+            >
+                Terms and conditions
+            </Link>
             <br></br>
             <p>&copy; 2025, GetChartered</p>
         </div>

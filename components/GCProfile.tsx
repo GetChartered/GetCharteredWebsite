@@ -74,7 +74,6 @@ export default async function GCProfile() {
             <Link
                 className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
                 href="https://billing.stripe.com/p/login/test_eVq28qaky3hjfeK5223oA00"
-                rel="noopener noreferrer"
             >
                 Manage Your Subscription
             </Link>

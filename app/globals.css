@@ -53,7 +53,7 @@ accents {
   red: '#f73b3b';
 }
 
-.button {
+button {
   text: '#11181C';
   marginTop: 4;
   alignSelf: "stretch";
