@@ -38,31 +38,12 @@ export default function Home() {
                 onClick={() => {
                   document.getElementById("pricing")?.scrollIntoView({
                     behavior: "smooth",
-                    block: "start",
+                    block: "center",
                   });
                 }}
               >
                 View Pricing
               </Button>
-            </div>
-
-            {/* Supported exams */}
-            <div className="mt-12 flex flex-wrap gap-3 justify-center">
-              {["ACA", "CFA", "CISI"].map((exam) => (
-                <span
-                  key={exam}
-                  className="px-5 py-2 rounded-full text-sm font-semibold"
-                  style={{
-                    backgroundColor:
-                      "var(--color-tint-10, rgba(99,102,241,0.1))",
-                    color: "var(--color-tint)",
-                    border:
-                      "1px solid var(--color-tint-20, rgba(99,102,241,0.2))",
-                  }}
-                >
-                  {exam}
-                </span>
-              ))}
             </div>
           </div>
         </div>
