@@ -25,36 +25,34 @@ export default async function MyAccountPage() {
       {/* Subscription Card */}
       <Link
         href="/my-account/subscriptions"
-        className="card card-hover"
-        style={{ display: 'block', textDecoration: 'none', color: 'inherit' }}
+        className="card card-hover block no-underline"
+        style={{ padding: '24px', color: 'inherit', textDecoration: 'none' }}
       >
         <div className="flex items-center justify-between mb-4">
           <div
-            className="w-12 h-12 rounded-full flex items-center justify-center"
+            className="w-11 h-11 rounded-full flex items-center justify-center"
             style={{ backgroundColor: 'rgba(0, 173, 181, 0.12)' }}
           >
-            <CreditCard size={24} style={{ color: 'var(--accent-blue)' }} />
+            <CreditCard size={22} style={{ color: 'var(--accent-blue)' }} />
           </div>
           {subscriptionData.status === 6 && (
-            <span className="badge badge-info" style={{ textTransform: 'capitalize' }}>
+            <span className="badge badge-success capitalize">
               {subscriptionStatus}
             </span>
           )}
         </div>
-        <h3 className="text-kpi-title mb-2">Subscription</h3>
-        <p style={{ color: 'var(--color-text-secondary)' }}>
+        <h3 className="text-label mb-1" style={{ fontWeight: 700, color: 'var(--color-text)' }}>Subscription</h3>
+        <p className="text-caption" style={{ color: 'var(--color-text-secondary)' }}>
           {subscriptionData.status === 6 ? 'Premium Plan' : 'No active subscription'}
         </p>
         {nextPaymentDate && (
-          <p
-            style={{ color: 'var(--color-text-muted)', marginTop: '8px', fontSize: '13px' }}
-          >
+          <p className="text-text-muted mt-1" style={{ fontSize: '13px' }}>
             Renews {nextPaymentDate.toLocaleDateString()}
           </p>
         )}
         <div
-          className="flex items-center gap-2 mt-4"
-          style={{ color: 'var(--color-tint)', fontSize: '14px', fontWeight: 500 }}
+          className="flex items-center gap-2 mt-4 text-body font-medium"
+          style={{ color: 'var(--color-tint)' }}
         >
           Manage subscription <ArrowRight size={16} />
         </div>
@@ -63,19 +61,20 @@ export default async function MyAccountPage() {
       {/* Profile Card */}
       <Link
         href="/my-account/profile"
-        className="card card-hover"
-        style={{ display: 'block', textDecoration: 'none', color: 'inherit' }}
+        className="card card-hover block no-underline"
+        style={{ padding: '24px', color: 'inherit', textDecoration: 'none' }}
       >
         <div className="flex items-center justify-between mb-4">
           <div
-            className="w-12 h-12 rounded-full flex items-center justify-center"
+            className="w-11 h-11 rounded-full flex items-center justify-center"
             style={{ backgroundColor: 'rgba(192, 132, 252, 0.12)' }}
           >
-            <User size={24} style={{ color: 'var(--accent-purple)' }} />
+            <User size={22} style={{ color: 'var(--accent-purple)' }} />
           </div>
         </div>
-        <h3 className="text-kpi-title mb-2">Profile</h3>
+        <h3 className="text-label mb-1" style={{ fontWeight: 700, color: 'var(--color-text)' }}>Profile</h3>
         <p
+          className="text-caption"
           style={{
             color: 'var(--color-text-secondary)',
             overflow: 'hidden',
@@ -86,8 +85,8 @@ export default async function MyAccountPage() {
           {user?.email}
         </p>
         <div
-          className="flex items-center gap-2 mt-4"
-          style={{ color: 'var(--color-tint)', fontSize: '14px', fontWeight: 500 }}
+          className="flex items-center gap-2 mt-4 text-body font-medium"
+          style={{ color: 'var(--color-tint)' }}
         >
           Edit profile <ArrowRight size={16} />
         </div>

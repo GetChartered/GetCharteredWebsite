@@ -1,19 +1,21 @@
 import { auth0 } from '@/lib/auth0';
 import SubscriptionDetails from '@/components/SubscriptionDetails';
 import Link from 'next/link';
-import { SubscriptionCard } from '@/components/account/SubscriptionCard';
 import { CancelSubscriptionDialog } from '@/components/account/CancelSubscriptionDialog';
+import { CreditCard, Calendar, Receipt, ExternalLink } from 'lucide-react';
 
 export default async function SubscriptionsPage() {
   const session = await auth0.getSession();
   const subscriptionData = await SubscriptionDetails();
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       {/* Header */}
       <div>
-        <h2 className="text-title font-bold text-text-main mb-2">Subscriptions</h2>
-        <p className="text-body text-text-secondary">
+        <h2 className="text-title mb-2" style={{ fontWeight: 700, color: 'var(--color-text)' }}>
+          Subscriptions
+        </h2>
+        <p className="text-body" style={{ color: 'var(--color-text-secondary)' }}>
           Manage your subscription plans and billing information
         </p>
       </div>
@@ -24,100 +26,104 @@ export default async function SubscriptionsPage() {
       ) : (
         <NoSubscription status={subscriptionData.status} />
       )}
-
-      {/* Billing History */}
-      <div className="card p-8">
-        <h3 className="text-label font-semibold text-text-main mb-6">Billing History</h3>
-        <div className="text-center py-12">
-          <div className="w-16 h-16 rounded-full bg-background-muted flex items-center justify-center mx-auto mb-4">
-            <span className="text-3xl">📄</span>
-          </div>
-          <p className="text-body text-text-secondary mb-4">
-            View your billing history and invoices
-          </p>
-          <a
-            href="https://billing.stripe.com/p/login/test_eVq28qaky3hjfeK5223oA00"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="btn btn-outline"
-          >
-            View in Stripe Portal
-          </a>
-        </div>
-      </div>
     </div>
   );
 }
 
+function formatDate(timestamp: number): string {
+  const date = new Date(timestamp * 1000);
+  if (isNaN(date.getTime())) return 'N/A';
+  return date.toLocaleDateString();
+}
+
 function CurrentSubscription({ subscriptionData }: { subscriptionData: any }) {
   const status = subscriptionData.status;
-  const currentPeriodEnd = new Date(subscriptionData.current_period_end * 1000);
 
   return (
-    <div className="card p-8">
-      <div className="flex items-start justify-between mb-6">
-        <div>
-          <h3 className="text-label font-semibold text-text-main mb-1">Current Plan</h3>
-          <p className="text-caption text-text-secondary">Your active subscription</p>
-        </div>
-        <span className={`badge ${status === 'active' ? 'badge-success' : 'badge-info'} capitalize`}>
-          {status}
-        </span>
-      </div>
-
-      <div className="space-y-6">
-        {/* Plan Details */}
-        <div className="p-6 rounded-lg bg-background-muted">
-          <div className="flex items-baseline gap-2 mb-2">
-            <span className="text-display font-bold text-text-main">£14.99</span>
-            <span className="text-body text-text-secondary">/month</span>
+    <div className="space-y-6">
+      {/* Plan Overview */}
+      <div className="card" style={{ padding: '24px' }}>
+        {/* Plan header */}
+        <div className="flex items-start justify-between" style={{ marginBottom: '24px' }}>
+          <div className="flex items-center gap-4">
+            <div
+              className="w-11 h-11 rounded-full flex items-center justify-center"
+              style={{ backgroundColor: 'rgba(0, 173, 181, 0.12)' }}
+            >
+              <CreditCard size={22} style={{ color: 'var(--accent-blue)' }} />
+            </div>
+            <div>
+              <h3 style={{ fontWeight: 600, color: 'var(--color-text)', fontSize: '14px' }}>
+                Premium Plan
+              </h3>
+              <div className="flex items-baseline gap-1">
+                <span className="text-title" style={{ fontWeight: 700, color: 'var(--color-text)' }}>
+                  £14.99
+                </span>
+                <span style={{ fontSize: '13px', color: 'var(--color-text-secondary)' }}>
+                  /month
+                </span>
+              </div>
+            </div>
           </div>
-          <h4 className="text-title font-semibold text-text-main mb-4">Premium Plan</h4>
-          <ul className="space-y-2">
-            <li className="flex items-center gap-2 text-body text-text-secondary">
-              <span className="text-color-success">✓</span>
-              Unlimited practice questions
-            </li>
-            <li className="flex items-center gap-2 text-body text-text-secondary">
-              <span className="text-color-success">✓</span>
-              All modules included
-            </li>
-            <li className="flex items-center gap-2 text-body text-text-secondary">
-              <span className="text-color-success">✓</span>
-              Advanced analytics
-            </li>
-            <li className="flex items-center gap-2 text-body text-text-secondary">
-              <span className="text-color-success">✓</span>
-              Mock exams & timed practice
-            </li>
-          </ul>
+          <span className={`badge ${status === 'active' ? 'badge-success' : 'badge-info'} capitalize`}>
+            {status}
+          </span>
         </div>
 
-        {/* Billing Information */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="p-4 rounded-lg border border-border-subtle">
-            <p className="text-caption text-text-secondary mb-1">Next Billing Date</p>
-            <p className="text-label font-semibold text-text-main">
-              {currentPeriodEnd.toLocaleDateString()}
-            </p>
+        {/* Billing details */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '24px' }}>
+          <div className="flex items-center gap-3" style={{ fontSize: '14px' }}>
+            <Calendar size={16} style={{ color: 'var(--color-text-muted)', flexShrink: 0 }} />
+            <span style={{ color: 'var(--color-text-secondary)' }}>
+              Next billing date:{' '}
+              <span style={{ fontWeight: 500, color: 'var(--color-text)' }}>
+                {formatDate(subscriptionData.current_period_end)}
+              </span>
+            </span>
           </div>
-          <div className="p-4 rounded-lg border border-border-subtle">
-            <p className="text-caption text-text-secondary mb-1">Next Payment</p>
-            <p className="text-label font-semibold text-text-main">£14.99</p>
+          <div className="flex items-center gap-3" style={{ fontSize: '14px' }}>
+            <Receipt size={16} style={{ color: 'var(--color-text-muted)', flexShrink: 0 }} />
+            <span style={{ color: 'var(--color-text-secondary)' }}>
+              Next payment:{' '}
+              <span style={{ fontWeight: 500, color: 'var(--color-text)' }}>
+                £14.99
+              </span>
+            </span>
           </div>
         </div>
 
         {/* Actions */}
-        <div className="flex flex-wrap gap-3 pt-4 border-t border-border-subtle">
+        <div
+          className="flex flex-wrap gap-4"
+          style={{ paddingTop: '20px', borderTop: '1px solid var(--color-border-subtle)' }}
+        >
           <a
             href="https://billing.stripe.com/p/login/test_eVq28qaky3hjfeK5223oA00"
             target="_blank"
             rel="noopener noreferrer"
-            className="btn btn-primary"
+            className="btn btn-primary btn-sm"
           >
-            Manage in Stripe
+            <span className="flex items-center gap-2">
+              Manage Billing <ExternalLink size={14} />
+            </span>
           </a>
           <CancelSubscriptionDialog subscriptionId={subscriptionData.id} />
+        </div>
+      </div>
+
+      {/* What's Included */}
+      <div className="card" style={{ padding: '24px' }}>
+        <h3 className="mb-4" style={{ fontWeight: 700, color: 'var(--color-text)', fontSize: '14px' }}>
+          What's included
+        </h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          {['Unlimited practice questions', 'All modules included', 'Advanced analytics', 'Mock exams & timed practice'].map((feature) => (
+            <div key={feature} className="flex items-center gap-2" style={{ fontSize: '14px', color: 'var(--color-text-secondary)' }}>
+              <span style={{ color: 'var(--color-success)' }}>✓</span>
+              {feature}
+            </div>
+          ))}
         </div>
       </div>
     </div>
@@ -137,22 +143,29 @@ function NoSubscription({ status }: { status: number }) {
   }
 
   return (
-    <div className="card p-8">
-      <div className="text-center py-12">
-        <div className="w-16 h-16 rounded-full bg-background-muted flex items-center justify-center mx-auto mb-4">
-          <span className="text-3xl">💳</span>
+    <div className="card" style={{ padding: '24px' }}>
+      <div className="text-center py-10">
+        <div
+          className="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-4"
+          style={{ backgroundColor: 'rgba(0, 173, 181, 0.12)' }}
+        >
+          <CreditCard size={24} style={{ color: 'var(--accent-blue)' }} />
         </div>
-        <h3 className="text-title font-semibold text-text-main mb-2">{message}</h3>
-        <p className="text-body text-text-secondary mb-6">{description}</p>
+        <h3 className="text-title mb-2" style={{ fontWeight: 600, color: 'var(--color-text)' }}>
+          {message}
+        </h3>
+        <p className="text-body mb-6" style={{ color: 'var(--color-text-secondary)' }}>
+          {description}
+        </p>
         {(status === 3 || status === 5) && (
           <form action="/api/checkout_sessions" method="POST">
-            <button type="submit" className="btn btn-primary">
+            <button type="submit" className="btn btn-primary btn-sm">
               Subscribe Now
             </button>
           </form>
         )}
         {status === 1 && (
-          <Link href="/auth/login" className="btn btn-primary">
+          <Link href="/auth/login" className="btn btn-primary btn-sm">
             Log In
           </Link>
         )}

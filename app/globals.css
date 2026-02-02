@@ -211,6 +211,10 @@ body {
   color: #ffffff;
 }
 
+.btn-danger:hover:not(:disabled) {
+  background-color: var(--color-danger-hover);
+}
+
 .btn-full {
   width: 100%;
 }
@@ -228,6 +232,35 @@ body {
 .card-hover:hover {
   transform: translateY(-2px);
   box-shadow: 0 6px 12px rgba(0, 0, 0, 0.12);
+  border-color: var(--color-tint);
+}
+
+/* Account nav item */
+.account-nav-link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  border-radius: var(--radius-md);
+  text-decoration: none;
+  color: var(--color-text-secondary);
+  background-color: transparent;
+  transition: all 200ms;
+}
+
+.account-nav-link:hover {
+  background-color: var(--color-card-alt);
+  color: var(--color-text);
+}
+
+.account-nav-link.active {
+  font-weight: 600;
+  color: var(--color-tint);
+  background-color: rgba(0, 173, 181, 0.08);
+}
+
+.account-nav-link.active:hover {
+  background-color: rgba(0, 173, 181, 0.12);
 }
 
 /* Inputs */
