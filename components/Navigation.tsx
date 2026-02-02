@@ -65,11 +65,11 @@ export function Navigation() {
             style={{ textDecoration: "none" }}
           >
             <img
-              src="/NewTransparentBackground.png"
+              src={theme === "dark" ? "/logo_dark.png" : "/logo_light.png"}
               alt="GetChartered Logo"
               style={{
-                width: (isMobile || isScrolled) ? '36px' : '48px',
-                height: (isMobile || isScrolled) ? '36px' : '48px',
+                width: (isMobile || isScrolled) ? '43px' : '58px',
+                height: (isMobile || isScrolled) ? '43px' : '58px',
                 objectFit: 'contain',
                 transition: 'all 0.3s ease',
               }}

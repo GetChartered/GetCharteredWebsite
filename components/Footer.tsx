@@ -4,8 +4,12 @@
 "use client";
 
 import React from "react";
+import { useTheme } from "@/components/ThemeProvider";
+import Link from "next/link";
 
 export function Footer() {
+  const { theme } = useTheme();
+
   return (
     <footer
       className="border-t py-12"
@@ -14,7 +18,7 @@ export function Footer() {
       <div className="container">
         {/* Logo & Description */}
         <div className="mb-8">
-          <a
+          <Link
             href="/"
             className="flex items-center gap-4 mb-4"
             style={{
@@ -26,9 +30,9 @@ export function Footer() {
             onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
           >
             <img
-              src="/NewTransparentBackground.png"
+              src={theme === "dark" ? "/logo_dark.png" : "/logo_light.png"}
               alt="GetChartered Logo"
-              style={{ width: '32px', height: '32px', objectFit: 'contain' }}
+              style={{ width: "38px", height: "38px", objectFit: "contain" }}
             />
             <span
               className="text-kpi-title"
@@ -36,7 +40,7 @@ export function Footer() {
             >
               GetChartered
             </span>
-          </a>
+          </Link>
           <p
             className="text-sm"
             style={{ color: "var(--color-text-secondary)" }}
@@ -49,7 +53,12 @@ export function Footer() {
         <div className="grid grid-cols-3 gap-8 mb-8">
           {/* Product */}
           <div>
-            <h4 className="font-semibold mb-4" style={{ textDecoration: "underline" }}>Product</h4>
+            <h4
+              className="font-semibold mb-4"
+              style={{ textDecoration: "underline" }}
+            >
+              Product
+            </h4>
             <ul className="space-y-2" style={{ listStyle: "none" }}>
               <li>
                 <a
@@ -113,7 +122,12 @@ export function Footer() {
 
           {/* Account */}
           <div>
-            <h4 className="font-semibold mb-4" style={{ textDecoration: "underline" }}>Account</h4>
+            <h4
+              className="font-semibold mb-4"
+              style={{ textDecoration: "underline" }}
+            >
+              Account
+            </h4>
             <ul className="space-y-2" style={{ listStyle: "none" }}>
               <li>
                 <a
@@ -158,7 +172,12 @@ export function Footer() {
 
           {/* Legal */}
           <div>
-            <h4 className="font-semibold mb-4" style={{ textDecoration: "underline" }}>Legal</h4>
+            <h4
+              className="font-semibold mb-4"
+              style={{ textDecoration: "underline" }}
+            >
+              Legal
+            </h4>
             <ul className="space-y-2" style={{ listStyle: "none" }}>
               <li>
                 <a

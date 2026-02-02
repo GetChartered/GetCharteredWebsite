@@ -340,6 +340,9 @@ body {
 .gap-8 {
   gap: 32px;
 }
+.gap-12 {
+  gap: 48px;
+}
 .text-center {
   text-align: center;
 }

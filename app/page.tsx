@@ -129,7 +129,7 @@ export default function Home() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 max-w-4xl mx-auto" style={{ gap: '48px' }}>
             <PricingCard
               title="Free"
               description="Perfect for getting started"
@@ -161,7 +161,7 @@ export default function Home() {
               ctaLabel="Start Free Trial"
               ctaHref="/purchase"
               highlighted={true}
-              badge="Most Popular"
+              badge="Recommended for Professionals"
             />
           </div>
         </div>
