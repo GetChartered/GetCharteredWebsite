@@ -23,8 +23,8 @@ export default function Home() {
               className="text-lg mb-8"
               style={{ color: "var(--color-text-secondary)" }}
             >
-              Join thousands of students who&apos;ve passed their ACA, CFA, and
-              CISI exams with our intelligent practice platform.
+              Practice questions for your ACA, CFA, CISI exams with our
+              intelligent learning platform.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -46,39 +46,23 @@ export default function Home() {
               </Button>
             </div>
 
-            {/* Trust indicators */}
-            <div className="mt-12 grid grid-cols-3 gap-8 max-w-2xl mx-auto">
-              <div>
-                <div
-                  className="text-kpi-value"
-                  style={{ color: "var(--color-tint)" }}
+            {/* Supported exams */}
+            <div className="mt-12 flex flex-wrap gap-3 justify-center">
+              {["ACA", "CFA", "CISI"].map((exam) => (
+                <span
+                  key={exam}
+                  className="px-5 py-2 rounded-full text-sm font-semibold"
+                  style={{
+                    backgroundColor:
+                      "var(--color-tint-10, rgba(99,102,241,0.1))",
+                    color: "var(--color-tint)",
+                    border:
+                      "1px solid var(--color-tint-20, rgba(99,102,241,0.2))",
+                  }}
                 >
-                  10,000+
-                </div>
-                <p style={{ color: "var(--color-text-secondary)" }}>Students</p>
-              </div>
-              <div>
-                <div
-                  className="text-kpi-value"
-                  style={{ color: "var(--color-tint)" }}
-                >
-                  500,000+
-                </div>
-                <p style={{ color: "var(--color-text-secondary)" }}>
-                  Questions
-                </p>
-              </div>
-              <div>
-                <div
-                  className="text-kpi-value"
-                  style={{ color: "var(--color-tint)" }}
-                >
-                  92%
-                </div>
-                <p style={{ color: "var(--color-text-secondary)" }}>
-                  Pass Rate
-                </p>
-              </div>
+                  {exam}
+                </span>
+              ))}
             </div>
           </div>
         </div>
@@ -105,7 +89,7 @@ export default function Home() {
               icon={BookOpen}
               iconColor="var(--accent-blue)"
               title="Practice Questions"
-              description="Access 500,000+ expertly written questions across all modules"
+              description="Expertly written questions across all exam modules"
             />
 
             <FeatureCard
@@ -145,7 +129,7 @@ export default function Home() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
             <PricingCard
               title="Free"
               description="Perfect for getting started"
@@ -178,22 +162,6 @@ export default function Home() {
               ctaHref="/purchase"
               highlighted={true}
               badge="Most Popular"
-            />
-
-            <PricingCard
-              title="Enterprise"
-              description="For organizations"
-              price="£499"
-              period="/year"
-              features={[
-                "Everything in Premium",
-                "Team management",
-                "Custom question banks",
-                "Dedicated support",
-                "API access",
-              ]}
-              ctaLabel="Contact Sales"
-              ctaHref="/contact"
             />
           </div>
         </div>

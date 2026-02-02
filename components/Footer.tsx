@@ -136,7 +136,7 @@ export function Footer() {
               </li>
               <li>
                 <a
-                  href="/login"
+                  href="/auth/login"
                   className="text-sm transition-colors"
                   style={{
                     color: "var(--color-text-secondary)",

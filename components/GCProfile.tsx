@@ -57,17 +57,10 @@ export default async function GCProfile() {
 
 
 
-    let subType = '';
-    if (customerData.body.items.data[0].plan.amount === 1000){
-        subType = 'Standard';
-    } else {
-        subType = 'Premium';
-    }
-
     return (
         <div>
             <p>Course: {customerData.body.course}</p>
-            <p>Subscription Type: {subType}</p>
+            <p>Subscription Type: Premium</p>
             <p>Subscription Status: {customerData.body.status}</p>
             <p>Next Payment: {customerData.body.days_until_due}</p>
             <br></br>

@@ -4,7 +4,7 @@ export default function LoginButton() {
     return (
         <a
             href="/auth/login"
-            className="button login"
+            className="btn btn-primary btn-md"
         >
             Log In
         </a>
