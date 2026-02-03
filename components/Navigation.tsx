@@ -4,10 +4,12 @@ import { useState, useEffect } from "react";
 import { Moon, Sun, User, Menu, X } from "lucide-react";
 import { Button } from "@/components/ui";
 import { useTheme } from "@/components/ThemeProvider";
+import { useUser } from "@auth0/nextjs-auth0/client";
 import Link from "next/link";
 
 export function Navigation() {
   const { theme, setTheme } = useTheme();
+  const { user } = useUser();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
@@ -104,7 +106,7 @@ export function Navigation() {
             </a>
             <a href="/my-account" style={{ textDecoration: "none" }}>
               <Button variant="ghost" size="sm">
-                <User size={20} />
+                <User size={20} style={{ color: user ? '#10b981' : 'inherit' }} />
               </Button>
             </a>
             <Button
@@ -180,7 +182,7 @@ export function Navigation() {
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 <Button variant="ghost" size="md" fullWidth>
-                  <User size={20} style={{ marginRight: '8px' }} />
+                  <User size={20} style={{ marginRight: '8px', color: user ? '#10b981' : 'inherit' }} />
                   My Account
                 </Button>
               </a>

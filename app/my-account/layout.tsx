@@ -1,7 +1,6 @@
 import { auth0 } from "@/lib/auth0";
 import { redirect } from "next/navigation";
 import LogoutButton from "@/components/LogoutButton";
-import { AccountNavItem } from "@/components/account/AccountNav";
 import { Navigation } from "@/components/Navigation";
 import { Footer } from "@/components/Footer";
 
@@ -13,7 +12,7 @@ export default async function AccountLayout({
   const session = await auth0.getSession();
 
   if (!session) {
-    redirect("/auth/login");
+    redirect("/auth/login?returnTo=/my-account");
   }
 
   const user = session.user;
@@ -79,33 +78,10 @@ export default async function AccountLayout({
                 </p>
               </div>
 
-              {/* Navigation Links */}
-              <nav style={{ padding: "8px" }}>
-                <ul style={{ listStyle: "none" }}>
-                  <AccountNavItem href="/my-account" icon="overview">
-                    Overview
-                  </AccountNavItem>
-                  <AccountNavItem href="/my-account/profile" icon="profile">
-                    My Details
-                  </AccountNavItem>
-                  <AccountNavItem
-                    href="/my-account/subscriptions"
-                    icon="subscription"
-                  >
-                    Subscriptions
-                  </AccountNavItem>
-                </ul>
-
-                <div
-                  style={{
-                    margin: "8px 8px 0",
-                    paddingTop: "8px",
-                    borderTop: "1px solid var(--color-border-subtle)",
-                  }}
-                >
-                  <LogoutButton />
-                </div>
-              </nav>
+              {/* Logout */}
+              <div style={{ padding: "8px" }}>
+                <LogoutButton />
+              </div>
             </div>
           </aside>
 

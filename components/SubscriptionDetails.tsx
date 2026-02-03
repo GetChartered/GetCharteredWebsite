@@ -1,4 +1,5 @@
 import {auth0} from "@/lib/auth0";
+import { stripe } from "@/lib/stripe";
 
 export default async function SubscriptionDetails(){
     const session = await auth0.getSession();
@@ -8,9 +9,6 @@ export default async function SubscriptionDetails(){
             status: 1,
         };
     }
-
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
     const customer = await stripe.customers.search({
         query: `email:\'${session.user.email}\'`,
@@ -30,31 +28,34 @@ export default async function SubscriptionDetails(){
 
     const customerId = customer.data[0].id;
 
-    const subscription = await stripe.subscriptions.list();
+    // Filter subscriptions by customer ID instead of fetching all
+    const subscriptionList = await stripe.subscriptions.list({
+        customer: customerId,
+        limit: 1,
+    });
 
-    if (!subscription) {
+    if (!subscriptionList) {
         return {
             status: 4,
         };
     }
 
-    let hasSubscription = false;
-    let customerData;
-    for (let i = 0; i < subscription.data.length; i++){
-        if (subscription.data[i].customer == customerId){
-            customerData = subscription.data[i];
-            hasSubscription = true;
-        }
-    }
-
-    if (!hasSubscription) {
+    // Check if customer has any active subscriptions
+    if (subscriptionList.data.length === 0) {
         return {
             status: 5,
         };
     }
 
+    // Get the subscription ID and retrieve it directly to get all fields
+    // Expand latest_invoice to get period_start and period_end for flexible billing subscriptions
+    const subscriptionId = subscriptionList.data[0].id;
+    const subscription = await stripe.subscriptions.retrieve(subscriptionId, {
+        expand: ['latest_invoice']
+    });
+
     return {
         status: 6,
-        body: customerData,
+        body: subscription,
     };
 }

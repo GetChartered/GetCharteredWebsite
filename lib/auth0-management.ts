@@ -1,8 +1,17 @@
 import 'server-only';
 
-const AUTH0_BASE = `https://${process.env.AUTH0_DOMAIN!}`;
-const AUTH0_CLIENT_ID = process.env.AUTH0_CLIENT_ID!;
-const AUTH0_CLIENT_SECRET = process.env.AUTH0_CLIENT_SECRET!;
+// Validate environment variables at module load time
+const AUTH0_DOMAIN = process.env.AUTH0_DOMAIN;
+const AUTH0_CLIENT_ID = process.env.AUTH0_CLIENT_ID;
+const AUTH0_CLIENT_SECRET = process.env.AUTH0_CLIENT_SECRET;
+
+if (!AUTH0_DOMAIN || !AUTH0_CLIENT_ID || !AUTH0_CLIENT_SECRET) {
+  throw new Error(
+    'Missing required Auth0 environment variables: AUTH0_DOMAIN, AUTH0_CLIENT_ID, AUTH0_CLIENT_SECRET'
+  );
+}
+
+const AUTH0_BASE = `https://${AUTH0_DOMAIN}`;
 
 let cachedToken: { token: string; expiresAt: number } | null = null;
 
@@ -23,8 +32,21 @@ async function getManagementToken(): Promise<string> {
   });
 
   if (!response.ok) {
-    const error = await response.text();
-    throw new Error(`Failed to get Auth0 Management API token: ${error}`);
+    let errorMessage = 'Auth0 API error';
+    try {
+      const error = await response.json();
+      errorMessage = error.error_description || error.message || errorMessage;
+    } catch {
+      // JSON parse failed, response might be HTML
+      errorMessage = `HTTP ${response.status}`;
+    }
+
+    console.error('Auth0 Management API Error:', {
+      status: response.status,
+      message: errorMessage,
+    });
+
+    throw new Error('Failed to get Auth0 Management API token');
   }
 
   const data = await response.json();
@@ -49,8 +71,21 @@ export async function updateUserProfile(userId: string, data: { name?: string })
   });
 
   if (!response.ok) {
-    const error = await response.text();
-    throw new Error(`Failed to update user profile: ${error}`);
+    let errorMessage = 'Auth0 API error';
+    try {
+      const error = await response.json();
+      errorMessage = error.error_description || error.message || errorMessage;
+    } catch {
+      errorMessage = `HTTP ${response.status}`;
+    }
+
+    console.error('Auth0 Profile Update Error:', {
+      status: response.status,
+      userId,
+      message: errorMessage,
+    });
+
+    throw new Error('Failed to update user profile');
   }
 
   return response.json();
@@ -67,7 +102,20 @@ export async function deleteUser(userId: string) {
   });
 
   if (!response.ok) {
-    const error = await response.text();
-    throw new Error(`Failed to delete user: ${error}`);
+    let errorMessage = 'Auth0 API error';
+    try {
+      const error = await response.json();
+      errorMessage = error.error_description || error.message || errorMessage;
+    } catch {
+      errorMessage = `HTTP ${response.status}`;
+    }
+
+    console.error('Auth0 User Deletion Error:', {
+      status: response.status,
+      userId,
+      message: errorMessage,
+    });
+
+    throw new Error('Failed to delete user');
   }
 }

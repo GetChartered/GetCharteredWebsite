@@ -84,18 +84,35 @@ export default async function Success({ searchParams }) {
     if (!session_id)
         throw new Error('Please provide a valid session_id (`cs_test_...`)')
 
-    const {
-        status,
-        customer_details: { email: customerEmail }
-    } = await stripe.checkout.sessions.retrieve(session_id, {
-        expand: ['line_items', 'payment_intent']
-    })
+    try {
+        const {
+            status,
+            customer_details: { email: customerEmail }
+        } = await stripe.checkout.sessions.retrieve(session_id, {
+            expand: ['line_items', 'payment_intent']
+        })
 
-    if (status === 'open') {
-        return redirect('/')
-    }
+        // Handle all possible checkout session statuses
+        switch (status) {
+            case 'complete':
+                // Payment successful, show success page
+                return <SuccessContent customerEmail={customerEmail} />
 
-    if (status === 'complete') {
-        return <SuccessContent customerEmail={customerEmail} />
+            case 'open':
+                // Session still open, redirect to home
+                return redirect('/')
+
+            case 'expired':
+                // Session expired, redirect to pricing with error
+                return redirect('/pricing?error=session-expired')
+
+            default:
+                // Unknown status, log and redirect
+                console.error('Unknown checkout session status:', status)
+                return redirect('/pricing?error=unknown')
+        }
+    } catch (error) {
+        console.error('Error retrieving checkout session:', error)
+        return redirect('/pricing?error=session-invalid')
     }
 }

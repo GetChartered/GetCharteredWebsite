@@ -9,8 +9,7 @@ export function ThemeSettings() {
     <div className="space-y-4">
       <div>
         <p className="text-body text-text-secondary mb-4">
-          Choose how GetChartered looks to you. Select a single theme, or sync with your system
-          preferences.
+          Choose how GetChartered looks to you.
         </p>
       </div>
 
@@ -51,7 +50,7 @@ export function ThemeSettings() {
             )}
           </div>
           <p className="text-caption text-text-secondary">
-            Clean and bright interface for daytime use
+            Clean and bright interface
           </p>
         </button>
 

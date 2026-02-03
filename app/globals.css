@@ -116,7 +116,6 @@ body {
   line-height: 20px;
   color: var(--color-text);
   background-color: var(--color-background);
-  transition: background-color var(--transition-normal);
 }
 
 /* ============================================

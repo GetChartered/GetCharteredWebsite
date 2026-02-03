@@ -2,8 +2,8 @@
 
 import React from "react";
 import SubscriptionDetails from "@/components/SubscriptionDetails";
-import Link from "next/link";
 import PurchaseButton from "@/components/PurchaseButton";
+import { BillingPortalButton } from "@/components/BillingPortalButton";
 
 export default async function GCProfile() {
 
@@ -64,12 +64,9 @@ export default async function GCProfile() {
             <p>Subscription Status: {customerData.body.status}</p>
             <p>Next Payment: {customerData.body.days_until_due}</p>
             <br></br>
-            <Link
-                className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-                href="https://billing.stripe.com/p/login/test_eVq28qaky3hjfeK5223oA00"
-            >
+            <BillingPortalButton className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]">
                 Manage Your Subscription
-            </Link>
+            </BillingPortalButton>
             <br></br>
         </div>
     );
