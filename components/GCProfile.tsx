@@ -1,6 +1,5 @@
 "use server";
 
-import React from "react";
 import SubscriptionDetails from "@/components/SubscriptionDetails";
 import PurchaseButton from "@/components/PurchaseButton";
 import { BillingPortalButton } from "@/components/BillingPortalButton";
@@ -61,12 +60,19 @@ export default async function GCProfile() {
         }
     }
 
+    // Type assertion for Stripe subscription with all properties
+    const subscription = customerData.body as any;
+
+    // Calculate next payment date from current_period_end
+    const nextPaymentDate = subscription.current_period_end
+        ? new Date(subscription.current_period_end * 1000).toLocaleDateString()
+        : 'N/A';
+
     return (
         <div>
-            <p>Course: {customerData.body.course}</p>
             <p>Subscription Type: Premium</p>
-            <p>Subscription Status: {customerData.body.status}</p>
-            <p>Next Payment: {customerData.body.days_until_due}</p>
+            <p>Subscription Status: {subscription.status}</p>
+            <p>Next Payment Date: {nextPaymentDate}</p>
             <br></br>
             <BillingPortalButton className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]">
                 Manage Your Subscription
