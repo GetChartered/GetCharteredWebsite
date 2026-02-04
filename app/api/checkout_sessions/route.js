@@ -48,7 +48,7 @@ export async function POST() {
             ],
             mode: 'subscription',
             success_url: `${origin}/success?session_id={CHECKOUT_SESSION_ID}`,
-            cancel_url: `${origin}/pricing?canceled=true`,
+            cancel_url: `${origin}/?canceled=true`,
             customer_email: authSession.user.email,
         });
 
