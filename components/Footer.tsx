@@ -5,7 +5,7 @@
 
 import React from "react";
 import { useTheme } from "@/components/ThemeProvider";
-import { useUser } from "@auth0/nextjs-auth0/client";
+import { useUser } from "@auth0/nextjs-auth0";
 import Link from "next/link";
 
 export function Footer() {
