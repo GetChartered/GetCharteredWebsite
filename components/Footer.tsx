@@ -5,10 +5,12 @@
 
 import React from "react";
 import { useTheme } from "@/components/ThemeProvider";
+import { useUser } from "@auth0/nextjs-auth0/client";
 import Link from "next/link";
 
 export function Footer() {
   const { theme } = useTheme();
+  const { user } = useUser();
 
   return (
     <footer
@@ -148,25 +150,27 @@ export function Footer() {
                   My Account
                 </a>
               </li>
-              <li>
-                <a
-                  href="/auth/login"
-                  className="text-sm transition-colors"
-                  style={{
-                    color: "var(--color-text-secondary)",
-                    textDecoration: "none",
-                  }}
-                  onMouseEnter={(e) =>
-                    (e.currentTarget.style.color = "var(--color-tint)")
-                  }
-                  onMouseLeave={(e) =>
-                    (e.currentTarget.style.color =
-                      "var(--color-text-secondary)")
-                  }
-                >
-                  Sign In
-                </a>
-              </li>
+              {!user && (
+                <li>
+                  <a
+                    href="/auth/login"
+                    className="text-sm transition-colors"
+                    style={{
+                      color: "var(--color-text-secondary)",
+                      textDecoration: "none",
+                    }}
+                    onMouseEnter={(e) =>
+                      (e.currentTarget.style.color = "var(--color-tint)")
+                    }
+                    onMouseLeave={(e) =>
+                      (e.currentTarget.style.color =
+                        "var(--color-text-secondary)")
+                    }
+                  >
+                    Sign In
+                  </a>
+                </li>
+              )}
             </ul>
           </div>
 

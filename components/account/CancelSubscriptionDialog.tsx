@@ -34,7 +34,7 @@ export function CancelSubscriptionDialog({ subscriptionId }: CancelSubscriptionD
 
     try {
       await CancelSubscription(formData);
-      window.location.href = '/my-account/subscriptions';
+      window.location.href = '/my-account';
     } catch (error) {
       console.error('Failed to cancel subscription:', error);
       setIsCancelling(false);

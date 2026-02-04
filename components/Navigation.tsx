@@ -1,18 +1,22 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Moon, Sun, User, Menu, X } from "lucide-react";
+import { Moon, Sun, User, Menu, X, Home } from "lucide-react";
 import { Button } from "@/components/ui";
 import { useTheme } from "@/components/ThemeProvider";
 import { useUser } from "@auth0/nextjs-auth0/client";
+import { usePathname } from "next/navigation";
 import Link from "next/link";
 
 export function Navigation() {
   const { theme, setTheme } = useTheme();
   const { user } = useUser();
+  const pathname = usePathname();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+
+  const isOnMyAccount = pathname === "/my-account";
 
   useEffect(() => {
     const handleScroll = () => {
@@ -41,17 +45,44 @@ export function Navigation() {
     }
   }, [isMobileMenuOpen]);
 
+  // Close menu on Escape key press
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isMobileMenuOpen) {
+        setIsMobileMenuOpen(false);
+      }
+    };
+
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, [isMobileMenuOpen]);
+
   return (
-    <nav
-      style={{
-        position: 'sticky',
-        top: 0,
-        zIndex: 50,
-        borderBottom: '1px solid var(--color-border-subtle)',
-        backgroundColor: 'var(--color-card)',
-        transition: 'all 0.3s ease',
-      }}
-    >
+    <>
+      {/* Backdrop overlay for mobile menu */}
+      {isMobileMenuOpen && (
+        <div
+          onClick={() => setIsMobileMenuOpen(false)}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            zIndex: 40,
+            transition: 'opacity 0.3s ease',
+          }}
+        />
+      )}
+
+      <nav
+        style={{
+          position: 'sticky',
+          top: 0,
+          zIndex: 50,
+          borderBottom: '1px solid var(--color-border-subtle)',
+          backgroundColor: 'var(--color-card)',
+          transition: 'all 0.3s ease',
+        }}
+      >
       <div className="container">
         <div
           className="flex items-center justify-between transition-all duration-300"
@@ -69,6 +100,7 @@ export function Navigation() {
             <img
               src={theme === "dark" ? "/logo_dark.png" : "/logo_light.png"}
               alt="GetChartered Logo"
+              suppressHydrationWarning
               style={{
                 width: (isMobile || isScrolled) ? '43px' : '58px',
                 height: (isMobile || isScrolled) ? '43px' : '58px',
@@ -104,9 +136,13 @@ export function Navigation() {
                 Demos
               </Button>
             </a>
-            <a href="/my-account" style={{ textDecoration: "none" }}>
+            <a href={isOnMyAccount ? "/" : "/my-account"} style={{ textDecoration: "none" }}>
               <Button variant="ghost" size="sm">
-                <User size={20} style={{ color: user ? '#10b981' : 'inherit' }} />
+                {isOnMyAccount ? (
+                  <Home size={20} />
+                ) : (
+                  <User size={20} style={{ color: user ? '#10b981' : 'inherit' }} />
+                )}
               </Button>
             </a>
             <Button
@@ -118,15 +154,8 @@ export function Navigation() {
             </Button>
           </div>
 
-          {/* Mobile Menu Button and Theme Toggle */}
+          {/* Mobile Menu Button */}
           <div className="nav-mobile items-center gap-3">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-            >
-              {theme === "dark" ? <Sun size={20} /> : <Moon size={20} />}
-            </Button>
             <Button
               variant="ghost"
               size="sm"
@@ -177,19 +206,38 @@ export function Navigation() {
                 </Button>
               </a>
               <a
-                href="/my-account"
+                href={isOnMyAccount ? "/" : "/my-account"}
                 style={{ textDecoration: "none" }}
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 <Button variant="ghost" size="md" fullWidth>
-                  <User size={20} style={{ marginRight: '8px', color: user ? '#10b981' : 'inherit' }} />
-                  My Account
+                  {isOnMyAccount ? (
+                    <>
+                      <Home size={20} style={{ marginRight: '8px' }} />
+                      Home
+                    </>
+                  ) : (
+                    <>
+                      <User size={20} style={{ marginRight: '8px', color: user ? '#10b981' : 'inherit' }} />
+                      My Account
+                    </>
+                  )}
                 </Button>
               </a>
+              <Button
+                variant="ghost"
+                size="md"
+                fullWidth
+                onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+              >
+                {theme === "dark" ? <Sun size={20} style={{ marginRight: '8px' }} /> : <Moon size={20} style={{ marginRight: '8px' }} />}
+                {theme === "dark" ? "Light Mode" : "Dark Mode"}
+              </Button>
             </div>
           </div>
         )}
       </div>
     </nav>
+    </>
   );
 }

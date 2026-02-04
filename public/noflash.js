@@ -25,10 +25,14 @@
     // source of truth from system preference
     var systemTheme = mql.matches ? 'dark' : 'light';
     setThemeAttribute(systemTheme);
-    localStorage.setItem(storageKey, systemTheme);
+    try {
+      localStorage.setItem(storageKey, systemTheme);
+    } catch (err) {}
   } else {
     // fallback to light mode
     setThemeAttribute('light');
-    localStorage.setItem(storageKey, 'light');
+    try {
+      localStorage.setItem(storageKey, 'light');
+    } catch (err) {}
   }
 })();

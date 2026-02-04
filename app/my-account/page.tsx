@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { CreditCard, Calendar, Receipt } from 'lucide-react';
+import { CreditCard, Calendar } from 'lucide-react';
 import SubscriptionDetails from '@/components/SubscriptionDetails';
 import { CancelSubscriptionDialog } from '@/components/account/CancelSubscriptionDialog';
 import { BillingPortalButton } from '@/components/BillingPortalButton';
@@ -127,11 +127,24 @@ function formatDate(timestamp: number | undefined): string {
 function CurrentSubscription({ subscriptionData }: { subscriptionData: any }) {
   const status = subscriptionData.status;
 
+  // Extract price information from subscription
+  const priceData = subscriptionData.items?.data?.[0]?.price;
+  const amountInCents = priceData?.unit_amount || 1499;
+  const amountValue = amountInCents / 100;
+
+  // Remove decimals if it's a whole number
+  const amount = amountValue % 1 === 0 ? amountValue.toString() : amountValue.toFixed(2);
+
+  const currency = priceData?.currency?.toUpperCase() || 'GBP';
+  const currencySymbol = currency === 'GBP' ? '£' : currency === 'USD' ? '$' : '€';
+  const interval = priceData?.recurring?.interval || 'month';
+
+  const formattedPrice = `${currencySymbol}${amount}`;
+  const formattedInterval = `/${interval}`;
+
   // Get the next billing date
   let nextBillingDate = subscriptionData.current_period_end ||
-    (typeof subscriptionData.latest_invoice === 'object'
-      ? subscriptionData.latest_invoice.period_end
-      : null);
+    subscriptionData.latest_invoice?.period_end || null;
 
   // If the period_end is in the past, calculate the next billing date
   if (nextBillingDate) {
@@ -179,10 +192,10 @@ function CurrentSubscription({ subscriptionData }: { subscriptionData: any }) {
               </h3>
               <div className="flex items-baseline gap-1">
                 <span className="text-title" style={{ fontWeight: 700, color: 'var(--color-text)' }}>
-                  £14.99
+                  {formattedPrice}
                 </span>
                 <span style={{ fontSize: '13px', color: 'var(--color-text-secondary)' }}>
-                  /month
+                  {formattedInterval}
                 </span>
               </div>
             </div>
@@ -193,22 +206,17 @@ function CurrentSubscription({ subscriptionData }: { subscriptionData: any }) {
         </div>
 
         {/* Billing details */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '24px' }}>
+        <div style={{ marginBottom: '24px' }}>
           <div className="flex items-center gap-3" style={{ fontSize: '14px' }}>
             <Calendar size={16} style={{ color: 'var(--color-text-muted)', flexShrink: 0 }} />
-            <span style={{ color: 'var(--color-text-secondary)' }}>
-              Next billing date:{' '}
+            <span style={{ color: 'var(--color-text-secondary)', paddingLeft: '8px' }}>
+              Next bill:{' '}
+              <span style={{ fontWeight: 500, color: 'var(--color-text)' }}>
+                {formattedPrice}
+              </span>
+              {' '}on{' '}
               <span style={{ fontWeight: 500, color: 'var(--color-text)' }}>
                 {formatDate(nextBillingDate)}
-              </span>
-            </span>
-          </div>
-          <div className="flex items-center gap-3" style={{ fontSize: '14px' }}>
-            <Receipt size={16} style={{ color: 'var(--color-text-muted)', flexShrink: 0 }} />
-            <span style={{ color: 'var(--color-text-secondary)' }}>
-              Next payment:{' '}
-              <span style={{ fontWeight: 500, color: 'var(--color-text)' }}>
-                £14.99
               </span>
             </span>
           </div>

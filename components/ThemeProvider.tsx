@@ -28,7 +28,12 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
   const setTheme = (newTheme: Theme) => {
     setThemeState(newTheme);
-    localStorage.setItem("theme", newTheme);
+    try {
+      localStorage.setItem("theme", newTheme);
+    } catch (err) {
+      // localStorage may be unavailable in private browsing mode or when quota is exceeded
+      console.warn("Failed to save theme to localStorage:", err);
+    }
   };
 
   return (
