@@ -3,36 +3,70 @@
   var dataAttribute = 'data-theme';
 
   function setThemeAttribute(theme) {
-    document.documentElement.setAttribute(dataAttribute, theme);
+    // Validate theme before setting - only accept 'light' or 'dark'
+    if (theme === 'light' || theme === 'dark') {
+      document.documentElement.setAttribute(dataAttribute, theme);
+    }
   }
 
   var preferDarkQuery = '(prefers-color-scheme: dark)';
   var mql = window.matchMedia(preferDarkQuery);
   var supportsColorSchemeQuery = mql.media === preferDarkQuery;
-  var localStorageTheme = null;
+  var storedTheme = null;
 
+  // Try localStorage first
   try {
-    localStorageTheme = localStorage.getItem(storageKey);
-  } catch (err) {}
+    storedTheme = localStorage.getItem(storageKey);
+  } catch (err) {
+    // localStorage unavailable (e.g., private browsing), try sessionStorage
+    try {
+      storedTheme = sessionStorage.getItem(storageKey);
+    } catch (sessionErr) {
+      // Both storage mechanisms unavailable
+    }
+  }
 
-  var localStorageExists = localStorageTheme !== null;
+  // Validate theme value - only accept 'light' or 'dark'
+  var isValidTheme = storedTheme === 'light' || storedTheme === 'dark';
+  var storageExists = storedTheme !== null && isValidTheme;
+
+  // Clear invalid theme values from storage
+  if (storedTheme !== null && !isValidTheme) {
+    try {
+      localStorage.removeItem(storageKey);
+    } catch (err) {
+      try {
+        sessionStorage.removeItem(storageKey);
+      } catch (sessionErr) {}
+    }
+  }
 
   // Determine the source of truth
-  if (localStorageExists) {
-    // source of truth from localStorage
-    setThemeAttribute(localStorageTheme);
+  if (storageExists) {
+    // source of truth from storage (validated)
+    setThemeAttribute(storedTheme);
   } else if (supportsColorSchemeQuery) {
     // source of truth from system preference
     var systemTheme = mql.matches ? 'dark' : 'light';
     setThemeAttribute(systemTheme);
     try {
       localStorage.setItem(storageKey, systemTheme);
-    } catch (err) {}
+    } catch (err) {
+      // Fallback to sessionStorage if localStorage is unavailable
+      try {
+        sessionStorage.setItem(storageKey, systemTheme);
+      } catch (sessionErr) {}
+    }
   } else {
     // fallback to light mode
     setThemeAttribute('light');
     try {
       localStorage.setItem(storageKey, 'light');
-    } catch (err) {}
+    } catch (err) {
+      // Fallback to sessionStorage if localStorage is unavailable
+      try {
+        sessionStorage.setItem(storageKey, 'light');
+      } catch (sessionErr) {}
+    }
   }
 })();

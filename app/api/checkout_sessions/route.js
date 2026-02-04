@@ -38,6 +38,35 @@ export async function POST() {
             );
         }
 
+        // Check if user already has an active subscription
+        try {
+            const existingCustomer = await stripe.customers.search({
+                query: `email:'${authSession.user.email}'`,
+            });
+
+            if (existingCustomer.data.length > 0) {
+                const customerId = existingCustomer.data[0].id;
+
+                // Check for active subscriptions
+                const subscriptions = await stripe.subscriptions.list({
+                    customer: customerId,
+                    status: 'active',
+                    limit: 1,
+                });
+
+                if (subscriptions.data.length > 0) {
+                    // User already has active subscription - redirect to account page
+                    return NextResponse.redirect(
+                        `${origin}/my-account?error=already_subscribed`,
+                        303
+                    );
+                }
+            }
+        } catch (subscriptionCheckError) {
+            // Log the error but don't block checkout - better to allow duplicate than block legitimate purchase
+            console.warn('Failed to check existing subscription:', subscriptionCheckError);
+        }
+
         // Create Checkout Session
         const session = await stripe.checkout.sessions.create({
             line_items: [

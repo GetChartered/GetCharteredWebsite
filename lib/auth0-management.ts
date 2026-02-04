@@ -15,6 +15,53 @@ const AUTH0_BASE = `https://${AUTH0_DOMAIN}`;
 
 let cachedToken: { token: string; expiresAt: number } | null = null;
 
+/**
+ * Custom error class for Auth0 Management API errors
+ */
+class Auth0ManagementError extends Error {
+  constructor(
+    message: string,
+    public statusCode: number,
+    public context?: Record<string, any>
+  ) {
+    super(message);
+    this.name = 'Auth0ManagementError';
+  }
+}
+
+/**
+ * Standardized error handler for Auth0 API responses
+ */
+async function handleAuth0Error(
+  response: Response,
+  operation: string,
+  context?: Record<string, any>
+): Promise<never> {
+  let errorMessage = 'Auth0 API error';
+
+  try {
+    const error = await response.json();
+    errorMessage = error.error_description || error.message || errorMessage;
+  } catch {
+    // JSON parse failed, response might be HTML
+    errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+  }
+
+  const errorContext = {
+    operation,
+    status: response.status,
+    ...context,
+  };
+
+  console.error('Auth0 Management API Error:', errorContext, errorMessage);
+
+  throw new Auth0ManagementError(
+    `${operation} failed: ${errorMessage}`,
+    response.status,
+    errorContext
+  );
+}
+
 async function getManagementToken(): Promise<string> {
   if (cachedToken && Date.now() < cachedToken.expiresAt) {
     return cachedToken.token;
@@ -32,21 +79,7 @@ async function getManagementToken(): Promise<string> {
   });
 
   if (!response.ok) {
-    let errorMessage = 'Auth0 API error';
-    try {
-      const error = await response.json();
-      errorMessage = error.error_description || error.message || errorMessage;
-    } catch {
-      // JSON parse failed, response might be HTML
-      errorMessage = `HTTP ${response.status}`;
-    }
-
-    console.error('Auth0 Management API Error:', {
-      status: response.status,
-      message: errorMessage,
-    });
-
-    throw new Error('Failed to get Auth0 Management API token');
+    await handleAuth0Error(response, 'Get Management Token');
   }
 
   const data = await response.json();
@@ -71,21 +104,7 @@ export async function updateUserProfile(userId: string, data: { name?: string })
   });
 
   if (!response.ok) {
-    let errorMessage = 'Auth0 API error';
-    try {
-      const error = await response.json();
-      errorMessage = error.error_description || error.message || errorMessage;
-    } catch {
-      errorMessage = `HTTP ${response.status}`;
-    }
-
-    console.error('Auth0 Profile Update Error:', {
-      status: response.status,
-      userId,
-      message: errorMessage,
-    });
-
-    throw new Error('Failed to update user profile');
+    await handleAuth0Error(response, 'Update User Profile', { userId });
   }
 
   return response.json();
@@ -102,20 +121,6 @@ export async function deleteUser(userId: string) {
   });
 
   if (!response.ok) {
-    let errorMessage = 'Auth0 API error';
-    try {
-      const error = await response.json();
-      errorMessage = error.error_description || error.message || errorMessage;
-    } catch {
-      errorMessage = `HTTP ${response.status}`;
-    }
-
-    console.error('Auth0 User Deletion Error:', {
-      status: response.status,
-      userId,
-      message: errorMessage,
-    });
-
-    throw new Error('Failed to delete user');
+    await handleAuth0Error(response, 'Delete User', { userId });
   }
 }

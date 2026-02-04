@@ -1,6 +1,4 @@
 /* app/globals.css - REPLACE ENTIRE FILE */
-@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap");
-
 @import "tailwindcss/preflight";
 @tailwind utilities;
 
@@ -55,7 +53,7 @@
   --radius-full: 9999px;
 
   /* Typography */
-  --font-family: "Poppins", -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-family: var(--font-poppins), -apple-system, BlinkMacSystemFont, sans-serif;
 
   /* Shadows */
   --shadow-card: 0 4px 8px rgba(0, 0, 0, 0.08);

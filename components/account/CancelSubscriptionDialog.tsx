@@ -12,6 +12,7 @@ export function CancelSubscriptionDialog({ subscriptionId }: CancelSubscriptionD
   const [isOpen, setIsOpen] = useState(false);
   const [reason, setReason] = useState('');
   const [isCancelling, setIsCancelling] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // Prevent body scroll when modal is open
   useEffect(() => {
@@ -27,16 +28,22 @@ export function CancelSubscriptionDialog({ subscriptionId }: CancelSubscriptionD
 
   const handleCancel = async () => {
     setIsCancelling(true);
+    setError(null);
 
     const formData = new FormData();
     formData.append('reason', reason);
     formData.append('subscriptionId', subscriptionId);
 
     try {
-      await CancelSubscription(formData);
-      window.location.href = '/my-account';
+      const result = await CancelSubscription(formData);
+      // Show success message briefly before redirecting
+      if (result.success) {
+        // Reload to show updated subscription status
+        window.location.href = '/my-account?cancelled=true';
+      }
     } catch (error) {
       console.error('Failed to cancel subscription:', error);
+      setError(error instanceof Error ? error.message : 'Failed to cancel subscription. Please try again.');
       setIsCancelling(false);
     }
   };
@@ -45,6 +52,7 @@ export function CancelSubscriptionDialog({ subscriptionId }: CancelSubscriptionD
     if (isCancelling) return;
     setIsOpen(false);
     setReason('');
+    setError(null);
   };
 
   return (
@@ -119,6 +127,23 @@ export function CancelSubscriptionDialog({ subscriptionId }: CancelSubscriptionD
                 }}
               />
             </div>
+
+            {error && (
+              <div
+                style={{
+                  padding: '12px 16px',
+                  marginBottom: '16px',
+                  borderRadius: 'var(--radius-md)',
+                  backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                  border: '1px solid rgba(239, 68, 68, 0.3)',
+                  color: '#ef4444',
+                  fontSize: '14px',
+                  lineHeight: '20px',
+                }}
+              >
+                {error}
+              </div>
+            )}
 
             <div className="flex gap-4">
               <Button onClick={handleCancel} variant="secondary" loading={isCancelling} fullWidth>

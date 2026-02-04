@@ -18,6 +18,6 @@ export default async function DeleteAccount(formData: FormData) {
     // Delete the Auth0 account
     await deleteUser(session.user.sub);
 
-    // Log the user out and redirect home
-    redirect("/auth/logout");
+    // redirect home
+    redirect("/");
 }

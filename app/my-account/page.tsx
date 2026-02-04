@@ -4,11 +4,51 @@ import SubscriptionDetails from '@/components/SubscriptionDetails';
 import { CancelSubscriptionDialog } from '@/components/account/CancelSubscriptionDialog';
 import { BillingPortalButton } from '@/components/BillingPortalButton';
 
-export default async function MyAccountPage() {
+export default async function MyAccountPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}) {
   const subscriptionData = await SubscriptionDetails();
+  const params = await searchParams;
+  const error = params.error as string | undefined;
+  const cancelled = params.cancelled as string | undefined;
 
   return (
     <div className="space-y-6">
+      {/* Error/Success Messages */}
+      {error === 'already_subscribed' && (
+        <div
+          style={{
+            padding: '16px 20px',
+            borderRadius: 'var(--radius-md)',
+            backgroundColor: 'rgba(239, 68, 68, 0.1)',
+            border: '1px solid rgba(239, 68, 68, 0.3)',
+            color: '#ef4444',
+            fontSize: '14px',
+            lineHeight: '20px',
+          }}
+        >
+          You already have an active subscription. You cannot purchase another subscription while one is active.
+        </div>
+      )}
+
+      {cancelled === 'true' && (
+        <div
+          style={{
+            padding: '16px 20px',
+            borderRadius: 'var(--radius-md)',
+            backgroundColor: 'rgba(34, 197, 94, 0.1)',
+            border: '1px solid rgba(34, 197, 94, 0.3)',
+            color: '#22c55e',
+            fontSize: '14px',
+            lineHeight: '20px',
+          }}
+        >
+          Your subscription has been cancelled successfully. You will retain access until the end of your current billing period.
+        </div>
+      )}
+
       {/* Subscription Section */}
       <div>
         <h2 className="text-title mb-2" style={{ fontWeight: 700, color: 'var(--color-text)' }}>
@@ -155,17 +195,35 @@ function CurrentSubscription({ subscriptionData }: { subscriptionData: any }) {
     if (periodEndDate < now) {
       const billingDay = periodEndDate.getDate();
       const nextDate = new Date(now);
+      const intervalCount = priceData?.recurring?.interval_count || 1;
 
-      // Set to the same day in the current month
+      // Set to the same day in the current period
       nextDate.setDate(billingDay);
 
-      // If that date has already passed this month, move to next month
+      // If that date has already passed this period, move to next billing period
       if (nextDate <= now) {
-        nextDate.setMonth(nextDate.getMonth() + 1);
+        // Add the appropriate time based on billing interval
+        switch (interval) {
+          case 'day':
+            nextDate.setDate(nextDate.getDate() + intervalCount);
+            break;
+          case 'week':
+            nextDate.setDate(nextDate.getDate() + (7 * intervalCount));
+            break;
+          case 'month':
+            nextDate.setMonth(nextDate.getMonth() + intervalCount);
+            break;
+          case 'year':
+            nextDate.setFullYear(nextDate.getFullYear() + intervalCount);
+            break;
+          default:
+            // Default to monthly if interval is unknown
+            nextDate.setMonth(nextDate.getMonth() + intervalCount);
+        }
       }
 
       // Handle edge case where the day doesn't exist in the target month (e.g., 31st in a 30-day month)
-      if (nextDate.getDate() !== billingDay) {
+      if ((interval === 'month' || interval === 'year') && nextDate.getDate() !== billingDay) {
         nextDate.setDate(0); // Set to last day of previous month
       }
 
