@@ -52,10 +52,14 @@ export default async function GCProfile() {
                         <PurchaseButton />
                     </div>
                 );
+            default:
+                return (
+                    <div>
+                        <p>ERROR: Unknown error occurred. Please reload page.</p>
+                    </div>
+                );
         }
     }
-
-
 
     return (
         <div>
