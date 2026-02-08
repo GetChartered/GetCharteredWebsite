@@ -1,0 +1,6 @@
+# Redirect netlify subdomain to primary domain
+[[redirects]]
+  from = "/*"
+  to = "https://getchartered.app"
+  status = 301
+  force = true
