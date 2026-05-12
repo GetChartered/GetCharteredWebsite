@@ -7,6 +7,7 @@ import { useTheme } from "@/components/ThemeProvider";
 import { useUser } from "@auth0/nextjs-auth0";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
+import { SUBSCRIPTIONS_ENABLED } from "@/lib/features";
 
 export function Navigation() {
   const { theme, setTheme } = useTheme();
@@ -121,19 +122,21 @@ export function Navigation() {
 
           {/* Desktop Navigation Buttons */}
           <div className="nav-desktop items-center gap-3">
-            <a href="/purchase" style={{ textDecoration: "none" }}>
+            {SUBSCRIPTIONS_ENABLED && (
+              <a href="/purchase" style={{ textDecoration: "none" }}>
+                <Button variant="ghost" size="sm">
+                  Purchase
+                </Button>
+              </a>
+            )}
+            <a href="/faq" style={{ textDecoration: "none" }}>
               <Button variant="ghost" size="sm">
-                Purchase
+                FAQ
               </Button>
             </a>
-            <a href="/resources" style={{ textDecoration: "none" }}>
+            <a href="/contact" style={{ textDecoration: "none" }}>
               <Button variant="ghost" size="sm">
-                Resources
-              </Button>
-            </a>
-            <a href="/demos" style={{ textDecoration: "none" }}>
-              <Button variant="ghost" size="sm">
-                Demos
+                Contact
               </Button>
             </a>
             <a href={isOnMyAccount ? "/" : "/my-account"} style={{ textDecoration: "none" }}>
@@ -178,31 +181,33 @@ export function Navigation() {
             }}
           >
             <div className="flex flex-col gap-2">
+              {SUBSCRIPTIONS_ENABLED && (
+                <a
+                  href="/purchase"
+                  style={{ textDecoration: "none" }}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  <Button variant="ghost" size="md" fullWidth>
+                    Purchase
+                  </Button>
+                </a>
+              )}
               <a
-                href="/purchase"
+                href="/faq"
                 style={{ textDecoration: "none" }}
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 <Button variant="ghost" size="md" fullWidth>
-                  Purchase
+                  FAQ
                 </Button>
               </a>
               <a
-                href="/resources"
+                href="/contact"
                 style={{ textDecoration: "none" }}
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 <Button variant="ghost" size="md" fullWidth>
-                  Resources
-                </Button>
-              </a>
-              <a
-                href="/demos"
-                style={{ textDecoration: "none" }}
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                <Button variant="ghost" size="md" fullWidth>
-                  Demos
+                  Contact
                 </Button>
               </a>
               <a

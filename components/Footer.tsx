@@ -3,10 +3,10 @@
 
 "use client";
 
-import React from "react";
 import { useTheme } from "@/components/ThemeProvider";
 import { useUser } from "@auth0/nextjs-auth0";
 import Link from "next/link";
+import { SUBSCRIPTIONS_ENABLED } from "@/lib/features";
 
 export function Footer() {
   const { theme } = useTheme();
@@ -62,9 +62,30 @@ export function Footer() {
               Product
             </h4>
             <ul className="space-y-2" style={{ listStyle: "none" }}>
+              {SUBSCRIPTIONS_ENABLED && (
+                <li>
+                  <a
+                    href="/purchase"
+                    className="text-sm transition-colors"
+                    style={{
+                      color: "var(--color-text-secondary)",
+                      textDecoration: "none",
+                    }}
+                    onMouseEnter={(e) =>
+                      (e.currentTarget.style.color = "var(--color-tint)")
+                    }
+                    onMouseLeave={(e) =>
+                      (e.currentTarget.style.color =
+                        "var(--color-text-secondary)")
+                    }
+                  >
+                    Purchase
+                  </a>
+                </li>
+              )}
               <li>
                 <a
-                  href="/purchase"
+                  href="/faq"
                   className="text-sm transition-colors"
                   style={{
                     color: "var(--color-text-secondary)",
@@ -78,45 +99,7 @@ export function Footer() {
                       "var(--color-text-secondary)")
                   }
                 >
-                  Purchase
-                </a>
-              </li>
-              <li>
-                <a
-                  href="/demos"
-                  className="text-sm transition-colors"
-                  style={{
-                    color: "var(--color-text-secondary)",
-                    textDecoration: "none",
-                  }}
-                  onMouseEnter={(e) =>
-                    (e.currentTarget.style.color = "var(--color-tint)")
-                  }
-                  onMouseLeave={(e) =>
-                    (e.currentTarget.style.color =
-                      "var(--color-text-secondary)")
-                  }
-                >
-                  Demos
-                </a>
-              </li>
-              <li>
-                <a
-                  href="/resources"
-                  className="text-sm transition-colors"
-                  style={{
-                    color: "var(--color-text-secondary)",
-                    textDecoration: "none",
-                  }}
-                  onMouseEnter={(e) =>
-                    (e.currentTarget.style.color = "var(--color-tint)")
-                  }
-                  onMouseLeave={(e) =>
-                    (e.currentTarget.style.color =
-                      "var(--color-text-secondary)")
-                  }
-                >
-                  Resources
+                  FAQ
                 </a>
               </li>
             </ul>
@@ -174,34 +157,15 @@ export function Footer() {
             </ul>
           </div>
 
-          {/* Legal */}
+          {/* Legal & Contact */}
           <div>
             <h4
               className="font-semibold mb-4"
               style={{ textDecoration: "underline" }}
             >
-              Legal
+              Legal & Contact
             </h4>
             <ul className="space-y-2" style={{ listStyle: "none" }}>
-              <li>
-                <a
-                  href="/faq"
-                  className="text-sm transition-colors"
-                  style={{
-                    color: "var(--color-text-secondary)",
-                    textDecoration: "none",
-                  }}
-                  onMouseEnter={(e) =>
-                    (e.currentTarget.style.color = "var(--color-tint)")
-                  }
-                  onMouseLeave={(e) =>
-                    (e.currentTarget.style.color =
-                      "var(--color-text-secondary)")
-                  }
-                >
-                  FAQ
-                </a>
-              </li>
               <li>
                 <a
                   href="/contact"

@@ -1,4 +1,5 @@
 import { PricingCard } from "@/components/PricingCard";
+import { SUBSCRIPTIONS_ENABLED } from "@/lib/features";
 
 interface PricingData {
   id: string;
@@ -64,6 +65,26 @@ function formatPeriod(interval: string, intervalCount: number): string {
 }
 
 export async function PricingSection() {
+  if (!SUBSCRIPTIONS_ENABLED) {
+    return (
+      <section id="pricing" className="py-24">
+        <div className="container">
+          <div className="max-w-xl mx-auto text-center">
+            <h2 className="text-display mb-4">Pricing Coming Soon</h2>
+            <p style={{ color: "var(--color-text-secondary)" }}>
+              We&apos;ll publish plan details when GetChartered launches on the App
+              Store. Want early access or pricing updates? Reach out via our{" "}
+              <a href="/contact" style={{ color: "var(--color-tint)" }}>
+                contact page
+              </a>
+              .
+            </p>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
   const pricingData = await getPricing();
 
   // Filter to only show paid plans (exclude free plans)

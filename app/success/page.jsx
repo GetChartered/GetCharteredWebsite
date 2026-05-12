@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { stripe } from '../../lib/stripe'
 import { Navigation } from '@/components/Navigation'
 import { Footer } from '@/components/Footer'
+import { SUBSCRIPTIONS_ENABLED } from '@/lib/features'
 
 function SuccessContent({ customerEmail }) {
     return (
@@ -52,10 +53,10 @@ function SuccessContent({ customerEmail }) {
                             >
                                 If you have any questions, please email{' '}
                                 <a
-                                    href="mailto:orders@example.com"
+                                    href="mailto:devs@getchartered.app"
                                     style={{ color: 'var(--color-tint)' }}
                                 >
-                                    orders@example.com
+                                    devs@getchartered.app
                                 </a>
                                 .
                             </p>
@@ -79,6 +80,10 @@ function SuccessContent({ customerEmail }) {
 }
 
 export default async function Success({ searchParams }) {
+    if (!SUBSCRIPTIONS_ENABLED) {
+        return redirect('/')
+    }
+
     const { session_id } = await searchParams
 
     if (!session_id)

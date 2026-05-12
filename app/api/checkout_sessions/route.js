@@ -3,9 +3,17 @@ import { headers } from 'next/headers'
 
 import { stripe } from '@/lib/stripe'
 import {auth0} from "../../../lib/auth0";
+import { SUBSCRIPTIONS_ENABLED } from '@/lib/features'
 
 export async function POST() {
     try {
+        if (!SUBSCRIPTIONS_ENABLED) {
+            return NextResponse.json(
+                { error: 'Subscriptions are not yet available.' },
+                { status: 503 }
+            );
+        }
+
         // Validate authentication
         const authSession = await auth0.getSession();
 

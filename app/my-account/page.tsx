@@ -1,23 +1,26 @@
 import Link from 'next/link';
-import { CreditCard, Calendar } from 'lucide-react';
+import { CreditCard, Calendar, Sparkles } from 'lucide-react';
 import SubscriptionDetails from '@/components/SubscriptionDetails';
 import { CancelSubscriptionDialog } from '@/components/account/CancelSubscriptionDialog';
 import { BillingPortalButton } from '@/components/BillingPortalButton';
+import { ChangePasswordButton } from '@/components/ChangePasswordButton';
+import { SUBSCRIPTIONS_ENABLED } from '@/lib/features';
 
 export default async function MyAccountPage({
   searchParams,
 }: {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
-  const subscriptionData = await SubscriptionDetails();
   const params = await searchParams;
   const error = params.error as string | undefined;
   const cancelled = params.cancelled as string | undefined;
 
+  const subscriptionData = SUBSCRIPTIONS_ENABLED ? await SubscriptionDetails() : null;
+
   return (
     <div className="space-y-6">
       {/* Error/Success Messages */}
-      {error === 'already_subscribed' && (
+      {SUBSCRIPTIONS_ENABLED && error === 'already_subscribed' && (
         <div
           style={{
             padding: '16px 20px',
@@ -33,7 +36,7 @@ export default async function MyAccountPage({
         </div>
       )}
 
-      {cancelled === 'true' && (
+      {SUBSCRIPTIONS_ENABLED && cancelled === 'true' && (
         <div
           style={{
             padding: '16px 20px',
@@ -55,13 +58,19 @@ export default async function MyAccountPage({
           Subscription
         </h2>
         <p className="text-body mb-4" style={{ color: 'var(--color-text-secondary)' }}>
-          Manage your subscription plan and billing information
+          {SUBSCRIPTIONS_ENABLED
+            ? 'Manage your subscription plan and billing information'
+            : 'Subscriptions open when GetChartered launches in July 2026'}
         </p>
 
-        {subscriptionData.status === 6 && subscriptionData.body ? (
-          <CurrentSubscription subscriptionData={subscriptionData.body} />
+        {SUBSCRIPTIONS_ENABLED ? (
+          subscriptionData && subscriptionData.status === 6 && subscriptionData.body ? (
+            <CurrentSubscription subscriptionData={subscriptionData.body} />
+          ) : (
+            <NoSubscription status={subscriptionData?.status ?? 0} />
+          )
         ) : (
-          <NoSubscription status={subscriptionData.status} />
+          <WaitlistPlaceholder />
         )}
       </div>
 
@@ -86,13 +95,7 @@ export default async function MyAccountPage({
                     Manage your password through your authentication provider
                   </p>
                 </div>
-                <a
-                  href="/auth/login?screen_hint=reset-password"
-                  className="btn btn-outline btn-sm"
-                  style={{ flexShrink: 0 }}
-                >
-                  Change Password
-                </a>
+                <ChangePasswordButton />
               </div>
             </div>
 
@@ -303,6 +306,30 @@ function CurrentSubscription({ subscriptionData }: { subscriptionData: any }) {
             </div>
           ))}
         </div>
+      </div>
+    </div>
+  );
+}
+
+function WaitlistPlaceholder() {
+  return (
+    <div className="card" style={{ padding: '24px' }}>
+      <div className="text-center py-10">
+        <div
+          className="rounded-full flex items-center justify-center mx-auto mb-4"
+          style={{ backgroundColor: 'rgba(0, 173, 181, 0.12)', width: '56px', height: '56px', flexShrink: 0 }}
+        >
+          <Sparkles size={24} style={{ color: 'var(--accent-blue)' }} />
+        </div>
+        <h3 className="text-title mb-2" style={{ fontWeight: 600, color: 'var(--color-text)' }}>
+          You&apos;re on the waitlist
+        </h3>
+        <p className="text-body mb-2" style={{ color: 'var(--color-text-secondary)' }}>
+          GetChartered is free during our beta period and launches publicly in July 2026.
+        </p>
+        <p className="text-caption" style={{ color: 'var(--color-text-muted)' }}>
+          You&apos;ll be among the first to know when subscriptions open.
+        </p>
       </div>
     </div>
   );

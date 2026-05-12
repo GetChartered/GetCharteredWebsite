@@ -110,6 +110,36 @@ export async function updateUserProfile(userId: string, data: { name?: string })
   return response.json();
 }
 
+/**
+ * Triggers Auth0 to send a password-reset email for a database-connection user.
+ * Uses the public `/dbconnections/change_password` endpoint (no Management token needed),
+ * so this works for users authenticated via username/password only. Users who signed
+ * up with a social provider (e.g., google-oauth2|...) don't have a password to reset.
+ */
+export async function sendPasswordResetEmail(email: string) {
+  const connection =
+    process.env.AUTH0_DB_CONNECTION || 'Username-Password-Authentication';
+
+  const response = await fetch(`${AUTH0_BASE}/dbconnections/change_password`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      client_id: AUTH0_CLIENT_ID,
+      email,
+      connection,
+    }),
+  });
+
+  if (!response.ok) {
+    await handleAuth0Error(response, 'Send Password Reset Email', {
+      connection,
+    });
+  }
+
+  // Endpoint returns a plain-text confirmation string, not JSON.
+  return response.text();
+}
+
 export async function deleteUser(userId: string) {
   const token = await getManagementToken();
 

@@ -1,11 +1,16 @@
-import { Play, BookOpen, BarChart3, Medal, LucideIcon } from "lucide-react";
+import { Play, BookOpen, BarChart3, Medal, Mail, UserPlus, User, LucideIcon } from "lucide-react";
+import Link from "next/link";
 import { Button } from "@/components/ui";
 import { Navigation } from "@/components/Navigation";
 import { Footer } from "@/components/Footer";
 import { PricingSection } from "@/components/PricingSection";
 import { ViewPricingButton } from "@/components/ViewPricingButton";
+import { SUBSCRIPTIONS_ENABLED } from "@/lib/features";
+import { auth0 } from "@/lib/auth0";
 
-export default function Home() {
+export default async function Home() {
+  const session = await auth0.getSession();
+  const isLoggedIn = !!session;
   return (
     <div className="min-h-screen">
       <Navigation />
@@ -22,17 +27,43 @@ export default function Home() {
               className="text-lg mb-8"
               style={{ color: "var(--color-text-secondary)" }}
             >
-              Practice questions for your ACA, CFA, CISI exams with our
-              intelligent learning platform.
+              Practice questions for your ACA, ACCA, CISI, and CII exams with
+              our intelligent learning platform.
             </p>
 
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button variant="primary" size="lg" leftIcon={Play}>
-                Start Free Trial
-              </Button>
+            {SUBSCRIPTIONS_ENABLED ? (
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <Button variant="primary" size="lg" leftIcon={Play}>
+                  Start Free Trial
+                </Button>
 
-              <ViewPricingButton />
-            </div>
+                <ViewPricingButton />
+              </div>
+            ) : (
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                {isLoggedIn ? (
+                  <Link href="/my-account" style={{ textDecoration: "none" }}>
+                    <Button variant="primary" size="lg" leftIcon={User}>
+                      Go to My Account
+                    </Button>
+                  </Link>
+                ) : (
+                  <Link
+                    href="/auth/login?screen_hint=signup"
+                    style={{ textDecoration: "none" }}
+                  >
+                    <Button variant="primary" size="lg" leftIcon={UserPlus}>
+                      Join the Waitlist
+                    </Button>
+                  </Link>
+                )}
+                <Link href="/contact" style={{ textDecoration: "none" }}>
+                  <Button variant="outline" size="lg" leftIcon={Mail}>
+                    Contact Us
+                  </Button>
+                </Link>
+              </div>
+            )}
           </div>
         </div>
       </section>
@@ -92,25 +123,77 @@ export default function Home() {
       <section className="py-24 bg-muted text-center">
         <div className="container">
           <div className="max-w-2xl mx-auto">
-            <h2 className="text-display mb-6">Ready to Pass Your Exams?</h2>
+            {SUBSCRIPTIONS_ENABLED ? (
+              <>
+                <h2 className="text-display mb-6">Ready to Pass Your Exams?</h2>
 
-            <p
-              className="text-lg mb-8"
-              style={{ color: "var(--color-text-secondary)" }}
-            >
-              Start your free trial today—no credit card required.
-            </p>
+                <p
+                  className="text-lg mb-8"
+                  style={{ color: "var(--color-text-secondary)" }}
+                >
+                  Start your free trial today, no credit card required.
+                </p>
 
-            <Button variant="primary" size="lg" leftIcon={Play}>
-              Start Free Trial
-            </Button>
+                <Button variant="primary" size="lg" leftIcon={Play}>
+                  Start Free Trial
+                </Button>
 
-            <p
-              className="text-sm mt-6"
-              style={{ color: "var(--color-text-muted)" }}
-            >
-              14-day free trial • Cancel anytime • No credit card required
-            </p>
+                <p
+                  className="text-sm mt-6"
+                  style={{ color: "var(--color-text-muted)" }}
+                >
+                  14-day free trial • Cancel anytime • No credit card required
+                </p>
+              </>
+            ) : isLoggedIn ? (
+              <>
+                <h2 className="text-display mb-6">You&apos;re on the Waitlist</h2>
+
+                <p
+                  className="text-lg mb-8"
+                  style={{ color: "var(--color-text-secondary)" }}
+                >
+                  Thanks for signing up early. GetChartered launches in July
+                  2026 — manage your account or get in touch with the team any
+                  time.
+                </p>
+
+                <Link href="/my-account" style={{ textDecoration: "none" }}>
+                  <Button variant="primary" size="lg" leftIcon={User}>
+                    Go to My Account
+                  </Button>
+                </Link>
+              </>
+            ) : (
+              <>
+                <h2 className="text-display mb-6">Be First in Line for Launch</h2>
+
+                <p
+                  className="text-lg mb-8"
+                  style={{ color: "var(--color-text-secondary)" }}
+                >
+                  GetChartered launches in July 2026. Sign up now to join the
+                  waitlist, get early access during our free beta, and help
+                  shape the product before it goes live.
+                </p>
+
+                <Link
+                  href="/auth/login?screen_hint=signup"
+                  style={{ textDecoration: "none" }}
+                >
+                  <Button variant="primary" size="lg" leftIcon={UserPlus}>
+                    Join the Waitlist
+                  </Button>
+                </Link>
+
+                <p
+                  className="text-sm mt-6"
+                  style={{ color: "var(--color-text-muted)" }}
+                >
+                  Free during beta • Cancel anytime
+                </p>
+              </>
+            )}
           </div>
         </div>
       </section>
