@@ -1,9 +1,8 @@
 import Link from "next/link";
 import { Navigation } from "@/components/Navigation";
 import { Footer } from "@/components/Footer";
-import { auth0 } from "@/lib/auth0";
-
-type FaqItem = { question: string; answer: React.ReactNode };
+import { FaqAccordion, type FaqItem } from "@/components/FaqAccordion";
+import { requireVerifiedIfSignedIn } from "@/lib/auth0";
 
 const faqs: FaqItem[] = [
   {
@@ -211,7 +210,8 @@ const faqs: FaqItem[] = [
 ];
 
 export default async function FAQ() {
-  const session = await auth0.getSession();
+  // Signed-in-but-unverified users get bounced to /verify-email here.
+  const session = await requireVerifiedIfSignedIn();
   const isLoggedIn = !!session;
 
   // Hide the "how do I join the waitlist?" question for logged-in users —
@@ -241,36 +241,7 @@ export default async function FAQ() {
               </p>
             </div>
 
-            <div className="space-y-4">
-              {visibleFaqs.map((faq) => (
-                <details
-                  key={faq.question}
-                  className="card"
-                  style={{ padding: "20px 24px" }}
-                >
-                  <summary
-                    style={{
-                      cursor: "pointer",
-                      fontWeight: 600,
-                      fontSize: "16px",
-                      color: "var(--color-text)",
-                      listStyle: "none",
-                    }}
-                  >
-                    {faq.question}
-                  </summary>
-                  <div
-                    className="mt-4 space-y-3"
-                    style={{
-                      color: "var(--color-text-secondary)",
-                      lineHeight: 1.6,
-                    }}
-                  >
-                    {faq.answer}
-                  </div>
-                </details>
-              ))}
-            </div>
+            <FaqAccordion items={visibleFaqs} />
 
             <div className="text-center mt-12">
               <p style={{ color: "var(--color-text-secondary)" }}>

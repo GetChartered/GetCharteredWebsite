@@ -5,12 +5,14 @@ import { CancelSubscriptionDialog } from '@/components/account/CancelSubscriptio
 import { BillingPortalButton } from '@/components/BillingPortalButton';
 import { ChangePasswordButton } from '@/components/ChangePasswordButton';
 import { SUBSCRIPTIONS_ENABLED } from '@/lib/features';
+import { requireOnboardedSession } from '@/lib/auth0';
 
 export default async function MyAccountPage({
   searchParams,
 }: {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
+  await requireOnboardedSession('/my-account');
   const params = await searchParams;
   const error = params.error as string | undefined;
   const cancelled = params.cancelled as string | undefined;

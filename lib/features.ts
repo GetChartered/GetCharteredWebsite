@@ -9,3 +9,11 @@
 
 export const SUBSCRIPTIONS_ENABLED =
   process.env.NEXT_PUBLIC_SUBSCRIPTIONS_ENABLED === "false"
+
+// When true, signed-in users with `onboarding_completed !== true` are
+// redirected to /onboarding from protected pages, and the "Skip for now"
+// escape on the onboarding flow is hidden. Defaults to true; set
+// NEXT_PUBLIC_ONBOARDING_REQUIRED="false" to fall back to the soft-banner
+// nudge.
+export const ONBOARDING_REQUIRED =
+  process.env.NEXT_PUBLIC_ONBOARDING_REQUIRED !== "false";

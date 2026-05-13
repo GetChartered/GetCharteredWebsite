@@ -6,10 +6,12 @@ import { Footer } from "@/components/Footer";
 import { PricingSection } from "@/components/PricingSection";
 import { ViewPricingButton } from "@/components/ViewPricingButton";
 import { SUBSCRIPTIONS_ENABLED } from "@/lib/features";
-import { auth0 } from "@/lib/auth0";
+import { requireVerifiedIfSignedIn } from "@/lib/auth0";
 
 export default async function Home() {
-  const session = await auth0.getSession();
+  // If signed in but unverified, this redirects to /verify-email — keeping
+  // the user locked into the verify flow until they confirm their email.
+  const session = await requireVerifiedIfSignedIn();
   const isLoggedIn = !!session;
   return (
     <div className="min-h-screen">
@@ -110,7 +112,7 @@ export default async function Home() {
               icon={BookOpen}
               iconColor="var(--accent-purple)"
               title="Smart Learning"
-              description="AI-powered algorithm focuses on weak areas"
+              description="Learning algorithm that focuses on weak areas"
             />
           </div>
         </div>

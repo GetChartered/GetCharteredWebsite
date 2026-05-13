@@ -8,6 +8,7 @@ import { useUser } from "@auth0/nextjs-auth0";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { SUBSCRIPTIONS_ENABLED } from "@/lib/features";
+import { OnboardingBanner } from "@/components/OnboardingBanner";
 
 export function Navigation() {
   const { theme, setTheme } = useTheme();
@@ -18,6 +19,10 @@ export function Navigation() {
   const [isMobile, setIsMobile] = useState(false);
 
   const isOnMyAccount = pathname === "/my-account";
+  // Lockdown nav: when the user is on /verify-email, hide all in-app links
+  // so the page is effectively isolated. Only the logo, sign-out, and theme
+  // toggle remain.
+  const isLocked = pathname === "/verify-email";
 
   useEffect(() => {
     const handleScroll = () => {
@@ -92,9 +97,9 @@ export function Navigation() {
             paddingBottom: (isMobile || isScrolled) ? "12px" : "24px",
           }}
         >
-          {/* Logo */}
+          {/* Logo — locks to /verify-email when the user is mid-verification */}
           <Link
-            href="/"
+            href={isLocked ? "/verify-email" : "/"}
             className="flex items-center gap-4"
             style={{ textDecoration: "none" }}
           >
@@ -122,32 +127,43 @@ export function Navigation() {
 
           {/* Desktop Navigation Buttons */}
           <div className="nav-desktop items-center gap-3">
-            {SUBSCRIPTIONS_ENABLED && (
-              <a href="/purchase" style={{ textDecoration: "none" }}>
-                <Button variant="ghost" size="sm">
-                  Purchase
-                </Button>
-              </a>
-            )}
-            <a href="/faq" style={{ textDecoration: "none" }}>
-              <Button variant="ghost" size="sm">
-                FAQ
-              </Button>
-            </a>
-            <a href="/contact" style={{ textDecoration: "none" }}>
-              <Button variant="ghost" size="sm">
-                Contact
-              </Button>
-            </a>
-            <a href={isOnMyAccount ? "/" : "/my-account"} style={{ textDecoration: "none" }}>
-              <Button variant="ghost" size="sm">
-                {isOnMyAccount ? (
-                  <Home size={20} />
-                ) : (
-                  <User size={20} style={{ color: user ? '#10b981' : 'inherit' }} />
+            {!isLocked && (
+              <>
+                {SUBSCRIPTIONS_ENABLED && (
+                  <Link href="/purchase" style={{ textDecoration: "none" }}>
+                    <Button variant="ghost" size="sm">
+                      Purchase
+                    </Button>
+                  </Link>
                 )}
-              </Button>
-            </a>
+                <Link href="/faq" style={{ textDecoration: "none" }}>
+                  <Button variant="ghost" size="sm">
+                    FAQ
+                  </Button>
+                </Link>
+                <Link href="/contact" style={{ textDecoration: "none" }}>
+                  <Button variant="ghost" size="sm">
+                    Contact
+                  </Button>
+                </Link>
+                <Link href={isOnMyAccount ? "/" : "/my-account"} style={{ textDecoration: "none" }}>
+                  <Button variant="ghost" size="sm">
+                    {isOnMyAccount ? (
+                      <Home size={20} />
+                    ) : (
+                      <User size={20} style={{ color: user ? '#10b981' : 'inherit' }} />
+                    )}
+                  </Button>
+                </Link>
+              </>
+            )}
+            {isLocked && (
+              <Link href="/auth/logout" style={{ textDecoration: "none" }}>
+                <Button variant="ghost" size="sm">
+                  Sign out
+                </Button>
+              </Link>
+            )}
             <Button
               variant="ghost"
               size="sm"
@@ -157,15 +173,34 @@ export function Navigation() {
             </Button>
           </div>
 
-          {/* Mobile Menu Button */}
+          {/* Mobile right-side controls — hamburger on normal pages,
+              inline sign-out + theme toggle in locked mode (the menu would
+              only have one item, so skip it entirely). */}
           <div className="nav-mobile items-center gap-3">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            >
-              {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
-            </Button>
+            {isLocked ? (
+              <>
+                <Link href="/auth/logout" style={{ textDecoration: "none" }}>
+                  <Button variant="ghost" size="sm">
+                    Sign out
+                  </Button>
+                </Link>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+                >
+                  {theme === "dark" ? <Sun size={20} /> : <Moon size={20} />}
+                </Button>
+              </>
+            ) : (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              >
+                {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+              </Button>
+            )}
           </div>
         </div>
 
@@ -182,7 +217,7 @@ export function Navigation() {
           >
             <div className="flex flex-col gap-2">
               {SUBSCRIPTIONS_ENABLED && (
-                <a
+                <Link
                   href="/purchase"
                   style={{ textDecoration: "none" }}
                   onClick={() => setIsMobileMenuOpen(false)}
@@ -190,9 +225,9 @@ export function Navigation() {
                   <Button variant="ghost" size="md" fullWidth>
                     Purchase
                   </Button>
-                </a>
+                </Link>
               )}
-              <a
+              <Link
                 href="/faq"
                 style={{ textDecoration: "none" }}
                 onClick={() => setIsMobileMenuOpen(false)}
@@ -200,8 +235,8 @@ export function Navigation() {
                 <Button variant="ghost" size="md" fullWidth>
                   FAQ
                 </Button>
-              </a>
-              <a
+              </Link>
+              <Link
                 href="/contact"
                 style={{ textDecoration: "none" }}
                 onClick={() => setIsMobileMenuOpen(false)}
@@ -209,8 +244,8 @@ export function Navigation() {
                 <Button variant="ghost" size="md" fullWidth>
                   Contact
                 </Button>
-              </a>
-              <a
+              </Link>
+              <Link
                 href={isOnMyAccount ? "/" : "/my-account"}
                 style={{ textDecoration: "none" }}
                 onClick={() => setIsMobileMenuOpen(false)}
@@ -228,7 +263,7 @@ export function Navigation() {
                     </>
                   )}
                 </Button>
-              </a>
+              </Link>
               <Button
                 variant="ghost"
                 size="md"
@@ -243,6 +278,7 @@ export function Navigation() {
         )}
       </div>
     </nav>
+    <OnboardingBanner />
     </>
   );
 }

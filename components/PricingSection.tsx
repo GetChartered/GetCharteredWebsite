@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { PricingCard } from "@/components/PricingCard";
 import { SUBSCRIPTIONS_ENABLED } from "@/lib/features";
 
@@ -74,9 +75,9 @@ export async function PricingSection() {
             <p style={{ color: "var(--color-text-secondary)" }}>
               We&apos;ll publish plan details when GetChartered launches on the App
               Store. Want early access or pricing updates? Reach out via our{" "}
-              <a href="/contact" style={{ color: "var(--color-tint)" }}>
+              <Link href="/contact" style={{ color: "var(--color-tint)" }}>
                 contact page
-              </a>
+              </Link>
               .
             </p>
           </div>

@@ -64,7 +64,7 @@ export function Footer() {
             <ul className="space-y-2" style={{ listStyle: "none" }}>
               {SUBSCRIPTIONS_ENABLED && (
                 <li>
-                  <a
+                  <Link
                     href="/purchase"
                     className="text-sm transition-colors"
                     style={{
@@ -80,11 +80,11 @@ export function Footer() {
                     }
                   >
                     Purchase
-                  </a>
+                  </Link>
                 </li>
               )}
               <li>
-                <a
+                <Link
                   href="/faq"
                   className="text-sm transition-colors"
                   style={{
@@ -100,7 +100,7 @@ export function Footer() {
                   }
                 >
                   FAQ
-                </a>
+                </Link>
               </li>
             </ul>
           </div>
@@ -115,7 +115,7 @@ export function Footer() {
             </h4>
             <ul className="space-y-2" style={{ listStyle: "none" }}>
               <li>
-                <a
+                <Link
                   href="/my-account"
                   className="text-sm transition-colors"
                   style={{
@@ -131,7 +131,7 @@ export function Footer() {
                   }
                 >
                   My Account
-                </a>
+                </Link>
               </li>
               {!user && (
                 <li>
@@ -167,7 +167,7 @@ export function Footer() {
             </h4>
             <ul className="space-y-2" style={{ listStyle: "none" }}>
               <li>
-                <a
+                <Link
                   href="/contact"
                   className="text-sm transition-colors"
                   style={{
@@ -183,10 +183,10 @@ export function Footer() {
                   }
                 >
                   Contact
-                </a>
+                </Link>
               </li>
               <li>
-                <a
+                <Link
                   href="/privacy"
                   className="text-sm transition-colors"
                   style={{
@@ -202,10 +202,10 @@ export function Footer() {
                   }
                 >
                   Privacy Policy
-                </a>
+                </Link>
               </li>
               <li>
-                <a
+                <Link
                   href="/terms"
                   className="text-sm transition-colors"
                   style={{
@@ -221,7 +221,7 @@ export function Footer() {
                   }
                 >
                   Terms & Conditions
-                </a>
+                </Link>
               </li>
             </ul>
           </div>
