@@ -3,11 +3,11 @@ import { CheckCircle2, ArrowRight } from "lucide-react";
 import { Navigation } from "@/components/Navigation";
 import { Footer } from "@/components/Footer";
 import { requireOnboardedSession } from "@/lib/auth0";
-import { getUserMetadata } from "@/lib/auth0-management";
+import { getUserMetadata, type OnboardingMetadata } from "@/lib/auth0-management";
 
 export default async function WelcomePage() {
   const session = await requireOnboardedSession("/welcome");
-  const metadata = await getUserMetadata(session.user.sub).catch(() => ({}));
+  const metadata: OnboardingMetadata = await getUserMetadata(session.user.sub).catch(() => ({}));
   const firstName = (metadata.full_name || session.user.name || "")
     .toString()
     .trim()
