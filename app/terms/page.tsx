@@ -20,7 +20,7 @@ export default async function TermsPage() {
             border: "1px solid var(--color-border-subtle)",
           }}
         >
-          <LegalContent source="/terms.html" />
+          <LegalContent source="/terms-legal.html" />
         </div>
       </main>
       <Footer />
