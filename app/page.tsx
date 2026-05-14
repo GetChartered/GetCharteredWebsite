@@ -29,8 +29,7 @@ export default async function Home() {
               className="text-lg mb-8"
               style={{ color: "var(--color-text-secondary)" }}
             >
-              Practice questions for your ACA, ACCA, CISI, and CII exams with
-              our intelligent learning platform.
+              Prepare for you professional certifications with our intelligent learning platform.
             </p>
 
             {SUBSCRIPTIONS_ENABLED ? (
