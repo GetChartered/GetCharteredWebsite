@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import { auth0 } from '@/lib/auth0';
 import {
-  getUserAccount,
   getUserMetadata,
   updateUserMetadata,
   QUALIFICATIONS,
@@ -22,14 +21,8 @@ export async function GET() {
   }
 
   try {
-    // Fetch the full account so callers (notably EmailVerificationBanner) get
-    // the live `email_verified` from Auth0 rather than the session cookie's
-    // cached claim — which doesn't update until the user re-logs in.
-    const account = await getUserAccount(session.user.sub);
-    return NextResponse.json({
-      metadata: account.metadata,
-      email_verified: account.email_verified,
-    });
+    const metadata = await getUserMetadata(session.user.sub);
+    return NextResponse.json({ metadata });
   } catch (error) {
     console.error('Onboarding GET error:', error);
     return NextResponse.json(
@@ -289,9 +282,15 @@ export async function POST(request: Request) {
     onboarding_completed: true,
   };
 
+  // Auth0 treats `name` as a root attribute owned by the IdP for social and
+  // enterprise connections (google-oauth2|, linkedin|, oauth2|linkedin|, …),
+  // so PATCHing it returns 400. Only database (auth0|…) users can have their
+  // root name updated; for everyone else we rely on `user_metadata.full_name`.
+  const isDatabaseUser = session.user.sub?.startsWith('auth0|') ?? false;
+
   try {
     await updateUserMetadata(session.user.sub, {
-      name: fullName,
+      name: isDatabaseUser ? fullName : undefined,
       metadata,
     });
     return NextResponse.json({ success: true, metadata });

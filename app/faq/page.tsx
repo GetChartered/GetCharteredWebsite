@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Navigation } from "@/components/Navigation";
 import { Footer } from "@/components/Footer";
 import { FaqAccordion, type FaqItem } from "@/components/FaqAccordion";
-import { requireVerifiedIfSignedIn } from "@/lib/auth0";
+import { getOptionalSession } from "@/lib/auth0";
 
 const faqs: FaqItem[] = [
   {
@@ -20,13 +20,13 @@ const faqs: FaqItem[] = [
     answer: (
       <>
         <p>
-          At launch, GetChartered will cover ACA, ACCA, CISI, and CII, the four
-          qualifications most commonly studied by graduates entering accounting
-          and financial services in the UK.
+          At launch, GetChartered will cover ACA, ACCA, CISI, CII, CIMA, and
+          CFA — the qualifications most commonly studied by graduates entering
+          accounting and financial services in the UK.
         </p>
         <p>
-          Support for CIMA, CFA, CIPS and other professional qualifications are
-          on the roadmap and will be added as the platform grows.
+          Support for CIPS and other professional qualifications is on the
+          roadmap and will be added as the platform grows.
         </p>
       </>
     ),
@@ -210,8 +210,7 @@ const faqs: FaqItem[] = [
 ];
 
 export default async function FAQ() {
-  // Signed-in-but-unverified users get bounced to /verify-email here.
-  const session = await requireVerifiedIfSignedIn();
+  const session = await getOptionalSession();
   const isLoggedIn = !!session;
 
   // Hide the "how do I join the waitlist?" question for logged-in users —

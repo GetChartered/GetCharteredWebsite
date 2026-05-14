@@ -1,10 +1,8 @@
 import { Navigation } from "@/components/Navigation";
 import { Footer } from "@/components/Footer";
 import { LegalContent } from "@/components/LegalContent";
-import { requireVerifiedIfSignedIn } from "@/lib/auth0";
 
-export default async function TermsPage() {
-  await requireVerifiedIfSignedIn();
+export default function TermsPage() {
   return (
     <>
       <Navigation />

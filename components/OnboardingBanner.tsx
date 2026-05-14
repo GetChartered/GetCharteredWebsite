@@ -19,11 +19,7 @@ export function OnboardingBanner() {
       setShow(false);
       return;
     }
-    if (
-      pathname === "/onboarding" ||
-      pathname === "/verify-email" ||
-      pathname?.startsWith("/auth/")
-    ) {
+    if (pathname === "/onboarding" || pathname?.startsWith("/auth/")) {
       setShow(false);
       return;
     }

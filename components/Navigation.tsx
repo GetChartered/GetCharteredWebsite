@@ -19,10 +19,6 @@ export function Navigation() {
   const [isMobile, setIsMobile] = useState(false);
 
   const isOnMyAccount = pathname === "/my-account";
-  // Lockdown nav: when the user is on /verify-email, hide all in-app links
-  // so the page is effectively isolated. Only the logo, sign-out, and theme
-  // toggle remain.
-  const isLocked = pathname === "/verify-email";
 
   useEffect(() => {
     const handleScroll = () => {
@@ -97,9 +93,8 @@ export function Navigation() {
             paddingBottom: (isMobile || isScrolled) ? "12px" : "24px",
           }}
         >
-          {/* Logo — locks to /verify-email when the user is mid-verification */}
           <Link
-            href={isLocked ? "/verify-email" : "/"}
+            href="/"
             className="flex items-center gap-4"
             style={{ textDecoration: "none" }}
           >
@@ -127,43 +122,32 @@ export function Navigation() {
 
           {/* Desktop Navigation Buttons */}
           <div className="nav-desktop items-center gap-3">
-            {!isLocked && (
-              <>
-                {SUBSCRIPTIONS_ENABLED && (
-                  <Link href="/purchase" style={{ textDecoration: "none" }}>
-                    <Button variant="ghost" size="sm">
-                      Purchase
-                    </Button>
-                  </Link>
-                )}
-                <Link href="/faq" style={{ textDecoration: "none" }}>
-                  <Button variant="ghost" size="sm">
-                    FAQ
-                  </Button>
-                </Link>
-                <Link href="/contact" style={{ textDecoration: "none" }}>
-                  <Button variant="ghost" size="sm">
-                    Contact
-                  </Button>
-                </Link>
-                <Link href={isOnMyAccount ? "/" : "/my-account"} style={{ textDecoration: "none" }}>
-                  <Button variant="ghost" size="sm">
-                    {isOnMyAccount ? (
-                      <Home size={20} />
-                    ) : (
-                      <User size={20} style={{ color: user ? '#10b981' : 'inherit' }} />
-                    )}
-                  </Button>
-                </Link>
-              </>
-            )}
-            {isLocked && (
-              <Link href="/auth/logout" style={{ textDecoration: "none" }}>
+            {SUBSCRIPTIONS_ENABLED && (
+              <Link href="/purchase" style={{ textDecoration: "none" }}>
                 <Button variant="ghost" size="sm">
-                  Sign out
+                  Purchase
                 </Button>
               </Link>
             )}
+            <Link href="/faq" style={{ textDecoration: "none" }}>
+              <Button variant="ghost" size="sm">
+                FAQ
+              </Button>
+            </Link>
+            <Link href="/contact" style={{ textDecoration: "none" }}>
+              <Button variant="ghost" size="sm">
+                Contact
+              </Button>
+            </Link>
+            <Link href={isOnMyAccount ? "/" : "/my-account"} style={{ textDecoration: "none" }}>
+              <Button variant="ghost" size="sm">
+                {isOnMyAccount ? (
+                  <Home size={20} />
+                ) : (
+                  <User size={20} style={{ color: user ? '#10b981' : 'inherit' }} />
+                )}
+              </Button>
+            </Link>
             <Button
               variant="ghost"
               size="sm"
@@ -173,34 +157,15 @@ export function Navigation() {
             </Button>
           </div>
 
-          {/* Mobile right-side controls — hamburger on normal pages,
-              inline sign-out + theme toggle in locked mode (the menu would
-              only have one item, so skip it entirely). */}
+          {/* Mobile right-side controls */}
           <div className="nav-mobile items-center gap-3">
-            {isLocked ? (
-              <>
-                <Link href="/auth/logout" style={{ textDecoration: "none" }}>
-                  <Button variant="ghost" size="sm">
-                    Sign out
-                  </Button>
-                </Link>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-                >
-                  {theme === "dark" ? <Sun size={20} /> : <Moon size={20} />}
-                </Button>
-              </>
-            ) : (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              >
-                {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
-              </Button>
-            )}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            >
+              {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+            </Button>
           </div>
         </div>
 

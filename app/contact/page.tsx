@@ -1,12 +1,10 @@
 import { Mail } from "lucide-react";
 import { Navigation } from "@/components/Navigation";
 import { Footer } from "@/components/Footer";
-import { requireVerifiedIfSignedIn } from "@/lib/auth0";
 
 const SUPPORT_EMAIL = "devs@getchartered.app";
 
-export default async function ContactPage() {
-  await requireVerifiedIfSignedIn();
+export default function ContactPage() {
   return (
     <div className="min-h-screen">
       <Navigation />

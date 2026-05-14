@@ -1,8 +1,39 @@
-import { auth0 } from "@/lib/auth0";
+import { auth0, getUserMetadataCached } from "@/lib/auth0";
+import type { OnboardingMetadata } from "@/lib/auth0-management";
 import { redirect } from "next/navigation";
 import LogoutButton from "@/components/LogoutButton";
 import { Navigation } from "@/components/Navigation";
 import { Footer } from "@/components/Footer";
+
+// Resolve a display name from the user's onboarding metadata, falling back
+// to whatever the IdP supplied. Treats email-shaped names ("foo@bar.com")
+// as missing — Auth0 stamps these in for database users that haven't picked
+// a real name yet.
+function pickDisplayName(
+  metadataName: string | undefined,
+  sessionName: string | undefined,
+  email: string | undefined
+): string {
+  if (metadataName && metadataName.trim()) return metadataName.trim();
+  if (sessionName && !sessionName.includes("@")) {
+    if (!email || sessionName.toLowerCase() !== email.toLowerCase()) {
+      return sessionName;
+    }
+  }
+  return "";
+}
+
+function getInitials(name: string, email?: string): string {
+  const source = name.trim();
+  if (source) {
+    const parts = source.split(/\s+/).filter(Boolean);
+    if (parts.length >= 2) {
+      return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+    }
+    if (parts[0]) return parts[0][0].toUpperCase();
+  }
+  return email?.[0]?.toUpperCase() || "U";
+}
 
 export default async function AccountLayout({
   children,
@@ -16,6 +47,11 @@ export default async function AccountLayout({
   }
 
   const user = session.user;
+  const metadata = await getUserMetadataCached(user.sub).catch(
+    (): OnboardingMetadata => ({})
+  );
+  const displayName = pickDisplayName(metadata.full_name, user.name, user.email);
+  const initials = getInitials(displayName, user.email);
 
   return (
     <div className="min-h-screen">
@@ -35,47 +71,78 @@ export default async function AccountLayout({
             <div className="card sticky top-8" style={{ padding: 0 }}>
               {/* User Info */}
               <div
-                className="flex items-center"
                 style={{
-                  gap: "10px",
-                  padding: "14px 16px",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "12px",
+                  padding: "18px 16px",
                   borderBottom: "1px solid var(--color-border-subtle)",
                 }}
               >
                 {user.picture ? (
                   <img
                     src={user.picture}
-                    alt={user.name || "User"}
+                    alt={displayName || user.email || "User"}
                     className="rounded-full"
-                    style={{ width: "40px", height: "40px", flexShrink: 0 }}
+                    style={{
+                      width: "44px",
+                      height: "44px",
+                      flexShrink: 0,
+                      objectFit: "cover",
+                      border: "1px solid var(--color-border-subtle)",
+                    }}
                   />
                 ) : (
                   <div
-                    className="rounded-full flex items-center justify-center font-semibold"
+                    aria-hidden
+                    className="rounded-full flex items-center justify-center"
                     style={{
-                      width: "22px",
-                      height: "22px",
-                      backgroundColor: "var(--color-background-muted)",
-                      fontSize: "10px",
+                      width: "44px",
+                      height: "44px",
                       flexShrink: 0,
+                      backgroundColor:
+                        "color-mix(in srgb, var(--color-tint) 14%, transparent)",
+                      color: "var(--color-tint)",
+                      fontSize: "15px",
+                      fontWeight: 600,
+                      letterSpacing: "0.02em",
                     }}
                   >
-                    {user.email?.[0]?.toUpperCase() || "U"}
+                    {initials}
                   </div>
                 )}
-                <p
-                  className="text-text-secondary"
-                  style={{
-                    fontSize: "13px",
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                    whiteSpace: "nowrap",
-                    flex: 1,
-                    minWidth: 0,
-                  }}
-                >
-                  {user.email}
-                </p>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  {displayName && (
+                    <p
+                      style={{
+                        fontSize: "14px",
+                        fontWeight: 600,
+                        color: "var(--color-text)",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
+                        lineHeight: 1.3,
+                      }}
+                      title={displayName}
+                    >
+                      {displayName}
+                    </p>
+                  )}
+                  <p
+                    style={{
+                      fontSize: "12px",
+                      color: "var(--color-text-secondary)",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
+                      lineHeight: 1.3,
+                      marginTop: displayName ? "2px" : 0,
+                    }}
+                    title={user.email}
+                  >
+                    {user.email}
+                  </p>
+                </div>
               </div>
 
               {/* Logout */}

@@ -6,12 +6,10 @@ import { Footer } from "@/components/Footer";
 import { PricingSection } from "@/components/PricingSection";
 import { ViewPricingButton } from "@/components/ViewPricingButton";
 import { SUBSCRIPTIONS_ENABLED } from "@/lib/features";
-import { requireVerifiedIfSignedIn } from "@/lib/auth0";
+import { getOptionalSession } from "@/lib/auth0";
 
 export default async function Home() {
-  // If signed in but unverified, this redirects to /verify-email — keeping
-  // the user locked into the verify flow until they confirm their email.
-  const session = await requireVerifiedIfSignedIn();
+  const session = await getOptionalSession();
   const isLoggedIn = !!session;
   return (
     <div className="min-h-screen">

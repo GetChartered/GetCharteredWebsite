@@ -110,7 +110,7 @@ export async function updateUserProfile(userId: string, data: { name?: string })
   return response.json();
 }
 
-export const QUALIFICATIONS = ['ACA', 'ACCA', 'CISI', 'CII'] as const;
+export const QUALIFICATIONS = ['ACA', 'ACCA', 'CISI', 'CII', 'CIMA', 'CFA'] as const;
 export type Qualification = (typeof QUALIFICATIONS)[number];
 
 export const HEARD_FROM_OPTIONS = [
@@ -155,10 +155,6 @@ export interface OnboardingMetadata {
   terms_accepted_at?: string;
   marketing_consent?: boolean;
   marketing_consent_at?: string;
-  // Set the first time we trigger Auth0's verification-email job for this
-  // user. Prevents us from re-spamming the job on every subsequent login while
-  // they're still unverified. Server-stamped only.
-  verification_email_sent_at?: string;
   onboarding_completed?: boolean;
 }
 
@@ -270,33 +266,6 @@ export async function sendPasswordResetEmail(email: string) {
 
   // Endpoint returns a plain-text confirmation string, not JSON.
   return response.text();
-}
-
-/**
- * Triggers Auth0 to (re)send the email-verification mail for a user.
- * Uses the Management API jobs endpoint, which is rate-limited per user by
- * Auth0 (typically a short cooldown between requests).
- */
-export async function sendVerificationEmail(userId: string) {
-  const token = await getManagementToken();
-
-  const response = await fetch(`${AUTH0_BASE}/api/v2/jobs/verification-email`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify({
-      user_id: userId,
-      client_id: AUTH0_CLIENT_ID,
-    }),
-  });
-
-  if (!response.ok) {
-    await handleAuth0Error(response, 'Send Verification Email', { userId });
-  }
-
-  return response.json();
 }
 
 export async function deleteUser(userId: string) {
