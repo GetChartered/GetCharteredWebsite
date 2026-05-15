@@ -80,17 +80,19 @@ export default async function MyAccountPage({
         )}
       </div>
 
-      {/* Account Security Section */}
-      <div>
-        <h2 className="text-title mb-2" style={{ fontWeight: 700, color: 'var(--color-text)' }}>
-          Account Security
-        </h2>
-        <p className="text-body mb-4" style={{ color: 'var(--color-text-secondary)' }}>
-          Manage your password and security settings
-        </p>
+      {/* Account Security — only for database (email/password) users.
+          Social-login users (google-oauth2|…, linkedin|…) manage credentials
+          with their IdP, so there's nothing actionable here for them. */}
+      {isDatabaseUser && (
+        <div>
+          <h2 className="text-title mb-2" style={{ fontWeight: 700, color: 'var(--color-text)' }}>
+            Account Security
+          </h2>
+          <p className="text-body mb-4" style={{ color: 'var(--color-text-secondary)' }}>
+            Manage your password and security settings
+          </p>
 
-        <div className="card" style={{ padding: "24px" }}>
-          <div className="space-y-8">
+          <div className="card" style={{ padding: "24px" }}>
             <div className="p-4 rounded-lg">
               <div className="flex items-start sm:items-center justify-between gap-3">
                 <div style={{ flex: 1, minWidth: 0 }}>
@@ -106,7 +108,7 @@ export default async function MyAccountPage({
             </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* Danger Zone */}
       <div>
