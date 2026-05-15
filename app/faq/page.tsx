@@ -16,22 +16,6 @@ const faqs: FaqItem[] = [
     ),
   },
   {
-    question: "Which qualifications does GetChartered support?",
-    answer: (
-      <>
-        <p>
-          At launch, GetChartered will cover ACA, ACCA, CISI, CII, CIMA, and
-          CFA — the qualifications most commonly studied by graduates entering
-          accounting and financial services in the UK.
-        </p>
-        <p>
-          Support for CIPS and other professional qualifications is on the
-          roadmap and will be added as the platform grows.
-        </p>
-      </>
-    ),
-  },
-  {
     question: "Is GetChartered a replacement for BPP or Kaplan?",
     answer: (
       <>

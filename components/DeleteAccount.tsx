@@ -10,17 +10,44 @@ export type DeleteAccountResult =
   | { success: true }
   | { success: false; error: string };
 
-// Clear the Auth0 v4 session cookie (and any chunked variants like
-// __session.0, __session.1) so the deleted user is signed out immediately.
+// Clear every cookie the Auth0 v4 SDK may have set so the deleted user is
+// signed out immediately:
+//   - __session / __session.N  (session JWE, chunked if large)
+//   - __FC_N                   (per-connection token sets for social IdPs
+//                               like LinkedIn — without these, middleware
+//                               tries to refresh the social token after the
+//                               user is gone and bounces to the Auth0
+//                               hosted login page)
+//   - __txn_*                  (transient transaction state)
+//
+// We overwrite with an expired cookie rather than calling delete() so the
+// attributes (path, sameSite, secure, httpOnly) match what the SDK wrote —
+// browsers won't clear a cookie whose attributes don't match.
+//
 // We do this server-side rather than redirecting through /auth/logout
 // because Auth0's logout endpoint trips on the id_token_hint that now
 // references a deleted user and shows the tenant error page.
 async function clearAuthSessionCookies() {
   const cookieStore = await cookies();
+  const isProd = process.env.NODE_ENV === "production";
+
   for (const cookie of cookieStore.getAll()) {
-    if (cookie.name === "__session" || cookie.name.startsWith("__session.")) {
-      cookieStore.delete(cookie.name);
-    }
+    const name = cookie.name;
+    const isAuthCookie =
+      name === "__session" ||
+      name.startsWith("__session.") ||
+      name.startsWith("__FC_") ||
+      name.startsWith("__txn_");
+    if (!isAuthCookie) continue;
+
+    cookieStore.set(name, "", {
+      path: "/",
+      maxAge: 0,
+      expires: new Date(0),
+      httpOnly: true,
+      sameSite: "lax",
+      secure: isProd,
+    });
   }
 }
 

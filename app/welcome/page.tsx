@@ -60,7 +60,7 @@ export default async function WelcomePage() {
               }}
             >
               You&apos;re all set up. GetChartered launches publicly in July
-              2026 — we&apos;ll be in touch when there&apos;s news, and your
+              2026. We&apos;ll be in touch when there&apos;s news, and your
               account&apos;s ready whenever the practice modules go live.
             </p>
 
@@ -73,10 +73,10 @@ export default async function WelcomePage() {
               }}
             >
               <h3
-                className="text-kpi-title mb-3"
+                className="text-kpi-title mb-4"
                 style={{ color: "var(--color-text)", fontWeight: 600 }}
               >
-                What&apos;s next
+                What&apos;s next?
               </h3>
               <ul
                 style={{

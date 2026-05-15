@@ -12,8 +12,12 @@ export default async function MyAccountPage({
 }: {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
-  await requireOnboardedSession('/my-account');
+  const session = await requireOnboardedSession('/my-account');
   const params = await searchParams;
+  // Database (email/password) users have a sub prefixed with `auth0|`.
+  // Social-login users (google-oauth2|…, linkedin|…) can't change a password
+  // here — their credentials live with the IdP — so hide the section entirely.
+  const isDatabaseUser = session.user.sub?.startsWith('auth0|') ?? false;
   const error = params.error as string | undefined;
   const cancelled = params.cancelled as string | undefined;
 
@@ -94,26 +98,10 @@ export default async function MyAccountPage({
                     Password
                   </p>
                   <p className="text-caption" style={{ color: 'var(--color-text-secondary)' }}>
-                    Manage your password through your authentication provider
+                    Manage your password
                   </p>
                 </div>
                 <ChangePasswordButton />
-              </div>
-            </div>
-
-            <div className="p-4 rounded-lg">
-              <div className="flex items-start sm:items-center justify-between gap-3">
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <p className="text-label mb-1" style={{ fontWeight: 500, color: 'var(--color-text)' }}>
-                    Two-Factor Authentication
-                  </p>
-                  <p className="text-caption" style={{ color: 'var(--color-text-secondary)' }}>
-                    Add an extra layer of security to your account
-                  </p>
-                </div>
-                <span className="badge" style={{ flexShrink: 0 }}>
-                  Coming Soon
-                </span>
               </div>
             </div>
           </div>

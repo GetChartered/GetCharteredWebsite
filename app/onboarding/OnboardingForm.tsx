@@ -747,7 +747,7 @@ function DetailsStep({
           label="Full name"
           value={fullName}
           onChange={(e) => setFullName(e.target.value)}
-          placeholder="Jane Smith"
+          placeholder="Type your name..."
           maxLength={100}
           autoComplete="name"
         />
@@ -871,7 +871,7 @@ function DetailsStep({
           isOpen={legalModal === "terms"}
           onClose={() => setLegalModal(null)}
           title="Terms of Service"
-          source="/terms.html"
+          source="/terms-legal.html"
         />
         <LegalModal
           isOpen={legalModal === "privacy"}
