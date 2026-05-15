@@ -16,6 +16,13 @@ export const auth0 = new Auth0Client({
       secure: process.env.NODE_ENV === 'production',
     },
   },
+  // Use the /v2/logout endpoint instead of OIDC RP-Initiated logout. /v2 does
+  // NOT require id_token_hint, which means /auth/logout works even after the
+  // user has been deleted from Auth0 (otherwise the tenant returns an error
+  // page complaining the hint references an unknown user). This is what lets
+  // the delete-account flow route through /auth/logout for a clean session
+  // teardown.
+  logoutStrategy: 'v2',
   async onCallback(error, ctx, _session) {
     const safeReturnTo =
       ctx.returnTo && ctx.returnTo.startsWith('/') ? ctx.returnTo : '/';

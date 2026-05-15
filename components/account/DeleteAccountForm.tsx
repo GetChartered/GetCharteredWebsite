@@ -43,9 +43,17 @@ export function DeleteAccountForm({ email }: { email: string }) {
     try {
       const result = await DeleteAccount(formData);
       if (result.success) {
-        // The server action already cleared the session cookie, so a plain
-        // navigation home is enough — full reload so useUser() re-reads state.
-        window.location.href = "/";
+        // Route through /auth/logout so the SDK middleware tears down the
+        // session cookies (and __FC_* connection tokens for social IdPs)
+        // with attributes that actually match what it wrote. `logoutStrategy:
+        // 'v2'` on the Auth0Client means the Auth0 round-trip won't fail on
+        // the now-missing user.
+        //
+        // No returnTo: Auth0's /v2/logout requires returnTo to match an
+        // Allowed Logout URL exactly (a bare "/" doesn't qualify). Omitting
+        // it lets the SDK fall back to appBaseUrl — which is already the
+        // URL the regular logout flow uses, so it's already allowlisted.
+        window.location.href = "/auth/logout";
         return;
       }
       setError(result.error);

@@ -1,6 +1,5 @@
 "use server";
 
-import { cookies } from "next/headers";
 import CancelSubscription from "@/components/CancelSubscription";
 import { auth0 } from "@/lib/auth0";
 import { deleteUser } from "@/lib/auth0-management";
@@ -10,47 +9,17 @@ export type DeleteAccountResult =
   | { success: true }
   | { success: false; error: string };
 
-// Clear every cookie the Auth0 v4 SDK may have set so the deleted user is
-// signed out immediately:
-//   - __session / __session.N  (session JWE, chunked if large)
-//   - __FC_N                   (per-connection token sets for social IdPs
-//                               like LinkedIn — without these, middleware
-//                               tries to refresh the social token after the
-//                               user is gone and bounces to the Auth0
-//                               hosted login page)
-//   - __txn_*                  (transient transaction state)
+// Cookie teardown is handled by routing the browser to /auth/logout after a
+// successful delete. The SDK middleware there knows the exact cookie names
+// and attributes the SDK wrote (session JWE chunks + __FC_* connection token
+// sets for social IdPs), so the Set-Cookie clearing actually matches and the
+// browser drops them. Trying to clear cookies in this server action loses a
+// race with the same-request middleware's session-rolling, which is why the
+// previous approach left the icon green after delete.
 //
-// We overwrite with an expired cookie rather than calling delete() so the
-// attributes (path, sameSite, secure, httpOnly) match what the SDK wrote —
-// browsers won't clear a cookie whose attributes don't match.
-//
-// We do this server-side rather than redirecting through /auth/logout
-// because Auth0's logout endpoint trips on the id_token_hint that now
-// references a deleted user and shows the tenant error page.
-async function clearAuthSessionCookies() {
-  const cookieStore = await cookies();
-  const isProd = process.env.NODE_ENV === "production";
-
-  for (const cookie of cookieStore.getAll()) {
-    const name = cookie.name;
-    const isAuthCookie =
-      name === "__session" ||
-      name.startsWith("__session.") ||
-      name.startsWith("__FC_") ||
-      name.startsWith("__txn_");
-    if (!isAuthCookie) continue;
-
-    cookieStore.set(name, "", {
-      path: "/",
-      maxAge: 0,
-      expires: new Date(0),
-      httpOnly: true,
-      sameSite: "lax",
-      secure: isProd,
-    });
-  }
-}
-
+// The /auth/logout endpoint normally trips on id_token_hint when the user is
+// already gone from Auth0; that's avoided here by setting logoutStrategy:
+// 'v2' on the Auth0Client (see lib/auth0.ts).
 export default async function DeleteAccount(
   formData: FormData
 ): Promise<DeleteAccountResult> {
@@ -86,6 +55,5 @@ export default async function DeleteAccount(
     };
   }
 
-  await clearAuthSessionCookies();
   return { success: true };
 }
