@@ -11,7 +11,13 @@ if (!AUTH0_DOMAIN || !AUTH0_CLIENT_ID || !AUTH0_CLIENT_SECRET) {
   );
 }
 
-const AUTH0_BASE = `https://${AUTH0_DOMAIN}`;
+// The Management API does not serve on Auth0 custom domains — only on the
+// canonical tenant URL. When AUTH0_DOMAIN is a custom domain (e.g.
+// auth.getchartered.app), AUTH0_MANAGEMENT_DOMAIN must be set to the canonical
+// tenant (e.g. dev-xxx.us.auth0.com). Falls back to AUTH0_DOMAIN for setups
+// where the canonical tenant is used directly.
+const AUTH0_MGMT_DOMAIN = process.env.AUTH0_MANAGEMENT_DOMAIN || AUTH0_DOMAIN;
+const AUTH0_BASE = `https://${AUTH0_MGMT_DOMAIN}`;
 
 let cachedToken: { token: string; expiresAt: number } | null = null;
 
