@@ -47,7 +47,7 @@ export function Footer() {
             className="text-sm"
             style={{ color: "var(--color-text-secondary)" }}
           >
-            Master your professional exams with confidence.
+            GetChartered - A Pass Professional Qualifications Limited product
           </p>
         </div>
 
