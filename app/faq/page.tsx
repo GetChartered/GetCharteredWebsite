@@ -176,6 +176,7 @@ const faqs: FaqItem[] = [
           Head to{" "}
           <Link
             href="/auth/login?screen_hint=signup"
+            prefetch={false}
             style={{ color: "var(--color-tint)" }}
           >
             getchartered.app and sign up
@@ -208,7 +209,7 @@ export default async function FAQ() {
 
   return (
     <div className="min-h-screen">
-      <Navigation />
+      <Navigation publicMode />
 
       <section className="py-24">
         <div className="container">
@@ -242,7 +243,7 @@ export default async function FAQ() {
         </div>
       </section>
 
-      <Footer />
+      <Footer publicMode />
     </div>
   );
 }

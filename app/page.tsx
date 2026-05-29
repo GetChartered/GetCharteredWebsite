@@ -13,7 +13,7 @@ export default async function Home() {
   const isLoggedIn = !!session;
   return (
     <div className="min-h-screen">
-      <Navigation />
+      <Navigation publicMode />
 
       {/* Hero Section */}
       <section className="py-24 text-center">
@@ -49,6 +49,7 @@ export default async function Home() {
                 ) : (
                   <Link
                     href="/auth/login?screen_hint=signup"
+                    prefetch={false}
                     style={{ textDecoration: "none" }}
                   >
                     <Button variant="primary" size="lg" leftIcon={UserPlus}>
@@ -178,6 +179,7 @@ export default async function Home() {
 
                 <Link
                   href="/auth/login?screen_hint=signup"
+                  prefetch={false}
                   style={{ textDecoration: "none" }}
                 >
                   <Button variant="primary" size="lg" leftIcon={UserPlus}>
@@ -197,7 +199,7 @@ export default async function Home() {
         </div>
       </section>
 
-      <Footer />
+      <Footer publicMode />
     </div>
   );
 }

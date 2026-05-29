@@ -362,7 +362,7 @@ function NoSubscription({ status }: { status: number }) {
           </form>
         )}
         {status === 1 && (
-          <Link href="/auth/login" className="btn btn-primary btn-sm">
+          <Link href="/auth/login" prefetch={false} className="btn btn-primary btn-sm">
             Log In
           </Link>
         )}

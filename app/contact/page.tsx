@@ -7,7 +7,7 @@ const SUPPORT_EMAIL = "devs@getchartered.app";
 export default function ContactPage() {
   return (
     <div className="min-h-screen">
-      <Navigation />
+      <Navigation publicMode />
 
       <section className="py-24">
         <div className="container">
@@ -55,7 +55,7 @@ export default function ContactPage() {
         </div>
       </section>
 
-      <Footer />
+      <Footer publicMode />
     </div>
   );
 }

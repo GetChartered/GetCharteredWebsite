@@ -5,7 +5,7 @@ import { LegalContent } from "@/components/LegalContent";
 export default function PrivacyPolicyPage() {
   return (
     <>
-      <Navigation />
+      <Navigation publicMode />
       <main className="container py-12">
         <div
           style={{
@@ -21,7 +21,7 @@ export default function PrivacyPolicyPage() {
           <LegalContent source="/privacypolicy.html" />
         </div>
       </main>
-      <Footer />
+      <Footer publicMode />
     </>
   );
 }
