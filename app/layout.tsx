@@ -37,6 +37,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
+        <meta name="google-site-verification" content="zNz9m_7AebtN5VO6O6fiALAgpMStytddlZyjI5fkc9A" />
         <script dangerouslySetInnerHTML={{ __html: noFlashScript }} />
       </head>
       <body

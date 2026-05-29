@@ -27,7 +27,7 @@ export default async function Home() {
               className="text-lg mb-8"
               style={{ color: "var(--color-text-secondary)" }}
             >
-              Prepare for you professional certifications with our intelligent learning platform.
+              Prepare for your professional certifications with our intelligent learning platform.
             </p>
 
             {SUBSCRIPTIONS_ENABLED ? (
