@@ -1,8 +1,10 @@
 import Link from "next/link";
 import { Navigation } from "@/components/Navigation";
 import { Footer } from "@/components/Footer";
-import { FaqAccordion, type FaqItem } from "@/components/FaqAccordion";
-import { getOptionalSession } from "@/lib/auth0";
+import { type FaqItem } from "@/components/FaqAccordion";
+import { AuthAwareFaqAccordion } from "@/components/AuthAwareFaqAccordion";
+
+const HIDE_FOR_LOGGED_IN_QUESTION = "How do I join the waitlist and get early access?";
 
 const faqs: FaqItem[] = [
   {
@@ -194,19 +196,7 @@ const faqs: FaqItem[] = [
   },
 ];
 
-export default async function FAQ() {
-  const session = await getOptionalSession();
-  const isLoggedIn = !!session;
-
-  // Hide the "how do I join the waitlist?" question for logged-in users —
-  // they already have an account, so the question doesn't apply and its
-  // "sign up" link would otherwise re-trigger the Auth0 consent flow.
-  const visibleFaqs = isLoggedIn
-    ? faqs.filter(
-        (faq) => faq.question !== "How do I join the waitlist and get early access?"
-      )
-    : faqs;
-
+export default function FAQ() {
   return (
     <div className="min-h-screen">
       <Navigation publicMode />
@@ -225,7 +215,10 @@ export default async function FAQ() {
               </p>
             </div>
 
-            <FaqAccordion items={visibleFaqs} />
+            <AuthAwareFaqAccordion
+              items={faqs}
+              hideQuestionWhenLoggedIn={HIDE_FOR_LOGGED_IN_QUESTION}
+            />
 
             <div className="text-center mt-12">
               <p style={{ color: "var(--color-text-secondary)" }}>
