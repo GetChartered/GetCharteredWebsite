@@ -1,6 +1,6 @@
 "use client";
 
-import { useUser } from "@auth0/nextjs-auth0";
+import { useOptionalUser } from "@/lib/useOptionalUser";
 import { FaqAccordion, type FaqItem } from "@/components/FaqAccordion";
 
 // Wraps FaqAccordion to filter out a specific question for signed-in users,
@@ -12,7 +12,7 @@ export function AuthAwareFaqAccordion({
   items: FaqItem[];
   hideQuestionWhenLoggedIn: string;
 }) {
-  const { user } = useUser();
+  const { user } = useOptionalUser();
   const visibleItems = user
     ? items.filter((item) => item.question !== hideQuestionWhenLoggedIn)
     : items;

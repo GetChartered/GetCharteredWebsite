@@ -3,13 +3,13 @@
 import Link from "next/link";
 import { Mail, User, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui";
-import { useUser } from "@auth0/nextjs-auth0";
+import { useOptionalUser } from "@/lib/useOptionalUser";
 
 // Renders the hero CTA buttons. Lives in a client component so the surrounding
 // page can be statically prerendered — session is resolved on the client via
 // SWR rather than blocking server render on a getOptionalSession() call.
 export function HomeHeroCTA() {
-  const { user } = useUser();
+  const { user } = useOptionalUser();
 
   return (
     <div className="flex flex-col sm:flex-row gap-4 justify-center">
