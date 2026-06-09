@@ -3,12 +3,12 @@
 import Link from "next/link";
 import { User, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui";
-import { useUser } from "@auth0/nextjs-auth0";
+import { useOptionalUser } from "@/lib/useOptionalUser";
 
 // Renders the bottom CTA section. Auth-aware copy + button live in a client
 // component so the page itself can be statically prerendered.
 export function HomeFinalCTA() {
-  const { user } = useUser();
+  const { user } = useOptionalUser();
 
   if (user) {
     return (
