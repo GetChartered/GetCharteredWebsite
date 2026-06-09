@@ -288,7 +288,7 @@ function CurrentSubscription({ subscriptionData }: { subscriptionData: any }) {
       {/* What's Included */}
       <div className="card" style={{ padding: '24px' }}>
         <h3 className="mb-4" style={{ fontWeight: 700, color: 'var(--color-text)', fontSize: '14px' }}>
-          What's included
+          What&apos;s included
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {['Unlimited practice questions', 'All modules included', 'Advanced analytics', 'Mock exams & timed practice'].map((feature) => (

@@ -90,13 +90,13 @@ export function CancelSubscriptionDialog({ subscriptionId }: CancelSubscriptionD
               Cancel Subscription
             </h3>
             <p style={{ fontSize: '14px', color: 'var(--color-text-secondary)', marginBottom: '24px', lineHeight: '22px' }}>
-              Are you sure you want to cancel your subscription? You'll lose access to all premium
+              Are you sure you want to cancel your subscription? You&apos;ll lose access to all premium
               features at the end of your billing period.
             </p>
 
             <div style={{ marginBottom: '24px' }}>
               <label style={{ display: 'block', fontSize: '14px', fontWeight: 500, color: 'var(--color-text)', marginBottom: '8px' }}>
-                Please tell us why you're cancelling (optional)
+                Please tell us why you&apos;re cancelling (optional)
               </label>
               <textarea
                 value={reason}
