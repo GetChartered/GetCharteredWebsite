@@ -9,11 +9,17 @@ import { useOptionalUser } from "@/lib/useOptionalUser";
 // page can be statically prerendered — session is resolved on the client via
 // SWR rather than blocking server render on a getOptionalSession() call.
 export function HomeHeroCTA() {
-  const { user } = useOptionalUser();
+  const { user, isLoading } = useOptionalUser();
 
   return (
     <div className="flex flex-col sm:flex-row gap-4 justify-center">
-      {user ? (
+      {isLoading ? (
+        <span style={{ textDecoration: "none" }}>
+          <Button variant="primary" size="lg" leftIcon={User} disabled>
+            Loading...
+          </Button>
+        </span>
+       ) : user ? (
         <Link href="/my-account" style={{ textDecoration: "none" }}>
           <Button variant="primary" size="lg" leftIcon={User}>
             Go to My Account

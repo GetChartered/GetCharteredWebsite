@@ -8,7 +8,7 @@ import { useOptionalUser } from "@/lib/useOptionalUser";
 // Renders the bottom CTA section. Auth-aware copy + button live in a client
 // component so the page itself can be statically prerendered.
 export function HomeFinalCTA() {
-  const { user } = useOptionalUser();
+  const { user, isLoading } = useOptionalUser();
 
   if (user) {
     return (
@@ -45,15 +45,21 @@ export function HomeFinalCTA() {
         before it goes live.
       </p>
 
-      <Link
-        href="/auth/login?screen_hint=signup"
-        prefetch={false}
-        style={{ textDecoration: "none" }}
-      >
-        <Button variant="primary" size="lg" leftIcon={UserPlus}>
+       {isLoading ? (
+         <Button variant="primary" size="lg" leftIcon={UserPlus} disabled>
           Join the Waitlist
         </Button>
-      </Link>
+       ) : (
+         <Link
+           href="/auth/login?screen_hint=signup"
+           prefetch={false}
+           style={{ textDecoration: "none" }}
+         >
+           <Button variant="primary" size="lg" leftIcon={UserPlus}>
+             Join the Waitlist
+           </Button>
+         </Link>
+       )}
 
       <p
         className="text-sm mt-6"

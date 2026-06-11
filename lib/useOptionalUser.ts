@@ -9,7 +9,7 @@ type OptionalUser = { sub: string; [key: string]: unknown } | null;
 // which makes SWR retry 5 times with exponential backoff — generating a storm
 // of /auth/profile calls per anonymous page view. This fetcher returns null on
 // 401 instead, so SWR treats logged-out as a successful "no user" result and
-// fires exactly one request per mount.
+ // fires exactly one request per mount (no focus/reconnect revalidation).
 export function useOptionalUser(): { user: OptionalUser; isLoading: boolean } {
   const { data, isLoading } = useSWR<OptionalUser>(
     process.env.NEXT_PUBLIC_PROFILE_ROUTE || "/auth/profile",
@@ -18,7 +18,12 @@ export function useOptionalUser(): { user: OptionalUser; isLoading: boolean } {
       if (res.status === 401 || res.status === 204) return null;
       if (!res.ok) throw new Error(`Profile fetch failed: ${res.status}`);
       return res.json();
-    }
+    },
+    {
+      revalidateOnFocus: false,
+      revalidateOnReconnect: false,
+      shouldRetryOnError: false,
+    } 
   );
 
   return { user: data ?? null, isLoading };

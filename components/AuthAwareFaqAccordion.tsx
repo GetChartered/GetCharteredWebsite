@@ -12,8 +12,8 @@ export function AuthAwareFaqAccordion({
   items: FaqItem[];
   hideQuestionWhenLoggedIn: string;
 }) {
-  const { user } = useOptionalUser();
-  const visibleItems = user
+  const { user, isLoading } = useOptionalUser();
+  const visibleItems = user || isLoading
     ? items.filter((item) => item.question !== hideQuestionWhenLoggedIn)
     : items;
   return <FaqAccordion items={visibleItems} />;
