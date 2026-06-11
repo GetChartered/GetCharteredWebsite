@@ -1,19 +1,17 @@
-import { Play, BookOpen, BarChart3, Medal, Mail, UserPlus, User, LucideIcon } from "lucide-react";
-import Link from "next/link";
+import { Play, BookOpen, BarChart3, Medal, LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui";
 import { Navigation } from "@/components/Navigation";
 import { Footer } from "@/components/Footer";
 import { PricingSection } from "@/components/PricingSection";
 import { ViewPricingButton } from "@/components/ViewPricingButton";
+import { HomeHeroCTA } from "@/components/HomeHeroCTA";
+import { HomeFinalCTA } from "@/components/HomeFinalCTA";
 import { SUBSCRIPTIONS_ENABLED } from "@/lib/features";
-import { getOptionalSession } from "@/lib/auth0";
 
-export default async function Home() {
-  const session = await getOptionalSession();
-  const isLoggedIn = !!session;
+export default function Home() {
   return (
     <div className="min-h-screen">
-      <Navigation />
+      <Navigation publicMode />
 
       {/* Hero Section */}
       <section className="py-24 text-center">
@@ -39,29 +37,7 @@ export default async function Home() {
                 <ViewPricingButton />
               </div>
             ) : (
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                {isLoggedIn ? (
-                  <Link href="/my-account" style={{ textDecoration: "none" }}>
-                    <Button variant="primary" size="lg" leftIcon={User}>
-                      Go to My Account
-                    </Button>
-                  </Link>
-                ) : (
-                  <Link
-                    href="/auth/login?screen_hint=signup"
-                    style={{ textDecoration: "none" }}
-                  >
-                    <Button variant="primary" size="lg" leftIcon={UserPlus}>
-                      Join the Waitlist
-                    </Button>
-                  </Link>
-                )}
-                <Link href="/contact" style={{ textDecoration: "none" }}>
-                  <Button variant="outline" size="lg" leftIcon={Mail}>
-                    Contact Us
-                  </Button>
-                </Link>
-              </div>
+              <HomeHeroCTA />
             )}
           </div>
         </div>
@@ -144,60 +120,14 @@ export default async function Home() {
                   14-day free trial • Cancel anytime • No credit card required
                 </p>
               </>
-            ) : isLoggedIn ? (
-              <>
-                <h2 className="text-display mb-6">You&apos;re on the Waitlist</h2>
-
-                <p
-                  className="text-lg mb-8"
-                  style={{ color: "var(--color-text-secondary)" }}
-                >
-                  Thanks for signing up early. GetChartered launches in July
-                  2026 — manage your account or get in touch with the team any
-                  time.
-                </p>
-
-                <Link href="/my-account" style={{ textDecoration: "none" }}>
-                  <Button variant="primary" size="lg" leftIcon={User}>
-                    Go to My Account
-                  </Button>
-                </Link>
-              </>
             ) : (
-              <>
-                <h2 className="text-display mb-6">Be First in Line for Launch</h2>
-
-                <p
-                  className="text-lg mb-8"
-                  style={{ color: "var(--color-text-secondary)" }}
-                >
-                  GetChartered launches in July 2026. Sign up now to join the
-                  waitlist, get early access during our free beta, and help
-                  shape the product before it goes live.
-                </p>
-
-                <Link
-                  href="/auth/login?screen_hint=signup"
-                  style={{ textDecoration: "none" }}
-                >
-                  <Button variant="primary" size="lg" leftIcon={UserPlus}>
-                    Join the Waitlist
-                  </Button>
-                </Link>
-
-                <p
-                  className="text-sm mt-6"
-                  style={{ color: "var(--color-text-muted)" }}
-                >
-                  Free during beta • Cancel anytime
-                </p>
-              </>
+              <HomeFinalCTA />
             )}
           </div>
         </div>
       </section>
 
-      <Footer />
+      <Footer publicMode />
     </div>
   );
 }

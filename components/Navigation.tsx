@@ -10,9 +10,20 @@ import Link from "next/link";
 import { SUBSCRIPTIONS_ENABLED } from "@/lib/features";
 import { OnboardingBanner } from "@/components/OnboardingBanner";
 
-export function Navigation() {
-  const { theme, setTheme } = useTheme();
+// Subcomponent that calls useUser() — only mounted when the surrounding page
+// genuinely cares about session state. Keeping the hook off public marketing
+// pages avoids the repeated /auth/profile XHRs that SWR fires.
+function UserStateIndicator({ mobile = false }: { mobile?: boolean }) {
   const { user } = useUser();
+  const color = user ? "#10b981" : "inherit";
+  if (mobile) {
+    return <User size={20} style={{ marginRight: "8px", color }} />;
+  }
+  return <User size={20} style={{ color }} />;
+}
+
+export function Navigation({ publicMode = false }: { publicMode?: boolean } = {}) {
+  const { theme, setTheme } = useTheme();
   const pathname = usePathname();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -143,8 +154,10 @@ export function Navigation() {
               <Button variant="ghost" size="sm">
                 {isOnMyAccount ? (
                   <Home size={20} />
+                ) : publicMode ? (
+                  <User size={20} />
                 ) : (
-                  <User size={20} style={{ color: user ? '#10b981' : 'inherit' }} />
+                  <UserStateIndicator />
                 )}
               </Button>
             </Link>
@@ -223,7 +236,11 @@ export function Navigation() {
                     </>
                   ) : (
                     <>
-                      <User size={20} style={{ marginRight: '8px', color: user ? '#10b981' : 'inherit' }} />
+                      {publicMode ? (
+                        <User size={20} style={{ marginRight: '8px' }} />
+                      ) : (
+                        <UserStateIndicator mobile />
+                      )}
                       My Account
                     </>
                   )}
@@ -243,7 +260,7 @@ export function Navigation() {
         )}
       </div>
     </nav>
-    <OnboardingBanner />
+    {!publicMode && <OnboardingBanner />}
     </>
   );
 }

@@ -8,9 +8,36 @@ import { useUser } from "@auth0/nextjs-auth0";
 import Link from "next/link";
 import { SUBSCRIPTIONS_ENABLED } from "@/lib/features";
 
-export function Footer() {
-  const { theme } = useTheme();
+// Subcomponent that calls useUser() — only mounted when the surrounding page
+// genuinely cares about session state. Keeping the hook off public marketing
+// pages avoids the repeated /auth/profile XHRs that SWR fires.
+function SignInLinkWhenLoggedOut() {
   const { user } = useUser();
+  if (user) return null;
+  return (
+    <li>
+      <a
+        href="/auth/login"
+        className="text-sm transition-colors"
+        style={{
+          color: "var(--color-text-secondary)",
+          textDecoration: "none",
+        }}
+        onMouseEnter={(e) =>
+          (e.currentTarget.style.color = "var(--color-tint)")
+        }
+        onMouseLeave={(e) =>
+          (e.currentTarget.style.color = "var(--color-text-secondary)")
+        }
+      >
+        Sign In
+      </a>
+    </li>
+  );
+}
+
+export function Footer({ publicMode = false }: { publicMode?: boolean } = {}) {
+  const { theme } = useTheme();
 
   return (
     <footer
@@ -133,7 +160,7 @@ export function Footer() {
                   My Account
                 </Link>
               </li>
-              {!user && (
+              {publicMode ? (
                 <li>
                   <a
                     href="/auth/login"
@@ -153,6 +180,8 @@ export function Footer() {
                     Sign In
                   </a>
                 </li>
+              ) : (
+                <SignInLinkWhenLoggedOut />
               )}
             </ul>
           </div>
