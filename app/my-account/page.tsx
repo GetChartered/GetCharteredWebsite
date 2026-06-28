@@ -368,7 +368,7 @@ function CurrentSubscription({ subscriptionData }: { subscriptionData: any }) {
             fontSize: "14px",
           }}
         >
-          What's included
+          What&apos;s included
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {[
