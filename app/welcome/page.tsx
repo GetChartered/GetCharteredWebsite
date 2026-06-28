@@ -3,11 +3,16 @@ import { CheckCircle2, ArrowRight } from "lucide-react";
 import { Navigation } from "@/components/Navigation";
 import { Footer } from "@/components/Footer";
 import { requireOnboardedSession } from "@/lib/auth0";
-import { getUserMetadata, type OnboardingMetadata } from "@/lib/auth0-management";
+import {
+  getUserMetadata,
+  type OnboardingMetadata,
+} from "@/lib/auth0-management";
 
 export default async function WelcomePage() {
   const session = await requireOnboardedSession("/welcome");
-  const metadata: OnboardingMetadata = await getUserMetadata(session.user.sub).catch(() => ({}));
+  const metadata: OnboardingMetadata = await getUserMetadata(
+    session.user.sub,
+  ).catch(() => ({}));
   const firstName = (metadata.full_name || session.user.name || "")
     .toString()
     .trim()
@@ -59,8 +64,8 @@ export default async function WelcomePage() {
                 lineHeight: 1.6,
               }}
             >
-              You&apos;re all set up. GetChartered launches publicly in July
-              2026. We&apos;ll be in touch when there&apos;s news, and your
+              You&apos;re all set up. We are aiming to launch GetChartered soon.
+              We&apos;ll be in touch when there&apos;s news, and your
               account&apos;s ready whenever the practice modules go live.
             </p>
 
@@ -89,8 +94,8 @@ export default async function WelcomePage() {
                 }}
               >
                 <WelcomeBullet>
-                  We&apos;ll email you when practice questions and mock exams
-                  go live.
+                  We&apos;ll email you when practice questions and mock exams go
+                  live.
                 </WelcomeBullet>
                 <WelcomeBullet>
                   Update your details any time from{" "}

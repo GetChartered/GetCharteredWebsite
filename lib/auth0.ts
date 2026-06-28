@@ -23,7 +23,7 @@ export const auth0 = new Auth0Client({
   // the delete-account flow route through /auth/logout for a clean session
   // teardown.
   logoutStrategy: 'v2',
-  async onCallback(error, ctx, _session) {
+  async onCallback(error, ctx) {
     const safeReturnTo =
       ctx.returnTo && ctx.returnTo.startsWith('/') ? ctx.returnTo : '/';
 

@@ -12,29 +12,27 @@ const DISMISS_KEY = "onboarding_banner_dismissed";
 export function OnboardingBanner() {
   const { user, isLoading } = useUser();
   const pathname = usePathname();
-  const [show, setShow] = useState(false);
+  const [needsOnboarding, setNeedsOnboarding] = useState(false);
+  const [dismissed, setDismissed] = useState(false);
+
+  const onExcludedRoute =
+    pathname === "/onboarding" || pathname?.startsWith("/auth/");
+  const eligible = !isLoading && !!user && !onExcludedRoute;
 
   useEffect(() => {
-    if (isLoading || !user) {
-      setShow(false);
-      return;
-    }
-    if (pathname === "/onboarding" || pathname?.startsWith("/auth/")) {
-      setShow(false);
-      return;
-    }
+    if (!eligible) return;
 
     // When onboarding is enforced server-side, dismissal makes no sense — the
     // user will just bounce off protected pages until they finish. Skip the
     // sessionStorage check entirely in that mode.
     if (!ONBOARDING_REQUIRED) {
-      let dismissed = false;
+      let alreadyDismissed = false;
       try {
-        dismissed = sessionStorage.getItem(DISMISS_KEY) === "1";
+        alreadyDismissed = sessionStorage.getItem(DISMISS_KEY) === "1";
       } catch {
         // sessionStorage unavailable (e.g. private mode) — treat as not dismissed.
       }
-      if (dismissed) return;
+      if (alreadyDismissed) return;
     }
 
     let cancelled = false;
@@ -45,7 +43,7 @@ export function OnboardingBanner() {
         const data = await res.json();
         if (cancelled) return;
         if (data?.metadata?.onboarding_completed !== true) {
-          setShow(true);
+          setNeedsOnboarding(true);
         }
       } catch {
         // Silent — banner just won't show.
@@ -55,8 +53,9 @@ export function OnboardingBanner() {
     return () => {
       cancelled = true;
     };
-  }, [user, isLoading, pathname]);
+  }, [eligible]);
 
+  const show = eligible && needsOnboarding && !dismissed;
   if (!show) return null;
 
   const dismiss = () => {
@@ -65,7 +64,7 @@ export function OnboardingBanner() {
     } catch {
       // ignore
     }
-    setShow(false);
+    setDismissed(true);
   };
 
   return (

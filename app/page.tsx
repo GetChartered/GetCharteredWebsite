@@ -152,8 +152,8 @@ export default async function Home() {
                   className="text-lg mb-8"
                   style={{ color: "var(--color-text-secondary)" }}
                 >
-                  Thanks for signing up early. GetChartered launches in July
-                  2026 — manage your account or get in touch with the team any
+                  Thanks for signing up early. We are aiming to launch GetChartered soon
+                   — manage your account or get in touch with the team any
                   time.
                 </p>
 
@@ -171,7 +171,7 @@ export default async function Home() {
                   className="text-lg mb-8"
                   style={{ color: "var(--color-text-secondary)" }}
                 >
-                  GetChartered launches in July 2026. Sign up now to join the
+                  We are aiming to launch GetChartered soon. Sign up now to join the
                   waitlist, get early access during our free beta, and help
                   shape the product before it goes live.
                 </p>
