@@ -15,11 +15,18 @@ import { Loader2 } from "lucide-react";
 export function LegalContent({ source }: { source: string }) {
   const [html, setHtml] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [requestedSource, setRequestedSource] = useState(source);
+
+  // Reset to the loading state when `source` changes. This render-phase reset
+  // is the React-recommended alternative to calling setState inside an effect.
+  if (source !== requestedSource) {
+    setRequestedSource(source);
+    setHtml(null);
+    setError(null);
+  }
 
   useEffect(() => {
     let cancelled = false;
-    setHtml(null);
-    setError(null);
 
     fetch(source)
       .then((response) => {

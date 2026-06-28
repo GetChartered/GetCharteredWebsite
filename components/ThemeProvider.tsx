@@ -1,6 +1,11 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useSyncExternalStore,
+} from "react";
 
 type Theme = "light" | "dark";
 
@@ -48,27 +53,44 @@ function saveTheme(theme: Theme): boolean {
   }
 }
 
+/**
+ * Read the current theme from the <html data-theme> attribute, which is set by
+ * noflash.js before hydration and updated by setTheme below.
+ */
+function getThemeSnapshot(): Theme {
+  return document.documentElement.getAttribute("data-theme") === "dark"
+    ? "dark"
+    : "light";
+}
+
+/**
+ * Subscribe to theme changes by observing the data-theme attribute. This makes
+ * the DOM attribute the single source of truth, so reading it via
+ * useSyncExternalStore avoids both hydration mismatches and setState-in-effect.
+ */
+function subscribeTheme(callback: () => void): () => void {
+  const observer = new MutationObserver(callback);
+  observer.observe(document.documentElement, {
+    attributes: true,
+    attributeFilter: ["data-theme"],
+  });
+  return () => observer.disconnect();
+}
+
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setThemeState] = useState<Theme>("light");
-  const [isStorageAvailable, setIsStorageAvailable] = useState(true);
-
-  useEffect(() => {
-    // Check if localStorage is available
-    setIsStorageAvailable(isLocalStorageAvailable());
-
-    // Sync with theme set by noflash.js
-    const currentTheme = document.documentElement.getAttribute("data-theme");
-    if (currentTheme === "dark" || currentTheme === "light") {
-      setThemeState(currentTheme);
-    }
-  }, []);
-
-  useEffect(() => {
-    document.documentElement.setAttribute("data-theme", theme);
-  }, [theme]);
+  const theme = useSyncExternalStore(
+    subscribeTheme,
+    getThemeSnapshot,
+    // Server snapshot: match noflash.js's default so hydration is consistent.
+    () => "light" as Theme,
+  );
+  const [isStorageAvailable, setIsStorageAvailable] = useState(() =>
+    isLocalStorageAvailable(),
+  );
 
   const setTheme = (newTheme: Theme) => {
-    setThemeState(newTheme);
+    // Update the DOM attribute — useSyncExternalStore's observer re-reads it.
+    document.documentElement.setAttribute("data-theme", newTheme);
 
     // Save to storage with fallback mechanism
     const savedToLocalStorage = saveTheme(newTheme);

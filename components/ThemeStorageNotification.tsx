@@ -13,7 +13,17 @@ import { useTheme } from "./ThemeProvider";
 export function ThemeStorageNotification() {
   const { isStorageAvailable } = useTheme();
   const [showNotification, setShowNotification] = useState(false);
-  const [isDismissed, setIsDismissed] = useState(false);
+  // Lazily restore this session's dismissal. Safe to read during init because
+  // the component renders nothing until the timer below fires, so there's no
+  // hydration mismatch.
+  const [isDismissed, setIsDismissed] = useState(() => {
+    try {
+      return sessionStorage.getItem('theme-notification-dismissed') === 'true';
+    } catch {
+      // Ignore if sessionStorage is unavailable
+      return false;
+    }
+  });
 
   useEffect(() => {
     // Show notification after a delay if storage is unavailable and not dismissed
@@ -31,22 +41,10 @@ export function ThemeStorageNotification() {
     // Remember dismissal for this session
     try {
       sessionStorage.setItem('theme-notification-dismissed', 'true');
-    } catch (err) {
+    } catch {
       // Ignore if sessionStorage is also unavailable
     }
   };
-
-  // Check if user previously dismissed the notification this session
-  useEffect(() => {
-    try {
-      const dismissed = sessionStorage.getItem('theme-notification-dismissed');
-      if (dismissed === 'true') {
-        setIsDismissed(true);
-      }
-    } catch (err) {
-      // Ignore if sessionStorage is unavailable
-    }
-  }, []);
 
   if (!showNotification || isStorageAvailable) {
     return null;

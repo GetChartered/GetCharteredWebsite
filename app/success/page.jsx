@@ -89,35 +89,38 @@ export default async function Success({ searchParams }) {
     if (!session_id)
         throw new Error('Please provide a valid session_id (`cs_test_...`)')
 
+    let status
+    let customerEmail
     try {
-        const {
-            status,
-            customer_details: { email: customerEmail }
-        } = await stripe.checkout.sessions.retrieve(session_id, {
+        const session = await stripe.checkout.sessions.retrieve(session_id, {
             expand: ['line_items', 'payment_intent']
         })
-
-        // Handle all possible checkout session statuses
-        switch (status) {
-            case 'complete':
-                // Payment successful, show success page
-                return <SuccessContent customerEmail={customerEmail} />
-
-            case 'open':
-                // Session still open, redirect to home
-                return redirect('/')
-
-            case 'expired':
-                // Session expired, redirect to pricing with error
-                return redirect('/pricing?error=session-expired')
-
-            default:
-                // Unknown status, log and redirect
-                console.error('Unknown checkout session status:', status)
-                return redirect('/pricing?error=unknown')
-        }
+        status = session.status
+        customerEmail = session.customer_details?.email
     } catch (error) {
         console.error('Error retrieving checkout session:', error)
         return redirect('/pricing?error=session-invalid')
+    }
+
+    // Handle all possible checkout session statuses. Kept outside the try/catch
+    // so that redirect()'s internal NEXT_REDIRECT throw isn't swallowed and so
+    // JSX isn't constructed inside a try (react-hooks/error-boundaries).
+    switch (status) {
+        case 'complete':
+            // Payment successful, show success page
+            return <SuccessContent customerEmail={customerEmail} />
+
+        case 'open':
+            // Session still open, redirect to home
+            return redirect('/')
+
+        case 'expired':
+            // Session expired, redirect to pricing with error
+            return redirect('/pricing?error=session-expired')
+
+        default:
+            // Unknown status, log and redirect
+            console.error('Unknown checkout session status:', status)
+            return redirect('/pricing?error=unknown')
     }
 }
