@@ -9,9 +9,10 @@ const faqs: FaqItem[] = [
     question: "When is GetChartered launching publicly?",
     answer: (
       <p>
-        GetChartered is targeting a July 2026 launch on the App Store. In the
-        meantime, you can join our waitlist at getchartered.app to be first in
-        line for early access, and to help shape the product before it goes live.
+        GetChartered is targeting a late summer 2026 launch on the App Store. In
+        the meantime, you can join our waitlist at getchartered.app to be first
+        in line for early access, and to help shape the product before it goes
+        live.
       </p>
     ),
   },
@@ -59,7 +60,10 @@ const faqs: FaqItem[] = [
           GetChartered is built around the format of the real exams, so
           you&apos;ll practise the way you&apos;ll actually be tested.
         </p>
-        <p>For multiple choice exams (CISI, CII, and ACA Exams 1–6), you can expect:</p>
+        <p>
+          For multiple choice exams (CISI, CII, and ACA Exams 1–6), you can
+          expect:
+        </p>
         <ul
           style={{
             paddingLeft: "20px",
@@ -202,7 +206,8 @@ export default async function FAQ() {
   // "sign up" link would otherwise re-trigger the Auth0 consent flow.
   const visibleFaqs = isLoggedIn
     ? faqs.filter(
-        (faq) => faq.question !== "How do I join the waitlist and get early access?"
+        (faq) =>
+          faq.question !== "How do I join the waitlist and get early access?",
       )
     : faqs;
 

@@ -1,76 +1,88 @@
-import Link from 'next/link';
-import { CreditCard, Calendar, Sparkles } from 'lucide-react';
-import SubscriptionDetails from '@/components/SubscriptionDetails';
-import { CancelSubscriptionDialog } from '@/components/account/CancelSubscriptionDialog';
-import { BillingPortalButton } from '@/components/BillingPortalButton';
-import { ChangePasswordButton } from '@/components/ChangePasswordButton';
-import { SUBSCRIPTIONS_ENABLED } from '@/lib/features';
-import { requireOnboardedSession } from '@/lib/auth0';
+import Link from "next/link";
+import { CreditCard, Calendar, Sparkles } from "lucide-react";
+import SubscriptionDetails from "@/components/SubscriptionDetails";
+import { CancelSubscriptionDialog } from "@/components/account/CancelSubscriptionDialog";
+import { BillingPortalButton } from "@/components/BillingPortalButton";
+import { ChangePasswordButton } from "@/components/ChangePasswordButton";
+import { SUBSCRIPTIONS_ENABLED } from "@/lib/features";
+import { requireOnboardedSession } from "@/lib/auth0";
 
 export default async function MyAccountPage({
   searchParams,
 }: {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
-  const session = await requireOnboardedSession('/my-account');
+  const session = await requireOnboardedSession("/my-account");
   const params = await searchParams;
   // Database (email/password) users have a sub prefixed with `auth0|`.
   // Social-login users (google-oauth2|…, linkedin|…) can't change a password
   // here — their credentials live with the IdP — so hide the section entirely.
-  const isDatabaseUser = session.user.sub?.startsWith('auth0|') ?? false;
+  const isDatabaseUser = session.user.sub?.startsWith("auth0|") ?? false;
   const error = params.error as string | undefined;
   const cancelled = params.cancelled as string | undefined;
 
-  const subscriptionData = SUBSCRIPTIONS_ENABLED ? await SubscriptionDetails() : null;
+  const subscriptionData = SUBSCRIPTIONS_ENABLED
+    ? await SubscriptionDetails()
+    : null;
 
   return (
     <div className="space-y-6">
       {/* Error/Success Messages */}
-      {SUBSCRIPTIONS_ENABLED && error === 'already_subscribed' && (
+      {SUBSCRIPTIONS_ENABLED && error === "already_subscribed" && (
         <div
           style={{
-            padding: '16px 20px',
-            borderRadius: 'var(--radius-md)',
-            backgroundColor: 'rgba(239, 68, 68, 0.1)',
-            border: '1px solid rgba(239, 68, 68, 0.3)',
-            color: '#ef4444',
-            fontSize: '14px',
-            lineHeight: '20px',
+            padding: "16px 20px",
+            borderRadius: "var(--radius-md)",
+            backgroundColor: "rgba(239, 68, 68, 0.1)",
+            border: "1px solid rgba(239, 68, 68, 0.3)",
+            color: "#ef4444",
+            fontSize: "14px",
+            lineHeight: "20px",
           }}
         >
-          You already have an active subscription. You cannot purchase another subscription while one is active.
+          You already have an active subscription. You cannot purchase another
+          subscription while one is active.
         </div>
       )}
 
-      {SUBSCRIPTIONS_ENABLED && cancelled === 'true' && (
+      {SUBSCRIPTIONS_ENABLED && cancelled === "true" && (
         <div
           style={{
-            padding: '16px 20px',
-            borderRadius: 'var(--radius-md)',
-            backgroundColor: 'rgba(34, 197, 94, 0.1)',
-            border: '1px solid rgba(34, 197, 94, 0.3)',
-            color: '#22c55e',
-            fontSize: '14px',
-            lineHeight: '20px',
+            padding: "16px 20px",
+            borderRadius: "var(--radius-md)",
+            backgroundColor: "rgba(34, 197, 94, 0.1)",
+            border: "1px solid rgba(34, 197, 94, 0.3)",
+            color: "#22c55e",
+            fontSize: "14px",
+            lineHeight: "20px",
           }}
         >
-          Your subscription has been cancelled successfully. You will retain access until the end of your current billing period.
+          Your subscription has been cancelled successfully. You will retain
+          access until the end of your current billing period.
         </div>
       )}
 
       {/* Subscription Section */}
       <div>
-        <h2 className="text-title mb-2" style={{ fontWeight: 700, color: 'var(--color-text)' }}>
+        <h2
+          className="text-title mb-2"
+          style={{ fontWeight: 700, color: "var(--color-text)" }}
+        >
           Subscription
         </h2>
-        <p className="text-body mb-4" style={{ color: 'var(--color-text-secondary)' }}>
+        <p
+          className="text-body mb-4"
+          style={{ color: "var(--color-text-secondary)" }}
+        >
           {SUBSCRIPTIONS_ENABLED
-            ? 'Manage your subscription plan and billing information'
-            : 'Subscriptions open when GetChartered launches in July 2026'}
+            ? "Manage your subscription plan and billing information"
+            : "Subscriptions open when GetChartered launches in late summer 2026"}
         </p>
 
         {SUBSCRIPTIONS_ENABLED ? (
-          subscriptionData && subscriptionData.status === 6 && subscriptionData.body ? (
+          subscriptionData &&
+          subscriptionData.status === 6 &&
+          subscriptionData.body ? (
             <CurrentSubscription subscriptionData={subscriptionData.body} />
           ) : (
             <NoSubscription status={subscriptionData?.status ?? 0} />
@@ -85,10 +97,16 @@ export default async function MyAccountPage({
           with their IdP, so there's nothing actionable here for them. */}
       {isDatabaseUser && (
         <div>
-          <h2 className="text-title mb-2" style={{ fontWeight: 700, color: 'var(--color-text)' }}>
+          <h2
+            className="text-title mb-2"
+            style={{ fontWeight: 700, color: "var(--color-text)" }}
+          >
             Account Security
           </h2>
-          <p className="text-body mb-4" style={{ color: 'var(--color-text-secondary)' }}>
+          <p
+            className="text-body mb-4"
+            style={{ color: "var(--color-text-secondary)" }}
+          >
             Manage your password and security settings
           </p>
 
@@ -96,10 +114,16 @@ export default async function MyAccountPage({
             <div className="p-4 rounded-lg">
               <div className="flex items-start sm:items-center justify-between gap-3">
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <p className="text-label mb-1" style={{ fontWeight: 500, color: 'var(--color-text)' }}>
+                  <p
+                    className="text-label mb-1"
+                    style={{ fontWeight: 500, color: "var(--color-text)" }}
+                  >
                     Password
                   </p>
-                  <p className="text-caption" style={{ color: 'var(--color-text-secondary)' }}>
+                  <p
+                    className="text-caption"
+                    style={{ color: "var(--color-text-secondary)" }}
+                  >
                     Manage your password
                   </p>
                 </div>
@@ -112,10 +136,16 @@ export default async function MyAccountPage({
 
       {/* Danger Zone */}
       <div>
-        <h2 className="text-title mb-2" style={{ fontWeight: 700, color: 'var(--color-danger)' }}>
+        <h2
+          className="text-title mb-2"
+          style={{ fontWeight: 700, color: "var(--color-danger)" }}
+        >
           Danger Zone
         </h2>
-        <p className="text-body mb-4" style={{ color: 'var(--color-text-secondary)' }}>
+        <p
+          className="text-body mb-4"
+          style={{ color: "var(--color-text-secondary)" }}
+        >
           Irreversible actions for your account
         </p>
 
@@ -126,10 +156,16 @@ export default async function MyAccountPage({
           <div className="p-4 rounded-lg bg-color-danger/5">
             <div className="flex items-start sm:items-center justify-between gap-3">
               <div style={{ flex: 1, minWidth: 0 }}>
-                <p className="text-label mb-1" style={{ fontWeight: 500, color: 'var(--color-text)' }}>
+                <p
+                  className="text-label mb-1"
+                  style={{ fontWeight: 500, color: "var(--color-text)" }}
+                >
                   Delete Account
                 </p>
-                <p className="text-caption" style={{ color: 'var(--color-text-secondary)' }}>
+                <p
+                  className="text-caption"
+                  style={{ color: "var(--color-text-secondary)" }}
+                >
                   Permanently delete your account and all associated data
                 </p>
               </div>
@@ -150,11 +186,11 @@ export default async function MyAccountPage({
 
 function formatDate(timestamp: number | undefined): string {
   if (!timestamp) {
-    return 'N/A';
+    return "N/A";
   }
   const date = new Date(timestamp * 1000);
   if (isNaN(date.getTime())) {
-    return 'N/A';
+    return "N/A";
   }
   return date.toLocaleDateString();
 }
@@ -168,18 +204,22 @@ function CurrentSubscription({ subscriptionData }: { subscriptionData: any }) {
   const amountValue = amountInCents / 100;
 
   // Remove decimals if it's a whole number
-  const amount = amountValue % 1 === 0 ? amountValue.toString() : amountValue.toFixed(2);
+  const amount =
+    amountValue % 1 === 0 ? amountValue.toString() : amountValue.toFixed(2);
 
-  const currency = priceData?.currency?.toUpperCase() || 'GBP';
-  const currencySymbol = currency === 'GBP' ? '£' : currency === 'USD' ? '$' : '€';
-  const interval = priceData?.recurring?.interval || 'month';
+  const currency = priceData?.currency?.toUpperCase() || "GBP";
+  const currencySymbol =
+    currency === "GBP" ? "£" : currency === "USD" ? "$" : "€";
+  const interval = priceData?.recurring?.interval || "month";
 
   const formattedPrice = `${currencySymbol}${amount}`;
   const formattedInterval = `/${interval}`;
 
   // Get the next billing date
-  let nextBillingDate = subscriptionData.current_period_end ||
-    subscriptionData.latest_invoice?.period_end || null;
+  let nextBillingDate =
+    subscriptionData.current_period_end ||
+    subscriptionData.latest_invoice?.period_end ||
+    null;
 
   // If the period_end is in the past, calculate the next billing date
   if (nextBillingDate) {
@@ -199,16 +239,16 @@ function CurrentSubscription({ subscriptionData }: { subscriptionData: any }) {
       if (nextDate <= now) {
         // Add the appropriate time based on billing interval
         switch (interval) {
-          case 'day':
+          case "day":
             nextDate.setDate(nextDate.getDate() + intervalCount);
             break;
-          case 'week':
-            nextDate.setDate(nextDate.getDate() + (7 * intervalCount));
+          case "week":
+            nextDate.setDate(nextDate.getDate() + 7 * intervalCount);
             break;
-          case 'month':
+          case "month":
             nextDate.setMonth(nextDate.getMonth() + intervalCount);
             break;
-          case 'year':
+          case "year":
             nextDate.setFullYear(nextDate.getFullYear() + intervalCount);
             break;
           default:
@@ -218,7 +258,10 @@ function CurrentSubscription({ subscriptionData }: { subscriptionData: any }) {
       }
 
       // Handle edge case where the day doesn't exist in the target month (e.g., 31st in a 30-day month)
-      if ((interval === 'month' || interval === 'year') && nextDate.getDate() !== billingDay) {
+      if (
+        (interval === "month" || interval === "year") &&
+        nextDate.getDate() !== billingDay
+      ) {
         nextDate.setDate(0); // Set to last day of previous month
       }
 
@@ -229,46 +272,73 @@ function CurrentSubscription({ subscriptionData }: { subscriptionData: any }) {
   return (
     <div className="space-y-6">
       {/* Plan Overview */}
-      <div className="card" style={{ padding: '24px' }}>
+      <div className="card" style={{ padding: "24px" }}>
         {/* Plan header */}
-        <div className="flex items-start justify-between" style={{ marginBottom: '24px' }}>
+        <div
+          className="flex items-start justify-between"
+          style={{ marginBottom: "24px" }}
+        >
           <div className="flex items-center gap-4">
             <div
               className="w-11 h-11 rounded-full flex items-center justify-center"
-              style={{ backgroundColor: 'rgba(0, 173, 181, 0.12)' }}
+              style={{ backgroundColor: "rgba(0, 173, 181, 0.12)" }}
             >
-              <CreditCard size={22} style={{ color: 'var(--accent-blue)' }} />
+              <CreditCard size={22} style={{ color: "var(--accent-blue)" }} />
             </div>
             <div>
-              <h3 style={{ fontWeight: 600, color: 'var(--color-text)', fontSize: '14px' }}>
+              <h3
+                style={{
+                  fontWeight: 600,
+                  color: "var(--color-text)",
+                  fontSize: "14px",
+                }}
+              >
                 Premium Plan
               </h3>
               <div className="flex items-baseline gap-1">
-                <span className="text-title" style={{ fontWeight: 700, color: 'var(--color-text)' }}>
+                <span
+                  className="text-title"
+                  style={{ fontWeight: 700, color: "var(--color-text)" }}
+                >
                   {formattedPrice}
                 </span>
-                <span style={{ fontSize: '13px', color: 'var(--color-text-secondary)' }}>
+                <span
+                  style={{
+                    fontSize: "13px",
+                    color: "var(--color-text-secondary)",
+                  }}
+                >
                   {formattedInterval}
                 </span>
               </div>
             </div>
           </div>
-          <span className={`badge ${status === 'active' ? 'badge-success' : 'badge-info'} capitalize`}>
+          <span
+            className={`badge ${status === "active" ? "badge-success" : "badge-info"} capitalize`}
+          >
             {status}
           </span>
         </div>
 
         {/* Billing details */}
-        <div style={{ marginBottom: '24px' }}>
-          <div className="flex items-center gap-3" style={{ fontSize: '14px' }}>
-            <Calendar size={16} style={{ color: 'var(--color-text-muted)', flexShrink: 0 }} />
-            <span style={{ color: 'var(--color-text-secondary)', paddingLeft: '8px' }}>
-              Next bill:{' '}
-              <span style={{ fontWeight: 500, color: 'var(--color-text)' }}>
+        <div style={{ marginBottom: "24px" }}>
+          <div className="flex items-center gap-3" style={{ fontSize: "14px" }}>
+            <Calendar
+              size={16}
+              style={{ color: "var(--color-text-muted)", flexShrink: 0 }}
+            />
+            <span
+              style={{
+                color: "var(--color-text-secondary)",
+                paddingLeft: "8px",
+              }}
+            >
+              Next bill:{" "}
+              <span style={{ fontWeight: 500, color: "var(--color-text)" }}>
                 {formattedPrice}
-              </span>
-              {' '}on{' '}
-              <span style={{ fontWeight: 500, color: 'var(--color-text)' }}>
+              </span>{" "}
+              on{" "}
+              <span style={{ fontWeight: 500, color: "var(--color-text)" }}>
                 {formatDate(nextBillingDate)}
               </span>
             </span>
@@ -278,7 +348,10 @@ function CurrentSubscription({ subscriptionData }: { subscriptionData: any }) {
         {/* Actions */}
         <div
           className="flex flex-wrap gap-4"
-          style={{ paddingTop: '20px', borderTop: '1px solid var(--color-border-subtle)' }}
+          style={{
+            paddingTop: "20px",
+            borderTop: "1px solid var(--color-border-subtle)",
+          }}
         >
           <BillingPortalButton />
           <CancelSubscriptionDialog subscriptionId={subscriptionData.id} />
@@ -286,14 +359,30 @@ function CurrentSubscription({ subscriptionData }: { subscriptionData: any }) {
       </div>
 
       {/* What's Included */}
-      <div className="card" style={{ padding: '24px' }}>
-        <h3 className="mb-4" style={{ fontWeight: 700, color: 'var(--color-text)', fontSize: '14px' }}>
+      <div className="card" style={{ padding: "24px" }}>
+        <h3
+          className="mb-4"
+          style={{
+            fontWeight: 700,
+            color: "var(--color-text)",
+            fontSize: "14px",
+          }}
+        >
           What's included
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          {['Unlimited practice questions', 'All modules included', 'Advanced analytics', 'Mock exams & timed practice'].map((feature) => (
-            <div key={feature} className="flex items-center gap-2" style={{ fontSize: '14px', color: 'var(--color-text-secondary)' }}>
-              <span style={{ color: 'var(--color-success)' }}>✓</span>
+          {[
+            "Unlimited practice questions",
+            "All modules included",
+            "Advanced analytics",
+            "Mock exams & timed practice",
+          ].map((feature) => (
+            <div
+              key={feature}
+              className="flex items-center gap-2"
+              style={{ fontSize: "14px", color: "var(--color-text-secondary)" }}
+            >
+              <span style={{ color: "var(--color-success)" }}>✓</span>
               {feature}
             </div>
           ))}
@@ -305,21 +394,36 @@ function CurrentSubscription({ subscriptionData }: { subscriptionData: any }) {
 
 function WaitlistPlaceholder() {
   return (
-    <div className="card" style={{ padding: '24px' }}>
+    <div className="card" style={{ padding: "24px" }}>
       <div className="text-center py-10">
         <div
           className="rounded-full flex items-center justify-center mx-auto mb-4"
-          style={{ backgroundColor: 'rgba(0, 173, 181, 0.12)', width: '56px', height: '56px', flexShrink: 0 }}
+          style={{
+            backgroundColor: "rgba(0, 173, 181, 0.12)",
+            width: "56px",
+            height: "56px",
+            flexShrink: 0,
+          }}
         >
-          <Sparkles size={24} style={{ color: 'var(--accent-blue)' }} />
+          <Sparkles size={24} style={{ color: "var(--accent-blue)" }} />
         </div>
-        <h3 className="text-title mb-2" style={{ fontWeight: 600, color: 'var(--color-text)' }}>
+        <h3
+          className="text-title mb-2"
+          style={{ fontWeight: 600, color: "var(--color-text)" }}
+        >
           You&apos;re on the waitlist
         </h3>
-        <p className="text-body mb-2" style={{ color: 'var(--color-text-secondary)' }}>
-          GetChartered is free during our beta period and launches publicly in July 2026.
+        <p
+          className="text-body mb-2"
+          style={{ color: "var(--color-text-secondary)" }}
+        >
+          GetChartered is free during our beta period and we aim to launch
+          publicly in late summer 2026.
         </p>
-        <p className="text-caption" style={{ color: 'var(--color-text-muted)' }}>
+        <p
+          className="text-caption"
+          style={{ color: "var(--color-text-muted)" }}
+        >
           You&apos;ll be among the first to know when subscriptions open.
         </p>
       </div>
@@ -328,30 +432,36 @@ function WaitlistPlaceholder() {
 }
 
 function NoSubscription({ status }: { status: number }) {
-  let message = 'You don\'t have an active subscription';
-  let description = 'Subscribe to get access to all features';
+  let message = "You don't have an active subscription";
+  let description = "Subscribe to get access to all features";
 
   if (status === 1) {
-    message = 'Please log in to view subscriptions';
-    description = 'You need to be logged in to manage your subscription';
+    message = "Please log in to view subscriptions";
+    description = "You need to be logged in to manage your subscription";
   } else if (status === 2 || status === 4) {
-    message = 'Unable to load subscription data';
-    description = 'Please try refreshing the page';
+    message = "Unable to load subscription data";
+    description = "Please try refreshing the page";
   }
 
   return (
-    <div className="card" style={{ padding: '24px' }}>
+    <div className="card" style={{ padding: "24px" }}>
       <div className="text-center py-10">
         <div
           className="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-4"
-          style={{ backgroundColor: 'rgba(0, 173, 181, 0.12)' }}
+          style={{ backgroundColor: "rgba(0, 173, 181, 0.12)" }}
         >
-          <CreditCard size={24} style={{ color: 'var(--accent-blue)' }} />
+          <CreditCard size={24} style={{ color: "var(--accent-blue)" }} />
         </div>
-        <h3 className="text-title mb-2" style={{ fontWeight: 600, color: 'var(--color-text)' }}>
+        <h3
+          className="text-title mb-2"
+          style={{ fontWeight: 600, color: "var(--color-text)" }}
+        >
           {message}
         </h3>
-        <p className="text-body mb-6" style={{ color: 'var(--color-text-secondary)' }}>
+        <p
+          className="text-body mb-6"
+          style={{ color: "var(--color-text-secondary)" }}
+        >
           {description}
         </p>
         {(status === 3 || status === 5) && (
