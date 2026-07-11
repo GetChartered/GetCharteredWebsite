@@ -9,7 +9,7 @@ const faqs: FaqItem[] = [
     question: "When is GetChartered launching publicly?",
     answer: (
       <p>
-        GetChartered is targeting a late summer 2026 launch on the App Store. In
+        GetChartered is targeting a late summer 2026 launch. In
         the meantime, you can join our waitlist at getchartered.app to be first
         in line for early access, and to help shape the product before it goes
         live.
