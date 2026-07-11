@@ -53,10 +53,10 @@ function SuccessContent({ customerEmail }) {
                             >
                                 If you have any questions, please email{' '}
                                 <a
-                                    href="mailto:devs@getchartered.app"
+                                    href="mailto:support@getchartered.app"
                                     style={{ color: 'var(--color-tint)' }}
                                 >
-                                    devs@getchartered.app
+                                    support@getchartered.app
                                 </a>
                                 .
                             </p>

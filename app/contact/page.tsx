@@ -2,7 +2,7 @@ import { Mail } from "lucide-react";
 import { Navigation } from "@/components/Navigation";
 import { Footer } from "@/components/Footer";
 
-const SUPPORT_EMAIL = "devs@getchartered.app";
+const SUPPORT_EMAIL = "support@getchartered.app";
 
 export default function ContactPage() {
   return (
