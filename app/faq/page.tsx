@@ -17,14 +17,13 @@ const faqs: FaqItem[] = [
     ),
   },
   {
-    question: "Is GetChartered a replacement for BPP or Kaplan?",
+    question: "Is GetChartered a replacement for your tuition provider?",
     answer: (
       <>
         <p>
-          No, and it was never designed to be. GetChartered is the revision
-          platform, not a course provider. We don&apos;t do lectures, textbooks,
-          or recorded content. Instead, we sit alongside whatever course
-          you&apos;re using (BPP, Kaplan, or anything else) and give you the
+          No, and it was never designed to be. GetChartered is a revision
+          platform, not a tuition provider. Instead, we sit alongside whatever course
+          you&apos;re on (BPP, Kaplan, or anything else) and give you the
           intelligent, structured practice that turns study into results.
         </p>
         <p>
@@ -35,19 +34,19 @@ const faqs: FaqItem[] = [
     ),
   },
   {
-    question: "How does the adaptive algorithm work?",
+    question: "How does the adaptive learning algorithm work?",
     answer: (
       <>
         <p>
-          Every question you attempt tells GetChartered something about where
+          Every question you attempt informs GetChartered something about where
           you stand. The algorithm tracks your performance across every topic
           and syllabus area, identifies the gaps in your knowledge, and then
-          prioritises those gaps in your next practice session, automatically.
+          prioritises gaps in your next practice session.
         </p>
         <p>
           That means instead of working through the same material in the same
-          order as everyone else, you spend your time where it actually moves
-          your score. The closer you get to your exam, the sharper the focus.
+          order as everyone else, you spend your time on questions that improves your score individually.
+          The closer you get to your exam, the sharper the focus.
         </p>
       </>
     ),
@@ -61,7 +60,7 @@ const faqs: FaqItem[] = [
           you&apos;ll practise the way you&apos;ll actually be tested.
         </p>
         <p>
-          For multiple choice exams (CISI, CII, and ACA Exams 1–6), you can
+          For multiple choice exams, you can
           expect:
         </p>
         <ul
@@ -72,29 +71,21 @@ const faqs: FaqItem[] = [
           }}
         >
           <li>
-            <strong>Shuffle mode:</strong> questions drawn randomly so you learn
-            the answers, not the order
+            <strong>Quick Practice:</strong> 10 randomly selected questions designed to be completed quickly. Perfect for your commute.
           </li>
           <li>
-            <strong>Browse mode:</strong> move through questions freely, flag
-            ones to revisit, and submit at the end (just like the real CBE
-            interface)
+            <strong>Module Practice:</strong> Target specific modules you want to study, perfect for specific exams.
           </li>
           <li>
-            <strong>Instant feedback:</strong> get your result and explanation
-            immediately after each answer
+            <strong>Focused Improvement Practice:</strong> Allows you to target the specific gaps in your knowledge.
           </li>
           <li>
-            <strong>End-of-session review:</strong> answer everything first,
-            then review your full results with right/wrong breakdowns and
-            explanations
+            <strong>Mock Exam:</strong> Practice questions in an exam style setting to get yourself ready for the real thing.
+          </li>
+          <li>
+            <strong>Daily Challenge:</strong> Instills consistent and good working habits.
           </li>
         </ul>
-        <p>
-          For ACCA, question types reflect the full exam format including
-          objective test questions across Applied Knowledge and Applied Skills
-          papers.
-        </p>
       </>
     ),
   },
@@ -102,30 +93,11 @@ const faqs: FaqItem[] = [
     question: "Is GetChartered available on web as well as a mobile app?",
     answer: (
       <p>
-        Yes. GetChartered is available both as a mobile app and via a web
+        Yes. GetChartered is available both as a mobile app for iOS and Android and via a web
         browser at getchartered.app. Your account, progress, and performance
         data sync across both, so you can practise on your phone on the commute
         and switch to your laptop at your desk without missing a beat.
       </p>
-    ),
-  },
-  {
-    question: "How is the content kept up to date?",
-    answer: (
-      <>
-        <p>
-          Every question on GetChartered is written directly from the official
-          syllabus documents published by the relevant exam bodies, not from
-          third-party materials. Content is reviewed and updated with each new
-          syllabus cycle to make sure you&apos;re always practising to the right
-          standard.
-        </p>
-        <p>
-          For ACA Tax Fundamentals, for example, all questions reflect Finance
-          Act 2025, which applies to 2026 sittings. We update content ahead of
-          each exam window so you&apos;re never revising outdated rules.
-        </p>
-      </>
     ),
   },
   {
@@ -144,10 +116,10 @@ const faqs: FaqItem[] = [
           Programme Manager and want to explore what that looks like for your
           intake, get in touch at{" "}
           <a
-            href="mailto:hello@getchartered.app"
+            href="mailto:support@getchartered.app"
             style={{ color: "var(--color-tint)" }}
           >
-            hello@getchartered.app
+            support@getchartered.app
           </a>
           .
         </p>
@@ -159,15 +131,11 @@ const faqs: FaqItem[] = [
     answer: (
       <>
         <p>
-          GetChartered is free during the beta period. We want to get the
-          product into the hands of real candidates, gather feedback, and prove
-          it works before we talk about pricing.
+          GetChartered is free to download with the option to upgrade to a premium subscription. 
+          We offer plans for both independent learners and enterprises.
         </p>
         <p>
-          Once we move out of beta, we&apos;ll introduce a straightforward
-          subscription. We&apos;ll always be significantly below the cost of a
-          revision course from a traditional provider, and we&apos;ll give beta
-          users advance notice before anything changes.
+          Please refer to our pricing page for specific pricing.
         </p>
       </>
     ),
