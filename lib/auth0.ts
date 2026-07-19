@@ -10,6 +10,12 @@ const appBaseUrl =
 
 export const auth0 = new Auth0Client({
   appBaseUrl,
+  authorizationParameters: {
+    // Scopes the session's access token to the GetChartered AWS API Gateway
+    // backend from login, so auth0.getAccessToken() (see lib/gcApi.ts) can
+    // return a token that Gateway's JWT authorizer will accept.
+    audience: 'https://getchartered.app/api/authVerify',
+  },
   session: {
     cookie: {
       sameSite: 'lax',
