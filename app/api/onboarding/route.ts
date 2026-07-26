@@ -30,16 +30,7 @@ export async function GET() {
   } catch (error) {
     console.error('Onboarding GET error:', error);
     return NextResponse.json(
-      {
-        error: 'Failed to load onboarding data',
-        // TEMPORARY DIAGNOSTIC — remove this debug field once the production
-        // error has been captured.
-        debug: {
-          message: error instanceof Error ? error.message : String(error),
-          name: error instanceof Error ? error.name : undefined,
-          stack: error instanceof Error ? error.stack : undefined,
-        },
-      },
+      { error: 'Failed to load onboarding data' },
       { status: 500 }
     );
   }
@@ -279,27 +270,9 @@ export async function POST(request: Request) {
       body: JSON.stringify(payload),
     });
     if (!response.ok) {
-      // TEMPORARY DIAGNOSTIC — remove this debug field (including
-      // tokenClaims, stashed by lib/gcApi.ts's callGcApi) once the
-      // production error has been captured.
-      const responseBody = await response.text().catch(() => '<could not read body>');
-      const tokenClaims = (response as unknown as { __debugTokenClaims?: unknown })
-        .__debugTokenClaims;
-      console.error(
-        'Onboarding POST — backend returned non-OK:',
-        response.status,
-        responseBody,
-        tokenClaims
-      );
+      console.error('Onboarding POST error: backend returned', response.status);
       return NextResponse.json(
-        {
-          error: 'Failed to save onboarding data',
-          debug: {
-            backendStatus: response.status,
-            backendBody: responseBody,
-            tokenClaims,
-          },
-        },
+        { error: 'Failed to save onboarding data' },
         { status: 502 }
       );
     }
@@ -314,16 +287,7 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error('Onboarding POST error:', error);
     return NextResponse.json(
-      {
-        error: 'Failed to save onboarding data',
-        // TEMPORARY DIAGNOSTIC — remove this debug field once the production
-        // error has been captured.
-        debug: {
-          message: error instanceof Error ? error.message : String(error),
-          name: error instanceof Error ? error.name : undefined,
-          stack: error instanceof Error ? error.stack : undefined,
-        },
-      },
+      { error: 'Failed to save onboarding data' },
       { status: 500 }
     );
   }

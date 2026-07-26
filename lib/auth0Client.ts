@@ -15,6 +15,13 @@ const appBaseUrl =
 
 export const auth0 = new Auth0Client({
   appBaseUrl,
+  // Hardcoded to the raw Auth0 tenant domain (not the auth.getchartered.app custom
+  // domain) to match the mobile app and the API Gateway JWT authoriser, which both
+  // still expect this issuer. A custom-domain migration is planned as a separate,
+  // coordinated project across app + website + backend — see [Notion link]. Do not
+  // change this to the custom domain without that migration happening everywhere
+  // at once.
+  domain: "dev-1lqwk84wufvuexsg.us.auth0.com",
   authorizationParameters: {
     // Scopes the session's access token to the GetChartered AWS API Gateway
     // backend from login, so auth0.getAccessToken() (see lib/gcApi.ts) can
