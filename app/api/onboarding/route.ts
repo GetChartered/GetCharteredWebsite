@@ -30,7 +30,16 @@ export async function GET() {
   } catch (error) {
     console.error('Onboarding GET error:', error);
     return NextResponse.json(
-      { error: 'Failed to load onboarding data' },
+      {
+        error: 'Failed to load onboarding data',
+        // TEMPORARY DIAGNOSTIC — remove this debug field once the production
+        // error has been captured.
+        debug: {
+          message: error instanceof Error ? error.message : String(error),
+          name: error instanceof Error ? error.name : undefined,
+          stack: error instanceof Error ? error.stack : undefined,
+        },
+      },
       { status: 500 }
     );
   }
@@ -270,9 +279,18 @@ export async function POST(request: Request) {
       body: JSON.stringify(payload),
     });
     if (!response.ok) {
-      console.error('Onboarding POST error: backend returned', response.status);
+      // TEMPORARY DIAGNOSTIC — remove this debug field once the production
+      // error has been captured.
+      const responseBody = await response.text().catch(() => '<could not read body>');
+      console.error('Onboarding POST — backend returned non-OK:', response.status, responseBody);
       return NextResponse.json(
-        { error: 'Failed to save onboarding data' },
+        {
+          error: 'Failed to save onboarding data',
+          debug: {
+            backendStatus: response.status,
+            backendBody: responseBody,
+          },
+        },
         { status: 502 }
       );
     }
@@ -287,7 +305,16 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error('Onboarding POST error:', error);
     return NextResponse.json(
-      { error: 'Failed to save onboarding data' },
+      {
+        error: 'Failed to save onboarding data',
+        // TEMPORARY DIAGNOSTIC — remove this debug field once the production
+        // error has been captured.
+        debug: {
+          message: error instanceof Error ? error.message : String(error),
+          name: error instanceof Error ? error.name : undefined,
+          stack: error instanceof Error ? error.stack : undefined,
+        },
+      },
       { status: 500 }
     );
   }
