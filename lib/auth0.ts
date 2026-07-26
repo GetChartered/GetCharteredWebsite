@@ -51,6 +51,27 @@ async function getProfileWithCache(userId: string): Promise<ProfileResponse> {
 export const getProfileCached = cache(getProfileWithCache);
 
 /**
+ * Next.js's own internal control-flow signals (redirect(), notFound(), and
+ * the static-generation "bail out to dynamic rendering" probe triggered by
+ * reading cookies) are thrown as errors with a recognisable `digest`. A
+ * broad try/catch around session/profile-fetching code (see below, and the
+ * three feature-gate layouts) must re-throw these rather than swallow them —
+ * observed directly in `next build`'s output, where wrapping auth0.getSession()
+ * caught the DYNAMIC_SERVER_USAGE bailout and logged it as a fake "failed to
+ * resolve session" error instead of letting Next mark the route dynamic.
+ */
+export function isNextControlFlowError(error: unknown): boolean {
+  if (!error || typeof error !== 'object' || !('digest' in error)) return false;
+  const digest = (error as { digest?: unknown }).digest;
+  return (
+    typeof digest === 'string' &&
+    (digest === 'DYNAMIC_SERVER_USAGE' ||
+      digest.startsWith('NEXT_REDIRECT') ||
+      digest.startsWith('NEXT_HTTP_ERROR_FALLBACK'))
+  );
+}
+
+/**
  * Use on public marketing pages. Returns the session if the visitor is signed
  * in, otherwise null. Lets the page render either way — no redirects.
  */
@@ -84,13 +105,30 @@ export async function requireSession(returnTo: string = '/') {
  * Side effects (via `redirect()`):
  *   - no session              → /auth/login?returnTo=<path>
  *   - onboarding incomplete   → /onboarding (only if ONBOARDING_REQUIRED)
+ *   - profile fetch failed    → /onboarding (see below)
  */
 export async function requireOnboardedSession(returnTo: string = '/') {
   const session = await requireSession(returnTo);
 
   if (ONBOARDING_REQUIRED) {
-    const profile = await getProfileCached(session.user.sub);
-    if (profile.onboardingCompleted !== true) {
+    // getProfileCached calls our backend (GET /profile) — a network error,
+    // non-OK response, or token failure here must NOT crash the page with an
+    // uncaught exception. Degrade to "treat as not onboarded" instead: worst
+    // case a user who'd already onboarded sees the onboarding form again,
+    // which is recoverable, versus a hard server error, which isn't.
+    let onboardingCompleted = false;
+    try {
+      const profile = await getProfileCached(session.user.sub);
+      onboardingCompleted = profile.onboardingCompleted === true;
+    } catch (error) {
+      if (isNextControlFlowError(error)) throw error;
+      console.error(
+        'requireOnboardedSession: failed to fetch profile, treating as not onboarded',
+        { userId: session.user.sub, error }
+      );
+    }
+
+    if (!onboardingCompleted) {
       redirect('/onboarding');
     }
   }
