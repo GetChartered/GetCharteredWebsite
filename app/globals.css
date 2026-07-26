@@ -108,6 +108,16 @@ html {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   scroll-behavior: smooth;
+  /* The sticky nav shrinks its own box height (padding + logo size) once
+     scrollY passes 50px. On pages whose content height happens to sit near
+     that threshold, the browser's scroll-anchoring feature "corrects"
+     scrollY to compensate for that self-inflicted layout shift — which can
+     push scrollY back across 50px and re-trigger the shrink, forever. This
+     opts the whole document out of scroll anchoring so that compensation
+     never happens. (Confirmed via direct reproduction: with this unset,
+     scrollY and the nav logo's width cycle continuously; with it set, the
+     nav settles after one clean transition.) */
+  overflow-anchor: none;
 }
 
 body {
@@ -345,6 +355,61 @@ body {
   max-width: 1200px;
   margin: 0 auto;
   padding: 0 16px;
+}
+
+/* Wider variant of .container, opt-in only — for chart/data-dense
+   dashboard pages (currently just /progress) that need real desktop width
+   to lay out a multi-column chart grid without wasted gutter. Deliberately
+   a separate class rather than widening .container itself: .container is
+   shared by narrow form/list pages (onboarding, welcome, leaderboard) that
+   should stay narrow regardless of viewport.
+
+   Fluid width + fixed side padding, not a vw-scaled max-width: a
+   `min(1600px, 92vw)` cap (the first version of this class) still left a
+   visibly growing gutter as the viewport got wider — at 1920px it was
+   ~160px of dead grey per side. Padding alone gives a genuinely minimal,
+   constant gutter at any normal desktop width; max-width here is purely a
+   sanity ceiling for ultra-wide (2560px+) monitors, not the thing doing the
+   gutter work. */
+.container-dashboard {
+  width: 100%;
+  max-width: 1800px;
+  margin: 0 auto;
+  padding: 0 56px;
+}
+
+/* Asymmetric list + sidebar split (leaderboard: ranked list + "your
+   position" panel). A plain inline `gridTemplateColumns: "2fr 1fr"` can't
+   collapse to a single column below some width the way the `auto-fit`/
+   `minmax` inline patterns used elsewhere on this site do — an actual
+   breakpoint is the only way to get a fixed ratio on wide screens that
+   still stacks on narrow ones, hence the one dedicated class here rather
+   than inline styles. */
+.leaderboard-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 20px;
+  align-items: start;
+}
+@media (min-width: 900px) {
+  .leaderboard-grid {
+    grid-template-columns: 2fr 1fr;
+  }
+}
+
+/* recharts renders its SVG surface with tabindex="0" (own built-in
+   keyboard-accessible-tooltip support), and clicking an individual bar/
+   sector focuses that specific element too — neither is covered by just
+   `.recharts-surface:focus` alone, since the bar/sector focus target is a
+   separate nested element. None of this site's charts have a documented
+   keyboard-nav interaction, so the browser's default focus outline reads as
+   a stray debug box: wrapping the whole chart when the surface itself is
+   focused (tabbing in), or boxing a single bar when that bar is clicked —
+   both reported as "a persistent focus-ring" / "a stray rectangle floating
+   near the tooltip" on the Accuracy by module chart specifically, but the
+   same recharts internals exist on every chart on this page. */
+.recharts-wrapper *:focus {
+  outline: none;
 }
 
 /* Utilities */

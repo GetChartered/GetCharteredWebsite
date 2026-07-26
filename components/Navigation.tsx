@@ -129,6 +129,25 @@ export function Navigation() {
                 </Button>
               </Link>
             )}
+            {user && (
+              <>
+                <Link href="/practice" style={{ textDecoration: "none" }}>
+                  <Button variant="ghost" size="sm">
+                    Practice
+                  </Button>
+                </Link>
+                <Link href="/progress" style={{ textDecoration: "none" }}>
+                  <Button variant="ghost" size="sm">
+                    Progress
+                  </Button>
+                </Link>
+                <Link href="/leaderboard" style={{ textDecoration: "none" }}>
+                  <Button variant="ghost" size="sm">
+                    Leaderboard
+                  </Button>
+                </Link>
+              </>
+            )}
             <Link href="/faq" style={{ textDecoration: "none" }}>
               <Button variant="ghost" size="sm">
                 FAQ
@@ -139,15 +158,26 @@ export function Navigation() {
                 Contact
               </Button>
             </Link>
-            <Link href={isOnMyAccount ? "/" : "/my-account"} style={{ textDecoration: "none" }}>
-              <Button variant="ghost" size="sm">
-                {isOnMyAccount ? (
-                  <Home size={20} />
-                ) : (
-                  <User size={20} style={{ color: user ? '#10b981' : 'inherit' }} />
-                )}
-              </Button>
-            </Link>
+            {user ? (
+              <Link href={isOnMyAccount ? "/" : "/my-account"} style={{ textDecoration: "none" }}>
+                <Button variant="ghost" size="sm">
+                  {isOnMyAccount ? <Home size={20} /> : <User size={20} style={{ color: '#10b981' }} />}
+                </Button>
+              </Link>
+            ) : (
+              <>
+                <Link href="/auth/login" style={{ textDecoration: "none" }}>
+                  <Button variant="ghost" size="sm">
+                    Log In
+                  </Button>
+                </Link>
+                <Link href="/auth/login?screen_hint=signup" style={{ textDecoration: "none" }}>
+                  <Button variant="primary" size="sm">
+                    Sign Up
+                  </Button>
+                </Link>
+              </>
+            )}
             <Button
               variant="ghost"
               size="sm"
@@ -192,6 +222,37 @@ export function Navigation() {
                   </Button>
                 </Link>
               )}
+              {user && (
+                <>
+                  <Link
+                    href="/practice"
+                    style={{ textDecoration: "none" }}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    <Button variant="ghost" size="md" fullWidth>
+                      Practice
+                    </Button>
+                  </Link>
+                  <Link
+                    href="/progress"
+                    style={{ textDecoration: "none" }}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    <Button variant="ghost" size="md" fullWidth>
+                      Progress
+                    </Button>
+                  </Link>
+                  <Link
+                    href="/leaderboard"
+                    style={{ textDecoration: "none" }}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    <Button variant="ghost" size="md" fullWidth>
+                      Leaderboard
+                    </Button>
+                  </Link>
+                </>
+              )}
               <Link
                 href="/faq"
                 style={{ textDecoration: "none" }}
@@ -210,25 +271,48 @@ export function Navigation() {
                   Contact
                 </Button>
               </Link>
-              <Link
-                href={isOnMyAccount ? "/" : "/my-account"}
-                style={{ textDecoration: "none" }}
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                <Button variant="ghost" size="md" fullWidth>
-                  {isOnMyAccount ? (
-                    <>
-                      <Home size={20} style={{ marginRight: '8px' }} />
-                      Home
-                    </>
-                  ) : (
-                    <>
-                      <User size={20} style={{ marginRight: '8px', color: user ? '#10b981' : 'inherit' }} />
-                      My Account
-                    </>
-                  )}
-                </Button>
-              </Link>
+              {user ? (
+                <Link
+                  href={isOnMyAccount ? "/" : "/my-account"}
+                  style={{ textDecoration: "none" }}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  <Button variant="ghost" size="md" fullWidth>
+                    {isOnMyAccount ? (
+                      <>
+                        <Home size={20} style={{ marginRight: '8px' }} />
+                        Home
+                      </>
+                    ) : (
+                      <>
+                        <User size={20} style={{ marginRight: '8px', color: '#10b981' }} />
+                        My Account
+                      </>
+                    )}
+                  </Button>
+                </Link>
+              ) : (
+                <>
+                  <Link
+                    href="/auth/login"
+                    style={{ textDecoration: "none" }}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    <Button variant="ghost" size="md" fullWidth>
+                      Log In
+                    </Button>
+                  </Link>
+                  <Link
+                    href="/auth/login?screen_hint=signup"
+                    style={{ textDecoration: "none" }}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    <Button variant="primary" size="md" fullWidth>
+                      Sign Up
+                    </Button>
+                  </Link>
+                </>
+              )}
               <Button
                 variant="ghost"
                 size="md"

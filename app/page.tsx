@@ -41,9 +41,9 @@ export default async function Home() {
             ) : (
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 {isLoggedIn ? (
-                  <Link href="/my-account" style={{ textDecoration: "none" }}>
-                    <Button variant="primary" size="lg" leftIcon={User}>
-                      Go to My Account
+                  <Link href="/practice" style={{ textDecoration: "none" }}>
+                    <Button variant="primary" size="lg" leftIcon={Play}>
+                      Start Practicing
                     </Button>
                   </Link>
                 ) : (
