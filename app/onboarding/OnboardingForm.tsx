@@ -143,37 +143,45 @@ export function OnboardingForm() {
         const data = await res.json();
         if (cancelled) return;
 
-        const meta = data.metadata ?? {};
-        setFullName(meta.full_name || getPrefillName(user));
-        setCompany(meta.company || "");
-        setRole(meta.role || "");
-        setLinkedinUrl(meta.linkedin_url || "");
+        // GET /api/onboarding now proxies our backend's GET /profile
+        // (DynamoDB-backed, Auth0 is identity-only) instead of Auth0
+        // user_metadata — field names are camelCase and there's no
+        // `qualifications` array, just a single `course` string.
+        const profile = data.profile ?? {};
+        setFullName(profile.fullName || getPrefillName(user));
+        setCompany(profile.company || "");
+        setRole(profile.role || "");
+        setLinkedinUrl(profile.linkedinUrl || "");
         if (
-          typeof meta.heard_from === "string" &&
-          (HEARD_FROM_OPTIONS as readonly string[]).includes(meta.heard_from)
+          typeof profile.heardFrom === "string" &&
+          (HEARD_FROM_OPTIONS as readonly string[]).includes(profile.heardFrom)
         ) {
-          setHeardFrom(meta.heard_from as HeardFromOption);
+          setHeardFrom(profile.heardFrom as HeardFromOption);
         }
-        setHeardFromDetail(meta.heard_from_detail || "");
-        if (Array.isArray(meta.qualifications) && meta.qualifications[0]) {
-          setQualification(meta.qualifications[0] as Qualification);
+        setHeardFromDetail(profile.heardFromDetail || "");
+        if (
+          typeof profile.course === "string" &&
+          (QUALIFICATION_OPTIONS.some((o) => o.id === profile.course))
+        ) {
+          setQualification(profile.course as Qualification);
         }
         if (
-          typeof meta.target_exam_window === "string" &&
-          TARGET_EXAM_WINDOWS.some((o) => o.value === meta.target_exam_window)
+          typeof profile.targetExamWindow === "string" &&
+          TARGET_EXAM_WINDOWS.some((o) => o.value === profile.targetExamWindow)
         ) {
-          setTargetExamWindow(meta.target_exam_window as TargetExamWindow);
+          setTargetExamWindow(profile.targetExamWindow as TargetExamWindow);
         }
         if (
-          typeof meta.qualification_stage === "string" &&
-          QUALIFICATION_STAGES.some((o) => o.value === meta.qualification_stage)
+          typeof profile.qualificationStage === "string" &&
+          QUALIFICATION_STAGES.some((o) => o.value === profile.qualificationStage)
         ) {
-          setQualificationStage(meta.qualification_stage as QualificationStage);
+          setQualificationStage(profile.qualificationStage as QualificationStage);
         }
-        // Once accepted, the checkbox stays ticked on revisits — withdrawing
-        // consent to terms isn't a flow that exists.
-        if (meta.terms_accepted_at) setTermsAccepted(true);
-        setMarketingConsent(meta.marketing_consent === true);
+        // Note: GET /profile has no equivalent of the old terms_accepted_at
+        // timestamp, so there's no signal to pre-check this from — the terms
+        // checkbox now always starts unchecked on prefill, even for a user
+        // resuming a half-finished onboarding who'd already ticked it before.
+        setMarketingConsent(profile.marketingConsent === true);
       } catch {
         if (!cancelled) setFullName(getPrefillName(user));
       } finally {

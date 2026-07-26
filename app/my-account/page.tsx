@@ -1,11 +1,15 @@
 import Link from "next/link";
-import { CreditCard, Calendar, Sparkles } from "lucide-react";
+import { CreditCard, Calendar, Sparkles, Target, TrendingUp, Flame, ArrowRight, LucideIcon } from "lucide-react";
 import SubscriptionDetails from "@/components/SubscriptionDetails";
 import { CancelSubscriptionDialog } from "@/components/account/CancelSubscriptionDialog";
 import { BillingPortalButton } from "@/components/BillingPortalButton";
 import { ChangePasswordButton } from "@/components/ChangePasswordButton";
+import { MyExamsSection } from "@/components/account/MyExamsSection";
 import { SUBSCRIPTIONS_ENABLED } from "@/lib/features";
 import { requireOnboardedSession } from "@/lib/auth0";
+import { fetchProgressData } from "@/lib/practice/fetchProgress";
+import { computeStreak, mergeDailyBreakdowns } from "@/lib/practice/progressStats";
+import type { ProgressData } from "@/lib/practice/types";
 
 export default async function MyAccountPage({
   searchParams,
@@ -25,8 +29,61 @@ export default async function MyAccountPage({
     ? await SubscriptionDetails()
     : null;
 
+  const progressData = await fetchProgressData();
+
   return (
     <div className="space-y-6">
+      {/* Practice quick stats */}
+      <div>
+        <div className="flex items-center justify-between mb-2">
+          <h2 className="text-title" style={{ fontWeight: 700, color: "var(--color-text)" }}>
+            Practice
+          </h2>
+          <Link
+            href="/practice"
+            style={{
+              fontSize: 13,
+              fontWeight: 600,
+              color: "var(--color-tint)",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 4,
+              textDecoration: "none",
+            }}
+          >
+            Go to Practice <ArrowRight size={14} />
+          </Link>
+        </div>
+        <p className="text-body mb-4" style={{ color: "var(--color-text-secondary)" }}>
+          Your practice activity at a glance.
+        </p>
+
+        {progressData ? (
+          <QuickStats progressData={progressData} />
+        ) : (
+          <div className="card" style={{ padding: 24, textAlign: "center" }}>
+            <p style={{ color: "var(--color-text-secondary)", fontSize: 14, marginBottom: 12 }}>
+              Couldn&apos;t load your practice stats right now.
+            </p>
+            <Link href="/practice" className="btn btn-primary btn-sm" style={{ textDecoration: "none" }}>
+              Start Practicing
+            </Link>
+          </div>
+        )}
+      </div>
+
+      {/* My Exams */}
+      <div>
+        <h2 className="text-title mb-2" style={{ fontWeight: 700, color: "var(--color-text)" }}>
+          My Exams
+        </h2>
+        <p className="text-body mb-4" style={{ color: "var(--color-text-secondary)" }}>
+          Set up which exams you&apos;re sitting and when — this powers your Progress
+          countdown and your default Leaderboard.
+        </p>
+        <MyExamsSection />
+      </div>
+
       {/* Error/Success Messages */}
       {SUBSCRIPTIONS_ENABLED && error === "already_subscribed" && (
         <div
@@ -477,6 +534,75 @@ function NoSubscription({ status }: { status: number }) {
           </Link>
         )}
       </div>
+    </div>
+  );
+}
+
+function QuickStats({ progressData }: { progressData: ProgressData }) {
+  const acaStats = progressData.moduleStats.filter((m) => m.course === "ACA");
+  const totalAnswered = acaStats.reduce((sum, m) => sum + m.totalAnswered, 0);
+  const totalCorrect = acaStats.reduce((sum, m) => sum + m.totalCorrect, 0);
+  const accuracy = totalAnswered > 0 ? Math.round((totalCorrect / totalAnswered) * 100) : null;
+  const dailyCounts = mergeDailyBreakdowns(progressData.weeklyStats);
+  const streak = computeStreak(dailyCounts);
+
+  return (
+    <div className="card" style={{ padding: 20 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16 }}>
+        <StatItem icon={Target} label="Answered" value={String(totalAnswered)} color="var(--accent-blue)" />
+        <StatItem
+          icon={TrendingUp}
+          label="Accuracy"
+          value={accuracy != null ? `${accuracy}%` : "—"}
+          color="var(--accent-green)"
+        />
+        <StatItem icon={Flame} label="Day streak" value={String(streak)} color="var(--accent-gold)" />
+      </div>
+      <div
+        style={{
+          marginTop: 16,
+          paddingTop: 16,
+          borderTop: "1px solid var(--color-border-subtle)",
+          textAlign: "center",
+        }}
+      >
+        <Link
+          href="/progress"
+          style={{
+            fontSize: 13,
+            fontWeight: 600,
+            color: "var(--color-tint)",
+            textDecoration: "none",
+          }}
+        >
+          View full progress →
+        </Link>
+      </div>
+    </div>
+  );
+}
+
+function StatItem({
+  icon: Icon,
+  label,
+  value,
+  color,
+}: {
+  icon: LucideIcon;
+  label: string;
+  value: string;
+  color: string;
+}) {
+  return (
+    <div style={{ textAlign: "center" }}>
+      <div
+        className="rounded-full flex items-center justify-center mx-auto mb-2"
+        style={{ width: 36, height: 36, backgroundColor: color + "20" }}
+      >
+        <Icon size={16} style={{ color }} />
+      </div>
+      <p style={{ fontSize: 20, fontWeight: 700, color: "var(--color-text)" }}>{value}</p>
+      <p style={{ fontSize: 11, color: "var(--color-text-secondary)" }}>{label}</p>
     </div>
   );
 }

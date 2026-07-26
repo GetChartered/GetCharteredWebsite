@@ -1,4 +1,5 @@
 import 'server-only';
+import { invalidateCachedUserMetadata, setCachedUserMetadata } from '@/lib/onboardingCache';
 
 // Validate environment variables at module load time
 const AUTH0_DOMAIN = process.env.AUTH0_DOMAIN;
@@ -108,7 +109,14 @@ export async function updateUserProfile(userId: string, data: { name?: string })
     await handleAuth0Error(response, 'Update User Profile', { userId });
   }
 
-  return response.json();
+  const updatedUser = await response.json();
+  // Root `name` changes are also surfaced through getUserMetadataCached
+  // (my-account's displayed name) — seed the cache straight from this PATCH
+  // response's user_metadata (see the longer comment on updateUserMetadata
+  // for why this replaced a plain invalidate-and-refetch).
+  seedOrInvalidateCache(userId, updatedUser);
+
+  return updatedUser;
 }
 
 export const QUALIFICATIONS = ['ACA', 'ACCA', 'CISI', 'CII', 'CIMA', 'CFA'] as const;
@@ -189,6 +197,16 @@ export async function getUserAccount(userId: string): Promise<{
   };
 }
 
+// NOTE: the onboarding flow (app/onboarding/OnboardingForm.tsx,
+// app/api/onboarding/route.ts) no longer calls this — onboarding data now
+// lives in DynamoDB behind our own GET /profile / POST /complete-onboarding
+// Lambdas (see lib/profile.ts), with Auth0 as identity/login only. This
+// function is still very much in use elsewhere though — don't delete it:
+// app/my-account/layout.tsx calls it (via getUserMetadataCached in
+// lib/auth0.ts) to resolve the display name shown in account settings, and
+// app/api/profile/route.ts (an unrelated PATCH-only route for editing that
+// display name — not to be confused with the new backend GET /profile
+// endpoint, an unfortunate naming collision) calls it indirectly too.
 export async function getUserMetadata(userId: string): Promise<OnboardingMetadata> {
   const token = await getManagementToken();
 
@@ -212,6 +230,10 @@ export async function getUserMetadata(userId: string): Promise<OnboardingMetadat
  * Updates a user's Auth0 record. Top-level `name` and `user_metadata` are
  * patched in the same Management API call. Auth0 merges `user_metadata`
  * one level deep, so partial updates preserve existing keys.
+ *
+ * NOTE: the onboarding flow no longer calls this (see the comment on
+ * getUserMetadata above) — it's kept because app/api/profile/route.ts still
+ * calls it directly for social-connection users' display-name edits.
  */
 export async function updateUserMetadata(
   userId: string,
@@ -236,7 +258,48 @@ export async function updateUserMetadata(
     await handleAuth0Error(response, 'Update User Metadata', { userId });
   }
 
-  return response.json();
+  const updatedUser = await response.json();
+  // Critical for onboarding specifically: this is what flips
+  // onboarding_completed false -> true, and requireOnboardedSession must
+  // see that on the very next request, not up to TTL_MS later (which would
+  // otherwise bounce a just-onboarded user straight back to /onboarding).
+  //
+  // Originally this just called invalidateCachedUserMetadata(userId) and
+  // relied on the next read to fetch fresh — that reintroduced exactly the
+  // bug it was meant to prevent: a PATCH immediately followed by a GET
+  // against Auth0's Management API is not guaranteed to be read-after-write
+  // consistent, so the very next requireOnboardedSession check (moments
+  // after onboarding completes) could still see the pre-write
+  // onboarding_completed value and bounce back to /onboarding — a loop.
+  // Auth0's PATCH response body already IS the full updated user (Auth0
+  // computes the one-level-deep user_metadata merge server-side and
+  // returns the result), so seeding the cache directly from `updatedUser`
+  // here uses the authoritative post-merge state with no extra read and no
+  // race window at all, instead of invalidating and hoping.
+  seedOrInvalidateCache(userId, updatedUser);
+
+  return updatedUser;
+}
+
+/** Seeds the cache from a Management API PATCH response's user_metadata
+ *  (the authoritative merged state, no extra read needed) — falls back to
+ *  a plain invalidate if the response is missing/malformed for any reason,
+ *  so a later read just goes to Auth0 fresh rather than caching garbage. */
+function seedOrInvalidateCache(userId: string, updatedUser: unknown): void {
+  if (
+    updatedUser &&
+    typeof updatedUser === 'object' &&
+    'user_metadata' in updatedUser &&
+    typeof (updatedUser as { user_metadata?: unknown }).user_metadata === 'object' &&
+    (updatedUser as { user_metadata?: unknown }).user_metadata !== null
+  ) {
+    setCachedUserMetadata(
+      userId,
+      (updatedUser as { user_metadata: OnboardingMetadata }).user_metadata
+    );
+  } else {
+    invalidateCachedUserMetadata(userId);
+  }
 }
 
 /**
@@ -282,4 +345,6 @@ export async function deleteUser(userId: string) {
   if (!response.ok) {
     await handleAuth0Error(response, 'Delete User', { userId });
   }
+
+  invalidateCachedUserMetadata(userId);
 }

@@ -8,6 +8,7 @@ import { useUser } from "@auth0/nextjs-auth0";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { SUBSCRIPTIONS_ENABLED } from "@/lib/features";
+import { isFeatureUnlocked } from "@/lib/featureAccess";
 import { OnboardingBanner } from "@/components/OnboardingBanner";
 
 export function Navigation() {
@@ -19,6 +20,9 @@ export function Navigation() {
   const [isMobile, setIsMobile] = useState(false);
 
   const isOnMyAccount = pathname === "/my-account";
+  // useUser()'s client-side `user` already carries the ID token's claims,
+  // sub included, so no separate session fetch is needed here.
+  const practiceFeaturesUnlocked = isFeatureUnlocked(user?.sub);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -129,6 +133,25 @@ export function Navigation() {
                 </Button>
               </Link>
             )}
+            {user && practiceFeaturesUnlocked && (
+              <>
+                <Link href="/practice" style={{ textDecoration: "none" }}>
+                  <Button variant="ghost" size="sm">
+                    Practice
+                  </Button>
+                </Link>
+                <Link href="/progress" style={{ textDecoration: "none" }}>
+                  <Button variant="ghost" size="sm">
+                    Progress
+                  </Button>
+                </Link>
+                <Link href="/leaderboard" style={{ textDecoration: "none" }}>
+                  <Button variant="ghost" size="sm">
+                    Leaderboard
+                  </Button>
+                </Link>
+              </>
+            )}
             <Link href="/faq" style={{ textDecoration: "none" }}>
               <Button variant="ghost" size="sm">
                 FAQ
@@ -139,15 +162,26 @@ export function Navigation() {
                 Contact
               </Button>
             </Link>
-            <Link href={isOnMyAccount ? "/" : "/my-account"} style={{ textDecoration: "none" }}>
-              <Button variant="ghost" size="sm">
-                {isOnMyAccount ? (
-                  <Home size={20} />
-                ) : (
-                  <User size={20} style={{ color: user ? '#10b981' : 'inherit' }} />
-                )}
-              </Button>
-            </Link>
+            {user ? (
+              <Link href={isOnMyAccount ? "/" : "/my-account"} style={{ textDecoration: "none" }}>
+                <Button variant="ghost" size="sm">
+                  {isOnMyAccount ? <Home size={20} /> : <User size={20} style={{ color: '#10b981' }} />}
+                </Button>
+              </Link>
+            ) : (
+              <>
+                <Link href="/auth/login" style={{ textDecoration: "none" }}>
+                  <Button variant="ghost" size="sm">
+                    Log In
+                  </Button>
+                </Link>
+                <Link href="/auth/login?screen_hint=signup" style={{ textDecoration: "none" }}>
+                  <Button variant="primary" size="sm">
+                    Sign Up
+                  </Button>
+                </Link>
+              </>
+            )}
             <Button
               variant="ghost"
               size="sm"
@@ -192,6 +226,37 @@ export function Navigation() {
                   </Button>
                 </Link>
               )}
+              {user && practiceFeaturesUnlocked && (
+                <>
+                  <Link
+                    href="/practice"
+                    style={{ textDecoration: "none" }}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    <Button variant="ghost" size="md" fullWidth>
+                      Practice
+                    </Button>
+                  </Link>
+                  <Link
+                    href="/progress"
+                    style={{ textDecoration: "none" }}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    <Button variant="ghost" size="md" fullWidth>
+                      Progress
+                    </Button>
+                  </Link>
+                  <Link
+                    href="/leaderboard"
+                    style={{ textDecoration: "none" }}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    <Button variant="ghost" size="md" fullWidth>
+                      Leaderboard
+                    </Button>
+                  </Link>
+                </>
+              )}
               <Link
                 href="/faq"
                 style={{ textDecoration: "none" }}
@@ -210,25 +275,48 @@ export function Navigation() {
                   Contact
                 </Button>
               </Link>
-              <Link
-                href={isOnMyAccount ? "/" : "/my-account"}
-                style={{ textDecoration: "none" }}
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                <Button variant="ghost" size="md" fullWidth>
-                  {isOnMyAccount ? (
-                    <>
-                      <Home size={20} style={{ marginRight: '8px' }} />
-                      Home
-                    </>
-                  ) : (
-                    <>
-                      <User size={20} style={{ marginRight: '8px', color: user ? '#10b981' : 'inherit' }} />
-                      My Account
-                    </>
-                  )}
-                </Button>
-              </Link>
+              {user ? (
+                <Link
+                  href={isOnMyAccount ? "/" : "/my-account"}
+                  style={{ textDecoration: "none" }}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  <Button variant="ghost" size="md" fullWidth>
+                    {isOnMyAccount ? (
+                      <>
+                        <Home size={20} style={{ marginRight: '8px' }} />
+                        Home
+                      </>
+                    ) : (
+                      <>
+                        <User size={20} style={{ marginRight: '8px', color: '#10b981' }} />
+                        My Account
+                      </>
+                    )}
+                  </Button>
+                </Link>
+              ) : (
+                <>
+                  <Link
+                    href="/auth/login"
+                    style={{ textDecoration: "none" }}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    <Button variant="ghost" size="md" fullWidth>
+                      Log In
+                    </Button>
+                  </Link>
+                  <Link
+                    href="/auth/login?screen_hint=signup"
+                    style={{ textDecoration: "none" }}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    <Button variant="primary" size="md" fullWidth>
+                      Sign Up
+                    </Button>
+                  </Link>
+                </>
+              )}
               <Button
                 variant="ghost"
                 size="md"

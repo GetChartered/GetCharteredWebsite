@@ -184,3 +184,48 @@ export const Badge = forwardRef<HTMLSpanElement, BadgeProps>(
 );
 
 Badge.displayName = "Badge";
+
+// ============================================
+// STAT TILE
+// ============================================
+
+export interface StatTileProps {
+  icon: LucideIcon;
+  label: string;
+  value: string;
+  caption?: string;
+  color: string;
+  infoTooltip?: React.ReactNode;
+  size?: "md" | "lg";
+}
+
+// Icon-in-colored-circle -> big bold value -> small label (with an optional
+// info-icon popover) -> optional caption below. Originated on the progress
+// dashboard's overview tiles; shared here so the leaderboard's "Your
+// position" panel can reuse the exact same proven visual pattern.
+export function StatTile({ icon: Icon, label, value, caption, color, infoTooltip, size = "md" }: StatTileProps) {
+  const isLarge = size === "lg";
+  const circleSize = isLarge ? 52 : 44;
+  const iconSize = isLarge ? 24 : 20;
+  const valueSize = isLarge ? 34 : 28;
+
+  return (
+    <div className="card" style={{ padding: isLarge ? 24 : 20, textAlign: "center" }}>
+      <div
+        className="rounded-full flex items-center justify-center mx-auto mb-3"
+        style={{ width: circleSize, height: circleSize, backgroundColor: color + "20" }}
+      >
+        <Icon size={iconSize} style={{ color }} />
+      </div>
+      <p style={{ fontSize: valueSize, fontWeight: 700, color: "var(--color-text)" }}>{value}</p>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 4 }}>
+        <p style={{ fontSize: 13, color: "var(--color-text-secondary)" }}>{label}</p>
+        {infoTooltip}
+      </div>
+      {caption && (
+        <p style={{ fontSize: 11, color: "var(--color-text-muted)", marginTop: 2 }}>{caption}</p>
+      )}
+    </div>
+  );
+}
+
