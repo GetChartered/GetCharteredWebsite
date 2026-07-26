@@ -1,73 +1,19 @@
-import { Auth0Client } from '@auth0/nextjs-auth0/server';
-import { NextResponse } from 'next/server';
 import { redirect } from 'next/navigation';
 import { cache } from 'react';
 import { getUserMetadata, type OnboardingMetadata } from '@/lib/auth0-management';
 import { getCachedUserMetadata, setCachedUserMetadata } from '@/lib/onboardingCache';
+import { getCachedProfile, setCachedProfile, type ProfileResponse } from '@/lib/profileCache';
+import { fetchProfileData } from '@/lib/profile';
 import { ONBOARDING_REQUIRED } from '@/lib/features';
+import { auth0 } from '@/lib/auth0Client';
 
-const appBaseUrl =
-  process.env.APP_BASE_URL || process.env.AUTH0_BASE_URL || 'http://localhost:3000';
-
-export const auth0 = new Auth0Client({
-  appBaseUrl,
-  authorizationParameters: {
-    // Scopes the session's access token to the GetChartered AWS API Gateway
-    // backend from login, so auth0.getAccessToken() (see lib/gcApi.ts) can
-    // return a token that Gateway's JWT authorizer will accept.
-    audience: 'https://getchartered.app/api/authVerify',
-    // MUST be listed explicitly alongside `audience`, not omitted: the
-    // SDK's Auth0Client/AuthClient constructor does
-    // `options.authorizationParameters || { scope: DEFAULT_SCOPES }`
-    // (node_modules/@auth0/nextjs-auth0/dist/server/auth-client.js) — a
-    // whole-object fallback, not a per-key one. Passing ANY
-    // authorizationParameters object (even one that only sets `audience`)
-    // is truthy, so it replaces the SDK's default `{ scope: DEFAULT_SCOPES
-    // }` entirely rather than extending it. Omitting `scope` here previously
-    // meant the /authorize request carried no scope param at all, so no
-    // offline_access was requested and Auth0 never issued a refresh token —
-    // access tokens then expired with no way to silently refresh
-    // ("AccessTokenError: ... missing_refresh_token"). This string is the
-    // SDK's own DEFAULT_SCOPES value (dist/utils/constants.js), copied
-    // explicitly rather than imported since it isn't part of the package's
-    // public API surface.
-    scope: 'openid profile email offline_access',
-  },
-  session: {
-    cookie: {
-      sameSite: 'lax',
-      secure: process.env.NODE_ENV === 'production',
-    },
-  },
-  // Use the /v2/logout endpoint instead of OIDC RP-Initiated logout. /v2 does
-  // NOT require id_token_hint, which means /auth/logout works even after the
-  // user has been deleted from Auth0 (otherwise the tenant returns an error
-  // page complaining the hint references an unknown user). This is what lets
-  // the delete-account flow route through /auth/logout for a clean session
-  // teardown.
-  logoutStrategy: 'v2',
-  async onCallback(error, ctx) {
-    const safeReturnTo =
-      ctx.returnTo && ctx.returnTo.startsWith('/') ? ctx.returnTo : '/';
-
-    if (error) {
-      const code = (error as { code?: string; cause?: { code?: string } }).code;
-      const causeCode = (error as { cause?: { code?: string } }).cause?.code;
-
-      // User-cancelled flows (declined consent, closed dialog, etc.) — just go back.
-      if (code === 'access_denied' || causeCode === 'access_denied') {
-        return NextResponse.redirect(new URL(safeReturnTo, appBaseUrl));
-      }
-
-      // Any other error: send the user home with a flag the page can surface.
-      const homeWithError = new URL('/', appBaseUrl);
-      homeWithError.searchParams.set('auth_error', '1');
-      return NextResponse.redirect(homeWithError);
-    }
-
-    return NextResponse.redirect(new URL(safeReturnTo, appBaseUrl));
-  },
-});
+// The Auth0Client instance itself lives in lib/auth0Client.ts (a dependency-
+// free leaf module) so lib/gcApi.ts can import it without importing this
+// file — see lib/auth0Client.ts's header comment for why (this file's
+// requireOnboardedSession() calls into lib/profile.ts -> lib/gcApi.ts, which
+// would otherwise be circular). Re-exported here so every other call site's
+// `import { auth0 } from '@/lib/auth0'` keeps working unchanged.
+export { auth0 };
 
 // Cross-request cache (lib/onboardingCache.ts) wrapped in React's per-request
 // `cache()` — the per-request layer still dedupes a layout + page hitting
@@ -86,6 +32,23 @@ async function getUserMetadataWithCache(userId: string): Promise<OnboardingMetad
 }
 
 export const getUserMetadataCached = cache(getUserMetadataWithCache);
+
+// Same cross-request-cache-under-React-cache() pattern as
+// getUserMetadataCached above, retargeted at our own GET /profile endpoint
+// (lib/profile.ts / lib/profileCache.ts) instead of Auth0's Management API —
+// this is what requireOnboardedSession uses now. getUserMetadataCached is
+// kept as-is above since app/my-account/layout.tsx and app/api/profile/route.ts
+// still call it for display-name resolution.
+async function getProfileWithCache(userId: string): Promise<ProfileResponse> {
+  const cached = getCachedProfile(userId);
+  if (cached) return cached;
+
+  const profile = await fetchProfileData();
+  setCachedProfile(userId, profile);
+  return profile;
+}
+
+export const getProfileCached = cache(getProfileWithCache);
 
 /**
  * Use on public marketing pages. Returns the session if the visitor is signed
@@ -126,8 +89,8 @@ export async function requireOnboardedSession(returnTo: string = '/') {
   const session = await requireSession(returnTo);
 
   if (ONBOARDING_REQUIRED) {
-    const metadata = await getUserMetadataCached(session.user.sub);
-    if (metadata.onboarding_completed !== true) {
+    const profile = await getProfileCached(session.user.sub);
+    if (profile.onboardingCompleted !== true) {
       redirect('/onboarding');
     }
   }

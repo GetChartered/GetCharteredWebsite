@@ -197,6 +197,16 @@ export async function getUserAccount(userId: string): Promise<{
   };
 }
 
+// NOTE: the onboarding flow (app/onboarding/OnboardingForm.tsx,
+// app/api/onboarding/route.ts) no longer calls this — onboarding data now
+// lives in DynamoDB behind our own GET /profile / POST /complete-onboarding
+// Lambdas (see lib/profile.ts), with Auth0 as identity/login only. This
+// function is still very much in use elsewhere though — don't delete it:
+// app/my-account/layout.tsx calls it (via getUserMetadataCached in
+// lib/auth0.ts) to resolve the display name shown in account settings, and
+// app/api/profile/route.ts (an unrelated PATCH-only route for editing that
+// display name — not to be confused with the new backend GET /profile
+// endpoint, an unfortunate naming collision) calls it indirectly too.
 export async function getUserMetadata(userId: string): Promise<OnboardingMetadata> {
   const token = await getManagementToken();
 
@@ -220,6 +230,10 @@ export async function getUserMetadata(userId: string): Promise<OnboardingMetadat
  * Updates a user's Auth0 record. Top-level `name` and `user_metadata` are
  * patched in the same Management API call. Auth0 merges `user_metadata`
  * one level deep, so partial updates preserve existing keys.
+ *
+ * NOTE: the onboarding flow no longer calls this (see the comment on
+ * getUserMetadata above) — it's kept because app/api/profile/route.ts still
+ * calls it directly for social-connection users' display-name edits.
  */
 export async function updateUserMetadata(
   userId: string,

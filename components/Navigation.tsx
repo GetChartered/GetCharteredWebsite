@@ -8,6 +8,7 @@ import { useUser } from "@auth0/nextjs-auth0";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { SUBSCRIPTIONS_ENABLED } from "@/lib/features";
+import { isFeatureUnlocked } from "@/lib/featureAccess";
 import { OnboardingBanner } from "@/components/OnboardingBanner";
 
 export function Navigation() {
@@ -19,6 +20,9 @@ export function Navigation() {
   const [isMobile, setIsMobile] = useState(false);
 
   const isOnMyAccount = pathname === "/my-account";
+  // useUser()'s client-side `user` already carries the ID token's claims,
+  // sub included, so no separate session fetch is needed here.
+  const practiceFeaturesUnlocked = isFeatureUnlocked(user?.sub);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -129,7 +133,7 @@ export function Navigation() {
                 </Button>
               </Link>
             )}
-            {user && (
+            {user && practiceFeaturesUnlocked && (
               <>
                 <Link href="/practice" style={{ textDecoration: "none" }}>
                   <Button variant="ghost" size="sm">
@@ -222,7 +226,7 @@ export function Navigation() {
                   </Button>
                 </Link>
               )}
-              {user && (
+              {user && practiceFeaturesUnlocked && (
                 <>
                   <Link
                     href="/practice"

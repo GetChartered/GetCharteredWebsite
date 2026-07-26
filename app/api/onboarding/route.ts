@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
 import { auth0 } from '@/lib/auth0';
+import { callGcApi } from '@/lib/gcApi';
+import { fetchProfileData } from '@/lib/profile';
 import {
-  getUserMetadata,
-  updateUserMetadata,
   QUALIFICATIONS,
   HEARD_FROM_OPTIONS,
   TARGET_EXAM_WINDOWS,
@@ -11,9 +11,12 @@ import {
   type HeardFromOption,
   type TargetExamWindow,
   type QualificationStage,
-  type OnboardingMetadata,
 } from '@/lib/auth0-management';
 
+// GET /api/onboarding — same-origin proxy to the GC backend's GET /profile,
+// used by OnboardingForm.tsx to prefill fields for a user resuming a
+// half-finished onboarding. Onboarding data now lives in DynamoDB behind our
+// own Lambda (Auth0 stays identity/login only) — see lib/profile.ts.
 export async function GET() {
   const session = await auth0.getSession();
   if (!session) {
@@ -21,8 +24,8 @@ export async function GET() {
   }
 
   try {
-    const metadata = await getUserMetadata(session.user.sub);
-    return NextResponse.json({ metadata });
+    const profile = await fetchProfileData();
+    return NextResponse.json({ profile });
   } catch (error) {
     console.error('Onboarding GET error:', error);
     return NextResponse.json(
@@ -232,8 +235,9 @@ export async function POST(request: Request) {
   }
   const qualificationStage = input.qualification_stage as QualificationStage;
 
-  // terms_accepted — required boolean true. We don't trust the client's
-  // timestamp; we either preserve the existing one or stamp it server-side now.
+  // terms_accepted — required boolean true. Timestamping/idempotency for this
+  // is handled inside the completeOnboarding Lambda itself now (if_not_exists),
+  // not here.
   if (input.terms_accepted !== true) {
     return NextResponse.json(
       { error: 'You must accept the Terms and Privacy Policy to continue' },
@@ -245,55 +249,33 @@ export async function POST(request: Request) {
   const marketingConsent =
     typeof input.marketing_consent === 'boolean' ? input.marketing_consent : false;
 
-  // Look up existing metadata to preserve audit timestamps when appropriate.
-  let existing: OnboardingMetadata = {};
-  try {
-    existing = await getUserMetadata(session.user.sub);
-  } catch (error) {
-    console.error('Onboarding POST: failed to read existing metadata', error);
-    // Non-fatal — proceed with empty existing; we'll just stamp new timestamps.
-  }
-
-  const now = new Date().toISOString();
-  const termsAcceptedAt = existing.terms_accepted_at ?? now;
-  // Only refresh the marketing consent timestamp when the user is opting in
-  // (false → true). If they're opting out or staying opted in, preserve.
-  let marketingConsentAt = existing.marketing_consent_at;
-  if (marketingConsent && !existing.marketing_consent) {
-    marketingConsentAt = now;
-  } else if (!marketingConsent) {
-    // Opting out clears the consent timestamp (record of withdrawn consent).
-    marketingConsentAt = undefined;
-  }
-
-  const metadata: OnboardingMetadata = {
-    full_name: fullName,
+  const payload = {
+    fullName,
     qualifications,
     company,
     role,
-    linkedin_url: linkedinUrl,
-    heard_from: heardFrom,
-    heard_from_detail: heardFromDetail,
-    target_exam_window: targetExamWindow,
-    qualification_stage: qualificationStage,
-    terms_accepted_at: termsAcceptedAt,
-    marketing_consent: marketingConsent,
-    marketing_consent_at: marketingConsentAt,
-    onboarding_completed: true,
+    linkedinUrl,
+    heardFrom,
+    heardFromDetail,
+    targetExamWindow,
+    qualificationStage,
+    termsAccepted: true,
+    marketingConsent,
   };
 
-  // Auth0 treats `name` as a root attribute owned by the IdP for social and
-  // enterprise connections (google-oauth2|, linkedin|, oauth2|linkedin|, …),
-  // so PATCHing it returns 400. Only database (auth0|…) users can have their
-  // root name updated; for everyone else we rely on `user_metadata.full_name`.
-  const isDatabaseUser = session.user.sub?.startsWith('auth0|') ?? false;
-
   try {
-    await updateUserMetadata(session.user.sub, {
-      name: isDatabaseUser ? fullName : undefined,
-      metadata,
+    const response = await callGcApi('/complete-onboarding', {
+      method: 'POST',
+      body: JSON.stringify(payload),
     });
-    return NextResponse.json({ success: true, metadata });
+    if (!response.ok) {
+      console.error('Onboarding POST error: backend returned', response.status);
+      return NextResponse.json(
+        { error: 'Failed to save onboarding data' },
+        { status: 502 }
+      );
+    }
+    return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Onboarding POST error:', error);
     return NextResponse.json(

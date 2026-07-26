@@ -1,5 +1,8 @@
 import 'server-only';
-import { auth0 } from '@/lib/auth0';
+// Imports from lib/auth0Client.ts (not lib/auth0.ts) deliberately — lib/auth0.ts
+// itself now calls into this file (requireOnboardedSession -> callGcApi, to
+// check GET /profile), so importing lib/auth0.ts here would be circular.
+import { auth0 } from '@/lib/auth0Client';
 
 // Same physical Gateway the mobile app targets (see GetChartered_app's
 // components/useBackendData.tsx / hooks/useCourseSelection.ts).
