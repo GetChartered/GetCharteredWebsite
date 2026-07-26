@@ -279,16 +279,25 @@ export async function POST(request: Request) {
       body: JSON.stringify(payload),
     });
     if (!response.ok) {
-      // TEMPORARY DIAGNOSTIC — remove this debug field once the production
-      // error has been captured.
+      // TEMPORARY DIAGNOSTIC — remove this debug field (including
+      // tokenClaims, stashed by lib/gcApi.ts's callGcApi) once the
+      // production error has been captured.
       const responseBody = await response.text().catch(() => '<could not read body>');
-      console.error('Onboarding POST — backend returned non-OK:', response.status, responseBody);
+      const tokenClaims = (response as unknown as { __debugTokenClaims?: unknown })
+        .__debugTokenClaims;
+      console.error(
+        'Onboarding POST — backend returned non-OK:',
+        response.status,
+        responseBody,
+        tokenClaims
+      );
       return NextResponse.json(
         {
           error: 'Failed to save onboarding data',
           debug: {
             backendStatus: response.status,
             backendBody: responseBody,
+            tokenClaims,
           },
         },
         { status: 502 }
