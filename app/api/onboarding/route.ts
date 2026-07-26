@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { auth0 } from '@/lib/auth0';
 import { callGcApi } from '@/lib/gcApi';
 import { fetchProfileData } from '@/lib/profile';
+import { invalidateCachedProfile } from '@/lib/profileCache';
 import {
   QUALIFICATIONS,
   HEARD_FROM_OPTIONS,
@@ -275,6 +276,13 @@ export async function POST(request: Request) {
         { status: 502 }
       );
     }
+
+    // Clear this user's cached profile so the very next requireOnboardedSession
+    // check (e.g. on /welcome, or any protected page navigated to right after)
+    // reads the fresh onboardingCompleted: true from the backend instead of a
+    // stale pre-onboarding result cached under lib/profileCache.ts's TTL.
+    invalidateCachedProfile(session.user.sub);
+
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Onboarding POST error:', error);
