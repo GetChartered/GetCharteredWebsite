@@ -32,13 +32,6 @@ export async function callGcApi(
 
   const { token } = await auth0.getAccessToken();
 
-  // TEMPORARY DIAGNOSTIC — decode (NOT verify) the outgoing access token's
-  // claims for debugging the production /complete-onboarding failure.
-  // Remove decodeJwtClaimsForDebug, this block, and the Object.assign below
-  // once the error has been captured.
-  const tokenClaims = decodeJwtClaimsForDebug(token);
-  console.error('callGcApi — outgoing token claims:', path, tokenClaims);
-
   const response = await fetch(`${GC_API_BASE}${path}`, {
     ...options,
     headers: {
@@ -49,49 +42,5 @@ export async function callGcApi(
     },
   });
 
-  // TEMPORARY DIAGNOSTIC — stash the decoded claims on the Response object
-  // so callers (e.g. app/api/onboarding/route.ts) can surface them in a
-  // debug payload without changing callGcApi's return type. Remove alongside
-  // the rest of this diagnostic.
-  Object.assign(response, { __debugTokenClaims: tokenClaims });
-
   return response;
-}
-
-// TEMPORARY DIAGNOSTIC — decodes (does NOT verify) a JWT's payload segment
-// for debugging the production /complete-onboarding failure. Never use this
-// for auth decisions — it performs no signature check. Only captures
-// iss/aud/azp/exp/iat plus the token's length and first 10 characters (not
-// the full token). Remove once the error has been captured.
-function decodeJwtClaimsForDebug(token: string): {
-  iss?: string;
-  aud?: unknown;
-  azp?: string;
-  exp?: number;
-  iat?: number;
-  tokenLength: number;
-  tokenPrefix: string;
-} {
-  const base = {
-    tokenLength: token.length,
-    tokenPrefix: token.slice(0, 10),
-  };
-  try {
-    const parts = token.split('.');
-    if (parts.length < 2) return base;
-    const base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
-    const padded = base64 + '='.repeat((4 - (base64.length % 4)) % 4);
-    const json = Buffer.from(padded, 'base64').toString('utf-8');
-    const claims = JSON.parse(json) as Record<string, unknown>;
-    return {
-      ...base,
-      iss: typeof claims.iss === 'string' ? claims.iss : undefined,
-      aud: claims.aud,
-      azp: typeof claims.azp === 'string' ? claims.azp : undefined,
-      exp: typeof claims.exp === 'number' ? claims.exp : undefined,
-      iat: typeof claims.iat === 'number' ? claims.iat : undefined,
-    };
-  } catch {
-    return base;
-  }
 }
