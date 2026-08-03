@@ -32,7 +32,7 @@ export function CalculatorModal({ onClose }: { onClose: () => void }) {
     <PracticeToolModal
       title="Calculator"
       onClose={onClose}
-      maxWidth={340}
+      maxWidth={380}
       draggable
       positionStorageKey={POSITION_STORAGE_KEY}
     >
@@ -40,8 +40,8 @@ export function CalculatorModal({ onClose }: { onClose: () => void }) {
         style={{
           borderRadius: 14,
           backgroundColor: "var(--color-card-alt)",
-          padding: "10px 14px",
-          marginBottom: 14,
+          padding: "14px 16px",
+          marginBottom: 16,
         }}
       >
         <p
@@ -65,7 +65,7 @@ export function CalculatorModal({ onClose }: { onClose: () => void }) {
             fontSize: 32,
             fontWeight: 700,
             textAlign: "right",
-            margin: 0,
+            margin: "4px 0 0",
             overflow: "hidden",
             textOverflow: "ellipsis",
             whiteSpace: "nowrap",
@@ -75,9 +75,9 @@ export function CalculatorModal({ onClose }: { onClose: () => void }) {
         </p>
       </div>
 
-      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
         {BUTTON_ROWS.map((row) => (
-          <div key={row.join("-")} style={{ display: "flex", gap: 8 }}>
+          <div key={row.join("-")} style={{ display: "flex", gap: 10 }}>
             {row.map((btn) => {
               const isOperator = btn === "=" || OPERATORS.includes(btn);
               const isUtility = (LIGHT_BTN as readonly string[]).includes(btn);
@@ -100,7 +100,7 @@ export function CalculatorModal({ onClose }: { onClose: () => void }) {
                     border: "none",
                     backgroundColor,
                     color,
-                    fontSize: 18,
+                    fontSize: 20,
                     fontWeight: 700,
                     cursor: "pointer",
                     display: "flex",

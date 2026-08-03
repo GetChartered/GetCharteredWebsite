@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Loader2 } from "lucide-react";
+import { BrandedLoader } from "@/components/BrandedLoader";
 
 /**
  * Renders one of the static legal HTML documents that live in /public.
@@ -63,11 +63,7 @@ export function LegalContent({ source }: { source: string }) {
           padding: 48,
         }}
       >
-        <Loader2
-          size={24}
-          className="animate-spin"
-          style={{ color: "var(--color-text-muted)" }}
-        />
+        <BrandedLoader size={48} />
       </div>
     );
   }

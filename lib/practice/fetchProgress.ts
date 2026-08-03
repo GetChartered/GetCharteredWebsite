@@ -1,6 +1,6 @@
 import { callGcApi } from "@/lib/gcApi";
 import { canonicalizeModuleCode } from "@/lib/practice/moduleCode";
-import type { ModuleStat, ProgressData, WeeklyStat } from "@/lib/practice/types";
+import type { ExamBreakdownEntry, ModuleStat, ProgressData, WeeklyStat } from "@/lib/practice/types";
 
 const KNOWN_MODULE_STAT_KEYS = new Set([
   "module",
@@ -99,6 +99,42 @@ function parseModuleStats(raw: unknown): ModuleStat[] {
   return Array.from(byCode.values());
 }
 
+/** Validates a raw examBreakdown object: exam code -> {newCorrect,
+ *  reviewCorrect, score}. Missing/non-numeric fields within an entry
+ *  default to 0 rather than dropping the whole entry — same tolerance
+ *  parseModuleStats/parseWeeklyStats already give individual numeric
+ *  fields elsewhere in this file. */
+function parseExamBreakdown(raw: unknown): Record<string, ExamBreakdownEntry> | undefined {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return undefined;
+  const out: Record<string, ExamBreakdownEntry> = {};
+  for (const [examCode, value] of Object.entries(raw as Record<string, unknown>)) {
+    if (!value || typeof value !== "object" || Array.isArray(value)) continue;
+    const v = value as Record<string, unknown>;
+    out[examCode] = {
+      newCorrect: typeof v.newCorrect === "number" ? v.newCorrect : 0,
+      reviewCorrect: typeof v.reviewCorrect === "number" ? v.reviewCorrect : 0,
+      score: typeof v.score === "number" ? v.score : 0,
+    };
+  }
+  return Object.keys(out).length > 0 ? out : undefined;
+}
+
+/** Validates a raw dailyNewCorrectByExam/dailyReviewCorrectByExam object:
+ *  date string -> (exam code -> count). Same shape both fields share. */
+function parseDailyByExam(raw: unknown): Record<string, Record<string, number>> | undefined {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return undefined;
+  const out: Record<string, Record<string, number>> = {};
+  for (const [date, value] of Object.entries(raw as Record<string, unknown>)) {
+    if (!value || typeof value !== "object" || Array.isArray(value)) continue;
+    const byExam: Record<string, number> = {};
+    for (const [examCode, count] of Object.entries(value as Record<string, unknown>)) {
+      if (typeof count === "number") byExam[examCode] = count;
+    }
+    if (Object.keys(byExam).length > 0) out[date] = byExam;
+  }
+  return Object.keys(out).length > 0 ? out : undefined;
+}
+
 function parseWeeklyStats(raw: unknown): WeeklyStat[] {
   if (!Array.isArray(raw)) return [];
   return raw
@@ -114,6 +150,17 @@ function parseWeeklyStats(raw: unknown): WeeklyStat[] {
           w.dailyBreakdown && typeof w.dailyBreakdown === "object" && !Array.isArray(w.dailyBreakdown)
             ? (w.dailyBreakdown as Record<string, number>)
             : undefined,
+        dailyNewCorrect:
+          w.dailyNewCorrect && typeof w.dailyNewCorrect === "object" && !Array.isArray(w.dailyNewCorrect)
+            ? (w.dailyNewCorrect as Record<string, number>)
+            : undefined,
+        dailyReviewCorrect:
+          w.dailyReviewCorrect && typeof w.dailyReviewCorrect === "object" && !Array.isArray(w.dailyReviewCorrect)
+            ? (w.dailyReviewCorrect as Record<string, number>)
+            : undefined,
+        examBreakdown: parseExamBreakdown(w.examBreakdown),
+        dailyNewCorrectByExam: parseDailyByExam(w.dailyNewCorrectByExam),
+        dailyReviewCorrectByExam: parseDailyByExam(w.dailyReviewCorrectByExam),
       };
       return stat;
     })

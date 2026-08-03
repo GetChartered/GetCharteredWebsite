@@ -2,9 +2,11 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { AlertTriangle, Calendar, CalendarPlus, ChevronDown, Loader2, Percent, Target, TrendingUp } from "lucide-react";
+import { AlertTriangle, Calendar, CalendarPlus, ChevronDown, Percent, Target, TrendingUp } from "lucide-react";
 import { Button, StatTile } from "@/components/ui";
+import { BrandedLoader } from "@/components/BrandedLoader";
 import { useExamModules } from "@/hooks/useExamModules";
+import { useExamPrep } from "@/hooks/useExamPrep";
 import { useProgressData } from "@/hooks/useProgressData";
 import {
   buildAccuracyByModule,
@@ -16,8 +18,9 @@ import {
   type CoverageBucket,
 } from "@/lib/practice/progressStats";
 import { getExamVisual } from "@/lib/practice/examVisuals";
+import { ExamScopeFilter } from "@/components/progress/ExamScopeFilter";
 import { StreakCard } from "@/components/progress/StreakCard";
-import { WeeklyActivitySection } from "@/components/progress/WeeklyActivityChart";
+import { WeeklyActivitySection, type Range } from "@/components/progress/WeeklyActivityChart";
 import { AccuracyByModuleChart } from "@/components/progress/AccuracyByModuleChart";
 import { CoverageBreakdownChart } from "@/components/progress/CoverageBreakdownChart";
 import { NewVsReviewChart } from "@/components/progress/NewVsReviewChart";
@@ -178,20 +181,95 @@ function ModuleCoverageCard({
 export function ProgressDashboardClient({ nextExam }: { nextExam: NextExamDisplay }) {
   const { loading: modulesLoading, exams, moduleQuestionCounts, error: modulesError } = useExamModules();
   const { loading: progressLoading, data: progressData, error: progressError, retry } = useProgressData();
+  // My Exams — the source of the top-level exam-scope filter's checkbox
+  // options (deliberately NOT the full GET /courses exam list; see
+  // ExamScopeFilter's own comment on why that's a narrower, intentional
+  // scope). examPrepError is deliberately not treated as a page-blocking
+  // error: if it fails, myExamCodes below just comes back empty, which
+  // means examFilterActive is false and the whole page behaves exactly as
+  // it did before this filter existed — graceful degradation rather than a
+  // second failure mode blocking a page whose core data (progressError)
+  // loaded fine.
+  const { examPrep, loading: examPrepLoading } = useExamPrep();
   // Shared between the Accuracy chart's exam pills and the Coverage donut
   // below it — GET /courses (via useExamModules) already gives us the full
   // exam->module mapping (the same one ModuleSelector's accordion groups
   // use), so scoping the donut to a selected exam is pure client-side
   // filtering of data already fetched, not a new backend dependency.
   const [examFilter, setExamFilter] = useState<string>("All");
+  // Shared between WeeklyActivitySection and NewVsReviewChart so picking a
+  // range in one updates both — see NewVsReviewChart.tsx for how it maps
+  // each range onto its own window/tick density.
+  const [range, setRange] = useState<Range>("week");
 
-  const loading = modulesLoading || progressLoading;
+  // Top-level exam-scope filter (ExamScopeFilter, rendered at the top of
+  // the page below) — the set of My Exams codes currently checked.
+  // Defaults to "every configured exam selected" the first time examPrep
+  // finishes loading. Adjusted during render (same pattern MyExamsSection
+  // uses to seed its own rows from a backend list exactly once) rather than
+  // a useEffect — a setState called synchronously inside an effect body
+  // trips this codebase's React Compiler purity lint.
+  const [selectedExamCodes, setSelectedExamCodes] = useState<Set<string>>(new Set());
+  const [examPrepSeeded, setExamPrepSeeded] = useState(false);
+  if (!examPrepSeeded && !examPrepLoading) {
+    setExamPrepSeeded(true);
+    setSelectedExamCodes(new Set(examPrep.map((e) => e.examCode)));
+  }
+
+  const myExamCodes = useMemo(() => new Set(examPrep.map((e) => e.examCode)), [examPrep]);
+  // "Active" = the user has actually narrowed the selection away from the
+  // full "everything selected" default (including narrowing all the way to
+  // nothing) — while everything's selected, every scoped metric below
+  // behaves exactly as it did before this filter existed, so there's no
+  // visible change just from having My Exams configured.
+  const examFilterActive = myExamCodes.size > 0 && selectedExamCodes.size !== myExamCodes.size;
+  const scopedExamCodes = examFilterActive ? selectedExamCodes : null;
+
+  const loading = modulesLoading || progressLoading || examPrepLoading;
   const error = modulesError || progressError;
 
-  const moduleStats = useMemo(
-    () => (progressData?.moduleStats ?? []).filter((m) => m.course === COURSE),
-    [progressData]
+  // The exam list every exam-scoped section below (Accuracy by module's
+  // tabs, the Coverage donut, the Coverage list) draws from — narrowed to
+  // the top-level filter's selection when active, otherwise the full
+  // syllabus exam list exactly as before. Accuracy by module's own
+  // single-select tabs then further narrow WITHIN this list (see
+  // filteredExams below) — the two filters compose rather than compete.
+  const relevantExams = useMemo(
+    () => (examFilterActive ? exams.filter((exam) => selectedExamCodes.has(exam.code)) : exams),
+    [exams, examFilterActive, selectedExamCodes]
   );
+
+  // If the top-level filter narrows relevantExams away from whatever
+  // Accuracy by module's tab is currently pointed at, fall back to "All"
+  // rather than silently keeping a tab selected that no longer has a
+  // matching section to show. Same "adjust state during render" pattern as
+  // the examPrep seeding above — tracks the last-seen selectedExamCodes
+  // reference (a new Set every change, per setSelectedExamCodes's
+  // immutable-update usage) so this only re-checks when the filter
+  // actually changes, not on every unrelated render.
+  const [syncedSelectedExamCodes, setSyncedSelectedExamCodes] = useState(selectedExamCodes);
+  if (selectedExamCodes !== syncedSelectedExamCodes) {
+    setSyncedSelectedExamCodes(selectedExamCodes);
+    if (examFilter !== "All" && !relevantExams.some((exam) => exam.code === examFilter)) {
+      setExamFilter("All");
+    }
+  }
+
+  // moduleStats feeds Questions Done, Overall Accuracy, Accuracy by module,
+  // and (via coverageTotals/orderedCoverageExams below) the Coverage donut
+  // and list — scoping it here once means the top-level exam filter
+  // automatically reaches all four without each one needing its own
+  // filtering logic. Overall Accuracy specifically can't be recomputed from
+  // examBreakdown the way Weekly Activity's score can (examBreakdown has no
+  // totalAnswered/totalCorrect — just newCorrect/reviewCorrect/score, no
+  // denominator to divide by), so this moduleStats-based scoping is the
+  // only structurally sound way to filter it; it happens to also be exactly
+  // what Questions Done needs.
+  const moduleStats = useMemo(() => {
+    const courseFiltered = (progressData?.moduleStats ?? []).filter((m) => m.course === COURSE);
+    if (!scopedExamCodes) return courseFiltered;
+    return courseFiltered.filter((m) => scopedExamCodes.has(m.module.split("-")[0] ?? m.module));
+  }, [progressData, scopedExamCodes]);
 
   const dailyCounts = useMemo(
     () => mergeDailyBreakdowns(progressData?.weeklyStats ?? []),
@@ -218,14 +296,24 @@ export function ProgressDashboardClient({ nextExam }: { nextExam: NextExamDispla
     return map;
   }, [exams]);
 
+  // Full syllabus exam names, independent of the top-level filter — used
+  // both for the Coverage sections' titles (unchanged) and for
+  // ExamScopeFilter's checkbox labels (which need real names for exams the
+  // top-level filter itself might currently be narrowing away).
+  const examNameByCode = useMemo(() => {
+    const map: Record<string, string> = {};
+    for (const exam of exams) map[exam.code] = exam.name || exam.code;
+    return map;
+  }, [exams]);
+
   const accuracyData = useMemo(
     () => buildAccuracyByModule(moduleStats, moduleNameByCode),
     [moduleStats, moduleNameByCode]
   );
 
   const filteredExams = useMemo(
-    () => (examFilter === "All" ? exams : exams.filter((exam) => exam.code === examFilter)),
-    [exams, examFilter]
+    () => (examFilter === "All" ? relevantExams : relevantExams.filter((exam) => exam.code === examFilter)),
+    [relevantExams, examFilter]
   );
 
   const coverageTotals = useMemo(() => {
@@ -238,14 +326,25 @@ export function ProgressDashboardClient({ nextExam }: { nextExam: NextExamDispla
       ? "Whole syllabus, every module combined."
       : `${examFilter} modules only${filteredExams[0]?.name ? ` — ${filteredExams[0].name}` : ""}.`;
 
+  // Coverage list order — the exam matching the Accuracy chart's selected
+  // tab moves to the top; "All" leaves the original order alone (there's no
+  // single matching section for "All" to promote). ExamCoverageSection
+  // itself handles the matching open/close reaction to examFilter — see its
+  // own comment.
+  const orderedCoverageExams = useMemo(() => {
+    if (examFilter === "All") return relevantExams;
+    const idx = relevantExams.findIndex((exam) => exam.code === examFilter);
+    if (idx <= 0) return relevantExams;
+    return [relevantExams[idx], ...relevantExams.slice(0, idx), ...relevantExams.slice(idx + 1)];
+  }, [relevantExams, examFilter]);
+
   if (loading) {
     return (
       <div
         className="card"
-        style={{ padding: 48, display: "flex", flexDirection: "column", alignItems: "center", gap: 12 }}
+        style={{ padding: 48, display: "flex", flexDirection: "column", alignItems: "center" }}
       >
-        <Loader2 size={28} className="animate-spin" style={{ color: "var(--color-tint)" }} />
-        <p style={{ color: "var(--color-text-secondary)", fontSize: 14 }}>Loading your progress…</p>
+        <BrandedLoader message="Loading your progress…" />
       </div>
     );
   }
@@ -266,6 +365,13 @@ export function ProgressDashboardClient({ nextExam }: { nextExam: NextExamDispla
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+      <ExamScopeFilter
+        examCodes={Array.from(myExamCodes)}
+        examNameByCode={examNameByCode}
+        selected={selectedExamCodes}
+        onChange={setSelectedExamCodes}
+      />
+
       {!hasAnyHistory && (
         <div
           className="card"
@@ -309,16 +415,33 @@ export function ProgressDashboardClient({ nextExam }: { nextExam: NextExamDispla
           color="var(--accent-gold)"
         />
         {nextExam.kind === "countdown" ? (
-          <StatTile
-            icon={Calendar}
-            label="Next Exam"
-            value={nextExam.value}
-            caption={nextExam.caption}
-            color="var(--accent-green)"
-          />
+          // Clickable through to My Exams (app/my-account#my-exams) — that's
+          // where the exam/date driving this countdown is actually set, same
+          // destination as the "Set up your exams" empty state below.
+          <Link href="/my-account#my-exams" style={{ textDecoration: "none" }}>
+            <div
+              className="card card-hover"
+              style={{ padding: 20, textAlign: "center", height: "100%", cursor: "pointer" }}
+            >
+              <div
+                className="rounded-full flex items-center justify-center mx-auto mb-3"
+                style={{ width: 44, height: 44, backgroundColor: "var(--accent-green)" + "20" }}
+              >
+                <Calendar size={20} style={{ color: "var(--accent-green)" }} />
+              </div>
+              <p style={{ fontSize: 28, fontWeight: 700, color: "var(--color-text)" }}>{nextExam.value}</p>
+              <p style={{ fontSize: 13, color: "var(--color-text-secondary)" }}>Next Exam</p>
+              {nextExam.caption && (
+                <p style={{ fontSize: 11, color: "var(--color-text-muted)", marginTop: 2 }}>{nextExam.caption}</p>
+              )}
+            </div>
+          </Link>
         ) : (
-          <Link href="/my-account" style={{ textDecoration: "none" }}>
-            <div className="card" style={{ padding: 20, textAlign: "center", height: "100%", cursor: "pointer" }}>
+          <Link href="/my-account#my-exams" style={{ textDecoration: "none" }}>
+            <div
+              className="card card-hover"
+              style={{ padding: 20, textAlign: "center", height: "100%", cursor: "pointer" }}
+            >
               <div
                 className="rounded-full flex items-center justify-center mx-auto mb-3"
                 style={{ width: 44, height: 44, backgroundColor: "var(--accent-green)" + "20" }}
@@ -338,7 +461,12 @@ export function ProgressDashboardClient({ nextExam }: { nextExam: NextExamDispla
           real width (smoother curve, more legible date labels across a
           many-month "All time" series). Full-width own row rather than
           sharing a column with a secondary chart. */}
-      <WeeklyActivitySection weeklyStats={progressData?.weeklyStats ?? []} />
+      <WeeklyActivitySection
+        weeklyStats={progressData?.weeklyStats ?? []}
+        range={range}
+        onRangeChange={setRange}
+        examCodes={scopedExamCodes}
+      />
 
       {/* Streak paired above New vs Review as a 2-column row (alignItems:
           "stretch" so StreakCard's height:"100%" actually fills the row —
@@ -346,8 +474,8 @@ export function ProgressDashboardClient({ nextExam }: { nextExam: NextExamDispla
           than Streak being a separate full-width block competing with the
           hero chart above it for attention). */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(340px, 1fr))", gap: 20, alignItems: "stretch" }}>
-        <StreakCard weeklyStats={progressData?.weeklyStats ?? []} />
-        <NewVsReviewChart weeklyStats={progressData?.weeklyStats ?? []} />
+        <StreakCard weeklyStats={progressData?.weeklyStats ?? []} examFilterActive={examFilterActive} />
+        <NewVsReviewChart weeklyStats={progressData?.weeklyStats ?? []} range={range} examCodes={scopedExamCodes} />
       </div>
 
       {/* The remaining two secondary/glanceable charts — same responsive
@@ -357,7 +485,7 @@ export function ProgressDashboardClient({ nextExam }: { nextExam: NextExamDispla
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(340px, 1fr))", gap: 20, alignItems: "start" }}>
         <AccuracyByModuleChart
           data={accuracyData}
-          exams={exams}
+          exams={relevantExams}
           examFilter={examFilter}
           onExamFilterChange={setExamFilter}
         />
@@ -367,10 +495,13 @@ export function ProgressDashboardClient({ nextExam }: { nextExam: NextExamDispla
       {/* Coverage — matches GetChartered_app's ModuleCoverageCard title
           exactly. Exams are grouped into collapsible <details>/<summary>
           accordions (same pattern as ModuleSelector's exam groups /
-          FaqAccordion), but unlike ModuleSelector's single-open-at-a-time
-          state, each section tracks its own open/closed state independently
-          so several can be open together — collapsing one exam to scan
-          another shouldn't hide a third you already had open. */}
+          FaqAccordion). Sections can still be manually opened/closed
+          independently of each other — collapsing one to scan another
+          doesn't hide a third you already had open — but selecting a tab in
+          Accuracy by module now overrides that: the matching section jumps
+          to the top and opens, every other section closes, same shared
+          examFilter state Accuracy by module and the Coverage donut above
+          already use (see ExamCoverageSection's own comment for how). */}
       <div>
         <h2 className="text-title" style={{ color: "var(--color-text)", marginBottom: 8 }}>
           Coverage
@@ -383,13 +514,14 @@ export function ProgressDashboardClient({ nextExam }: { nextExam: NextExamDispla
         </div>
 
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-          {exams.map((exam, i) => (
+          {orderedCoverageExams.map((exam, i) => (
             <ExamCoverageSection
               key={exam.code}
               exam={exam}
               moduleStats={moduleStats}
               moduleQuestionCounts={moduleQuestionCounts}
               defaultOpen={i === 0}
+              examFilter={examFilter}
             />
           ))}
         </div>
@@ -403,13 +535,32 @@ function ExamCoverageSection({
   moduleStats,
   moduleQuestionCounts,
   defaultOpen,
+  examFilter,
 }: {
   exam: PracticeExamGroup;
   moduleStats: ModuleStat[];
   moduleQuestionCounts: Record<string, number>;
   defaultOpen: boolean;
+  /** Selected tab from Accuracy by module (shared state, lifted to
+   *  ProgressDashboardClient — same value CoverageBreakdownChart's scope
+   *  already reacts to). When it changes to a specific exam code, this
+   *  section force-opens if it's the match and force-closes otherwise;
+   *  switching back to "All" reverts every section to its own
+   *  defaultOpen. Manual toggling (the summary onClick below) still works
+   *  normally in between filter changes. */
+  examFilter: string;
 }) {
   const [open, setOpen] = useState(defaultOpen);
+
+  // Adjust state during render (same pattern AccuracyByModuleChart uses for
+  // its own examFilter-driven reset) rather than a useEffect — a setState
+  // called synchronously inside an effect body trips this codebase's React
+  // Compiler purity lint, since it causes an extra cascading render.
+  const [syncedFilter, setSyncedFilter] = useState(examFilter);
+  if (examFilter !== syncedFilter) {
+    setSyncedFilter(examFilter);
+    setOpen(examFilter === "All" ? defaultOpen : examFilter === exam.code);
+  }
 
   const startedCount = exam.modules.filter(
     (m) => (moduleStats.find((s) => s.module === m.code)?.totalAnswered ?? 0) > 0

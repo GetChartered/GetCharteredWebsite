@@ -48,46 +48,57 @@ export interface StreakDay {
   isToday: boolean;
 }
 
-const STREAK_WEEKDAY_LABELS = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"];
+export const STREAK_WEEKDAY_LABELS = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"];
 
 /**
- * The current week's 7 days (Monday through Sunday, including days later
- * this week that haven't happened yet — those just render as not-done, same
- * as any other day with no session). Scoped to the current week only, not a
- * longer span like GetChartered_app's 2-week grid: per the backend
- * contract's daily-session-count field (WeeklyStat.dailyBreakdown), the
- * codebase's own established assumption (see lib/practice/
- * weeklyActivityChart.ts's buildCurrentWeekDailySeries, which likewise only
- * ever reads the current week's entry) is that day-level resolution is only
- * reliably surfaced for the current week — the chart above deliberately
- * switches to weekly aggregates for every longer range instead of trying to
- * plot daily bars further back.
+ * `weeksBack` consecutive Monday-Sunday weeks ending at the current week
+ * (inclusive), oldest week first — e.g. weeksBack=3 returns [2 weeks ago,
+ * last week, this week]. Days later in the current week that haven't
+ * happened yet just render as not-done, same as any other day with no
+ * session.
+ *
+ * `done` is computed from dailyBreakdown merged across every entry in
+ * `weeklyStats` (mergeDailyBreakdowns, same approach used elsewhere in this
+ * file for multi-week data) — a prior week with no matching WeeklyStat row,
+ * or one with no dailyBreakdown at all, safely renders as an all-not-done
+ * week rather than erroring.
  */
-export function buildCurrentWeekStreakDays(weeklyStats: WeeklyStat[], now: Date = new Date()): StreakDay[] {
+export function buildRecentWeeksStreakDays(
+  weeklyStats: WeeklyStat[],
+  weeksBack: number = 3,
+  now: Date = new Date()
+): StreakDay[][] {
   const dailyCounts = mergeDailyBreakdowns(weeklyStats);
 
-  const start = new Date(now);
-  const dow = start.getDay(); // 0 = Sunday .. 6 = Saturday
+  const currentWeekStart = new Date(now);
+  const dow = currentWeekStart.getDay(); // 0 = Sunday .. 6 = Saturday
   const mondayOffset = dow === 0 ? -6 : 1 - dow;
-  start.setDate(start.getDate() + mondayOffset);
-  start.setHours(0, 0, 0, 0);
+  currentWeekStart.setDate(currentWeekStart.getDate() + mondayOffset);
+  currentWeekStart.setHours(0, 0, 0, 0);
 
   const todayKey = toLocalDateKey(now);
 
-  const days: StreakDay[] = [];
-  for (let i = 0; i < 7; i++) {
-    const d = new Date(start);
-    d.setDate(start.getDate() + i);
-    const key = toLocalDateKey(d);
-    days.push({
-      dateISO: key,
-      dayNum: d.getDate(),
-      label: STREAK_WEEKDAY_LABELS[i],
-      done: (dailyCounts[key] ?? 0) > 0,
-      isToday: key === todayKey,
-    });
+  const weeks: StreakDay[][] = [];
+  for (let w = weeksBack - 1; w >= 0; w--) {
+    const weekStart = new Date(currentWeekStart);
+    weekStart.setDate(currentWeekStart.getDate() - w * 7);
+
+    const days: StreakDay[] = [];
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(weekStart);
+      d.setDate(weekStart.getDate() + i);
+      const key = toLocalDateKey(d);
+      days.push({
+        dateISO: key,
+        dayNum: d.getDate(),
+        label: STREAK_WEEKDAY_LABELS[i],
+        done: (dailyCounts[key] ?? 0) > 0,
+        isToday: key === todayKey,
+      });
+    }
+    weeks.push(days);
   }
-  return days;
+  return weeks;
 }
 
 /** Most-recent week by weekStartISO, or null if there's no history yet. */
@@ -154,12 +165,22 @@ export function buildCoverageBarData(coverage: ModuleCoverage): CoverageBarData 
   const started = coverage.totalAnswered > 0;
   const bankKnown = coverage.bankSize != null && coverage.bankSize > 0;
   const notStarted = coverage.notStartedCount ?? 0;
+  const answeredSum = coverage.masteredCount + coverage.reviewingCount + coverage.learningCount;
 
+  // bankSize alone isn't a safe denominator: notStartedCount is clamped to
+  // >=0 (see buildModuleCoverage) when answeredSum exceeds bankSize — e.g.
+  // the backend's Leitner-bucket counts including questions no longer in
+  // the current bank snapshot — but the segment values themselves are NOT
+  // clamped. Using bankSize as barTotal in that case makes the segments
+  // sum to more than barTotal, so their percentages (and the aggregate
+  // "touched" % this feeds via buildCoverageTotals) exceed 100%. Using
+  // whichever is larger keeps barTotal >= the actual segment sum always,
+  // so every percentage stays correctly bounded at 0-100%.
   const barTotal = !started
     ? 1
     : bankKnown
-      ? coverage.bankSize!
-      : Math.max(coverage.learningCount + coverage.reviewingCount + coverage.masteredCount, 1);
+      ? Math.max(coverage.bankSize!, answeredSum)
+      : Math.max(answeredSum, 1);
 
   const segments: { key: CoverageBucket; value: number }[] = !started
     ? [{ key: "notStarted", value: 1 }]

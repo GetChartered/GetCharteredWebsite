@@ -4,10 +4,11 @@ import { Fragment, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useUser } from "@auth0/nextjs-auth0";
-import { ArrowLeft, ArrowRight, Check, Loader2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check } from "lucide-react";
 import { Button, Input } from "@/components/ui";
 import { Navigation } from "@/components/Navigation";
 import { LegalModal } from "@/components/LegalModal";
+import { BrandedLoader } from "@/components/BrandedLoader";
 import { ONBOARDING_REQUIRED } from "@/lib/features";
 
 type Qualification = "ACA" | "ACCA" | "CISI" | "CII" | "CIMA" | "CFA";
@@ -274,11 +275,7 @@ export function OnboardingForm() {
             padding: "120px 24px",
           }}
         >
-          <Loader2
-            size={28}
-            className="animate-spin"
-            style={{ color: "var(--color-text-muted)" }}
-          />
+          <BrandedLoader />
         </div>
       </div>
     );

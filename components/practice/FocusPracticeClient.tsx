@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { AlertTriangle, Loader2, Play, Sparkles, TrendingUp } from "lucide-react";
+import { AlertTriangle, Play, Sparkles, TrendingUp } from "lucide-react";
 import { Button } from "@/components/ui";
+import { BrandedLoader } from "@/components/BrandedLoader";
 import { QuestionCard } from "@/components/practice/QuestionCard";
 import { PracticeSummary } from "@/components/practice/PracticeSummary";
 import { usePracticeRunner } from "@/hooks/usePracticeRunner";
@@ -65,12 +66,11 @@ export function FocusPracticeClient() {
     return (
       <div
         className="card"
-        style={{ padding: 48, display: "flex", flexDirection: "column", alignItems: "center", gap: 12 }}
+        style={{ padding: 48, display: "flex", flexDirection: "column", alignItems: "center" }}
       >
-        <Loader2 size={28} className="animate-spin" style={{ color: "var(--color-tint)" }} />
-        <p style={{ color: "var(--color-text-secondary)", fontSize: 14 }}>
-          {runner.step === "loading-questions" ? "Preparing your questions…" : "Finding your focus areas…"}
-        </p>
+        <BrandedLoader
+          message={runner.step === "loading-questions" ? "Preparing your questions…" : "Finding your focus areas…"}
+        />
       </div>
     );
   }
@@ -192,7 +192,7 @@ export function FocusPracticeClient() {
   }
 
   return (
-    <div style={{ maxWidth: 640, margin: "0 auto" }}>
+    <div style={{ maxWidth: 1080, margin: "0 auto" }}>
       <PracticeSummary
         questions={runner.questions}
         answers={runner.answers}

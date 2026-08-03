@@ -28,6 +28,12 @@ type QuestionCardProps = {
   /** Session-only, not persisted — matches GetChartered_app's flag behavior. */
   isFlagged?: boolean;
   onToggleFlag?: () => void;
+  /**
+   * Hides "of {totalQuestions}" and the progress bar — for Timed Practice's
+   * unlimited-question presets, where totalQuestions is really just the
+   * size of the internally pre-fetched batch, not a real session target.
+   */
+  hideProgress?: boolean;
 };
 
 function arraysEqualAsSets(a: string[], b: string[]): boolean {
@@ -56,6 +62,7 @@ export function QuestionCard({
   timerUrgent = false,
   isFlagged = false,
   onToggleFlag,
+  hideProgress = false,
 }: QuestionCardProps) {
   const prefs = usePracticePreferences();
   // Lazy initializer — computed once per mount. QuestionCard remounts per
@@ -127,7 +134,7 @@ export function QuestionCard({
         <span
           style={{ fontSize: 13, fontWeight: 600, color: "var(--color-text-secondary)" }}
         >
-          Question {questionNumber} of {totalQuestions}
+          {hideProgress ? `Question ${questionNumber}` : `Question ${questionNumber} of ${totalQuestions}`}
         </span>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           {timerLabel && (
@@ -163,25 +170,27 @@ export function QuestionCard({
         </div>
       </div>
 
-      <div
-        style={{
-          width: "100%",
-          height: 4,
-          borderRadius: 999,
-          backgroundColor: "var(--color-border-subtle)",
-          marginBottom: 24,
-          overflow: "hidden",
-        }}
-      >
+      {!hideProgress && (
         <div
           style={{
-            width: `${((questionNumber - 1) / totalQuestions) * 100}%`,
-            height: "100%",
-            backgroundColor: "var(--color-tint)",
-            transition: "width 0.3s ease",
+            width: "100%",
+            height: 4,
+            borderRadius: 999,
+            backgroundColor: "var(--color-border-subtle)",
+            marginBottom: 24,
+            overflow: "hidden",
           }}
-        />
-      </div>
+        >
+          <div
+            style={{
+              width: `${((questionNumber - 1) / totalQuestions) * 100}%`,
+              height: "100%",
+              backgroundColor: "var(--color-tint)",
+              transition: "width 0.3s ease",
+            }}
+          />
+        </div>
+      )}
 
       {question.scenario && (
         <p

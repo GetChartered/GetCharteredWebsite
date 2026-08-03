@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono, Poppins } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/ThemeProvider";
+import { TourProvider } from "@/lib/tour/TourProvider";
+import { TourOverlay } from "@/components/tour/TourOverlay";
 
 // Runs synchronously in <head> before first paint so the correct theme
 // attribute is on <html> before any CSS is applied. Must stay self-contained.
@@ -43,7 +45,18 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${poppins.variable} antialiased`}
       >
-        <ThemeProvider>{children}</ThemeProvider>
+        <ThemeProvider>
+          {/* TourProvider/TourOverlay mounted here (not per-page) so tour
+              state survives client-side navigation between pages — every
+              page.tsx renders its own <Navigation /> rather than sharing one
+              persistent client layout, so this root layout is the only place
+              state can outlive a route change without extra plumbing. Not
+              wired to any real trigger yet — see lib/tour/tourConfig.ts. */}
+          <TourProvider>
+            {children}
+            <TourOverlay />
+          </TourProvider>
+        </ThemeProvider>
       </body>
     </html>
   );
