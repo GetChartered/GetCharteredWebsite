@@ -2,14 +2,27 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { AlertTriangle, CalendarPlus, ChevronDown, Crown, EyeOff, Loader2, Trophy, TrendingUp } from "lucide-react";
+import {
+  AlertTriangle,
+  CalendarPlus,
+  Check,
+  ChevronDown,
+  Crown,
+  EyeOff,
+  Share2,
+  Trophy,
+  TrendingUp,
+} from "lucide-react";
 import { Button, StatTile } from "@/components/ui";
+import { BrandedLoader } from "@/components/BrandedLoader";
 import { InfoTooltip } from "@/components/InfoTooltip";
 import { useLeaderboard } from "@/hooks/useLeaderboard";
 import { useProgressData } from "@/hooks/useProgressData";
 import { formatLeaderboardName } from "@/lib/practice/leaderboardName";
 import { currentWeek } from "@/lib/practice/progressStats";
 import type { LeaderboardData, LeaderboardEntry } from "@/lib/practice/types";
+
+const COURSE = "ACA";
 
 const MEDAL_COLORS: Record<1 | 2 | 3, string> = {
   1: "var(--accent-gold)",
@@ -78,6 +91,8 @@ export function LeaderboardClient() {
   const rankedData: RankedLeaderboardData | null =
     leaderboardData?.optedIn === true && !leaderboardData.noCohort ? leaderboardData : null;
 
+  const selectedExam = exams.find((e) => e.code === selectedExamCode) ?? null;
+
   const handleOptIn = async (value: boolean) => {
     setDecidingOptIn(true);
     await optIn(value);
@@ -88,10 +103,9 @@ export function LeaderboardClient() {
     return (
       <div
         className="card"
-        style={{ padding: 48, display: "flex", flexDirection: "column", alignItems: "center", gap: 12 }}
+        style={{ padding: 48, display: "flex", flexDirection: "column", alignItems: "center" }}
       >
-        <Loader2 size={28} className="animate-spin" style={{ color: "var(--color-tint)" }} />
-        <p style={{ color: "var(--color-text-secondary)", fontSize: 14 }}>Loading…</p>
+        <BrandedLoader message="Loading…" />
       </div>
     );
   }
@@ -157,32 +171,35 @@ export function LeaderboardClient() {
           />
         </div>
 
-        {rankedData && (
-          <span
-            style={{
-              fontSize: 13,
-              color: "var(--color-text-secondary)",
-              padding: "8px 16px",
-              borderRadius: "var(--radius-full)",
-              backgroundColor: "var(--color-card-alt)",
-            }}
-          >
-            Your rank:{" "}
-            <strong style={{ color: "var(--color-text)" }}>
-              {rankedData.yourRank != null ? rankedData.yourRank : "—"}
-            </strong>{" "}
-            of {rankedData.cohortSize}
-          </span>
-        )}
+        <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+          {selectedExam && <ShareLeaderboardButton examCode={selectedExam.code} examName={selectedExam.name || selectedExam.code} />}
+
+          {rankedData && (
+            <span
+              style={{
+                fontSize: 13,
+                color: "var(--color-text-secondary)",
+                padding: "8px 16px",
+                borderRadius: "var(--radius-full)",
+                backgroundColor: "var(--color-card-alt)",
+              }}
+            >
+              Your rank:{" "}
+              <strong style={{ color: "var(--color-text)" }}>
+                {rankedData.yourRank != null ? rankedData.yourRank : "—"}
+              </strong>{" "}
+              of {rankedData.cohortSize}
+            </span>
+          )}
+        </div>
       </div>
 
       {leaderboardLoading && (
         <div
           className="card"
-          style={{ padding: 48, display: "flex", flexDirection: "column", alignItems: "center", gap: 12 }}
+          style={{ padding: 48, display: "flex", flexDirection: "column", alignItems: "center" }}
         >
-          <Loader2 size={28} className="animate-spin" style={{ color: "var(--color-tint)" }} />
-          <p style={{ color: "var(--color-text-secondary)", fontSize: 14 }}>Loading leaderboard…</p>
+          <BrandedLoader message="Loading leaderboard…" />
         </div>
       )}
 
@@ -205,6 +222,54 @@ export function LeaderboardClient() {
         />
       )}
     </div>
+  );
+}
+
+// Replicates GetChartered_app's leaderboard screen's handleInvite exactly:
+// a link carrying ?examKey= that pre-selects this exam for whoever opens it
+// (see examCodeFromKey in hooks/useLeaderboard.ts), handed to the native
+// share sheet where available. There is no backend cohort/invite system
+// behind this on either platform — the link doesn't grant access to
+// anything or create any relationship between inviter and invitee, it only
+// works if the recipient is already a logged-in user who has this exam in
+// their own My Exams/course selection. Copy is worded accordingly ("Join me
+// preparing for X", not "invite"/"join my cohort") so it doesn't imply a
+// membership mechanism that isn't there.
+function ShareLeaderboardButton({ examCode, examName }: { examCode: string; examName: string }) {
+  const [copied, setCopied] = useState(false);
+
+  const handleShare = async () => {
+    const examKey = `${COURSE}#${examCode}`;
+    const url = `${window.location.origin}/leaderboard?examKey=${encodeURIComponent(examKey)}`;
+    const shareData = {
+      title: "GetChartered",
+      text: `Join me preparing for ${examName} on GetChartered`,
+      url,
+    };
+
+    if (typeof navigator.share === "function") {
+      try {
+        await navigator.share(shareData);
+      } catch {
+        // User cancelled the share sheet, or the browser rejected the
+        // request — neither is an error worth surfacing.
+      }
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // Clipboard access denied/unavailable — nothing else to fall back to.
+    }
+  };
+
+  return (
+    <Button variant="outline" size="sm" leftIcon={copied ? Check : Share2} onClick={() => void handleShare()}>
+      {copied ? "Link copied!" : "Invite colleagues"}
+    </Button>
   );
 }
 

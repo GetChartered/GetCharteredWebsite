@@ -1,7 +1,8 @@
 "use client";
 
-import { AlertTriangle, Loader2 } from "lucide-react";
+import { AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui";
+import { BrandedLoader } from "@/components/BrandedLoader";
 import { ModuleSelector } from "@/components/practice/ModuleSelector";
 import { QuestionCard } from "@/components/practice/QuestionCard";
 import { PracticeSummary } from "@/components/practice/PracticeSummary";
@@ -26,18 +27,9 @@ export function QuickPracticeClient() {
     return (
       <div
         className="card"
-        style={{
-          padding: 48,
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          gap: 12,
-        }}
+        style={{ padding: 48, display: "flex", flexDirection: "column", alignItems: "center" }}
       >
-        <Loader2 size={28} className="animate-spin" style={{ color: "var(--color-tint)" }} />
-        <p style={{ color: "var(--color-text-secondary)", fontSize: 14 }}>
-          {modulesLoading ? "Loading modules…" : "Preparing your questions…"}
-        </p>
+        <BrandedLoader message={modulesLoading ? "Loading modules…" : "Preparing your questions…"} />
       </div>
     );
   }
@@ -118,7 +110,7 @@ export function QuickPracticeClient() {
 
   // runner.step === "summary"
   return (
-    <div style={{ maxWidth: 640, margin: "0 auto" }}>
+    <div style={{ maxWidth: 1080, margin: "0 auto" }}>
       <PracticeSummary
         questions={runner.questions}
         answers={runner.answers}

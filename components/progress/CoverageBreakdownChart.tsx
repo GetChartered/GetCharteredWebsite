@@ -26,21 +26,55 @@ const BUCKET_LABELS: Record<CoverageBucket, string> = {
 
 const BUCKET_ORDER: CoverageBucket[] = ["mastered", "reviewing", "learning", "notStarted"];
 
+// Matches the fixed pixel size the donut's wrapping <div> is given below
+// (width: DONUT_SIZE, height: DONUT_SIZE) — used to tell which half of the
+// donut a hovered segment is in.
+const DONUT_SIZE = 160;
+
 type Slice = { key: CoverageBucket; label: string; value: number };
 
-function DonutTooltip({ active, payload, total }: { active?: boolean; payload?: Array<{ payload: Slice }>; total: number }) {
+function DonutTooltip({
+  active,
+  payload,
+  total,
+  coordinate,
+}: {
+  active?: boolean;
+  payload?: Array<{ payload: Slice }>;
+  total: number;
+  // Injected by recharts (not passed explicitly in JSX below) — the hovered
+  // segment's position within the chart's own coordinate space.
+  coordinate?: { x: number; y: number };
+}) {
   if (!active || !payload || payload.length === 0) return null;
   const d = payload[0].payload;
   const pct = total > 0 ? Math.round((d.value / total) * 100) : 0;
+
+  // Recharts' default Pie/Donut tooltip positioning lands close enough to
+  // the segment's own coordinate that, on a small donut like this one, it
+  // overlaps the "touched %" label sitting in the center — there's no
+  // "position near the cursor" behavior for polar charts the way Cartesian
+  // charts get. Nudging the tooltip further out — right when the hovered
+  // segment is in the donut's left half, left when it's in the right half —
+  // clears both the segment itself and the center label, and adapts to
+  // whichever side is actually hovered rather than sitting in one fixed
+  // spot. The nudge distance is roughly the donut's own radius, enough to
+  // clear the outer edge regardless of exactly where within the segment's
+  // arc recharts placed `coordinate`.
+  const hoveredLeftHalf = (coordinate?.x ?? DONUT_SIZE / 2) < DONUT_SIZE / 2;
+  const shiftX = hoveredLeftHalf ? 70 : -70;
+
   return (
     <div
       style={{
+        transform: `translateX(${shiftX}px)`,
         background: "var(--color-card)",
         border: "1px solid var(--color-border-subtle)",
         borderRadius: 8,
         padding: "8px 12px",
         boxShadow: "0 4px 16px rgba(0,0,0,0.12)",
         fontSize: 12,
+        whiteSpace: "nowrap",
       }}
     >
       <div style={{ fontWeight: 600, color: "var(--color-text)" }}>{d.label}</div>
@@ -82,7 +116,7 @@ export function CoverageBreakdownChart({ totals, scopeLabel }: { totals: Coverag
       <p style={{ fontSize: 12, color: "var(--color-text-secondary)", margin: "4px 0 12px" }}>{scopeLabel}</p>
 
       <div style={{ display: "flex", alignItems: "center", gap: 20, flexWrap: "wrap" }}>
-        <div style={{ position: "relative", width: 160, height: 160, flexShrink: 0 }}>
+        <div style={{ position: "relative", width: DONUT_SIZE, height: DONUT_SIZE, flexShrink: 0 }}>
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               <Pie
@@ -100,7 +134,15 @@ export function CoverageBreakdownChart({ totals, scopeLabel }: { totals: Coverag
                   <Cell key={s.key} fill={BUCKET_COLORS[s.key]} />
                 ))}
               </Pie>
-              <Tooltip content={<DonutTooltip total={totals.total} />} />
+              {/* allowEscapeViewBox: DonutTooltip shifts itself well outside
+                  the pie's own small viewBox (see its comment) — without
+                  this, recharts clips the tooltip back to that viewBox and
+                  the shift has no visible effect. */}
+              <Tooltip
+                content={<DonutTooltip total={totals.total} />}
+                allowEscapeViewBox={{ x: true, y: true }}
+                wrapperStyle={{ zIndex: 20 }}
+              />
             </PieChart>
           </ResponsiveContainer>
           <div

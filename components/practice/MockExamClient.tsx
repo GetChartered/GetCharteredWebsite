@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { AlertTriangle, Loader2 } from "lucide-react";
+import { AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui";
+import { BrandedLoader } from "@/components/BrandedLoader";
 import { ExamPicker } from "@/components/practice/ExamPicker";
 import { QuestionCard } from "@/components/practice/QuestionCard";
 import { PracticeSummary } from "@/components/practice/PracticeSummary";
@@ -40,12 +41,9 @@ export function MockExamClient() {
     return (
       <div
         className="card"
-        style={{ padding: 48, display: "flex", flexDirection: "column", alignItems: "center", gap: 12 }}
+        style={{ padding: 48, display: "flex", flexDirection: "column", alignItems: "center" }}
       >
-        <Loader2 size={28} className="animate-spin" style={{ color: "var(--color-tint)" }} />
-        <p style={{ color: "var(--color-text-secondary)", fontSize: 14 }}>
-          {modulesLoading ? "Loading exams…" : "Preparing your mock exam…"}
-        </p>
+        <BrandedLoader message={modulesLoading ? "Loading exams…" : "Preparing your mock exam…"} />
       </div>
     );
   }
@@ -125,7 +123,7 @@ export function MockExamClient() {
 
   const remaining = runner.timeLeft ?? 0;
   return (
-    <div style={{ maxWidth: 640, margin: "0 auto" }}>
+    <div style={{ maxWidth: 1080, margin: "0 auto" }}>
       <PracticeSummary
         questions={runner.questions}
         answers={runner.answers}

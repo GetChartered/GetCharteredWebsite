@@ -244,6 +244,29 @@ body {
   border-color: var(--color-tint);
 }
 
+/* Small selectable chip (ExamScopeFilter's exam pills) — same lift-on-hover
+   idea as .card-hover but lighter, sized for a compact inline control
+   rather than a full card. Border/background colour for the
+   selected/unselected states are set inline per-chip (they depend on the
+   exam's own tint from lib/practice/examVisuals.ts), so this class only
+   owns the hover transform. */
+.exam-chip {
+  transition: transform var(--transition-normal), box-shadow var(--transition-normal);
+}
+.exam-chip:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* My Exams row's remove button (MyExamsSection.tsx) — a danger-tinted hover,
+   same "hover needs a real CSS class, inline styles can't express :hover"
+   reasoning as .exam-chip above. */
+.exam-row-remove:hover {
+  border-color: var(--color-danger);
+  color: var(--color-danger);
+  background-color: color-mix(in srgb, var(--color-danger) 8%, transparent);
+}
+
 /* Account nav item */
 .account-nav-link {
   display: flex;

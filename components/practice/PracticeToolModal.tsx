@@ -171,6 +171,13 @@ export function PracticeToolModal({
           <button
             type="button"
             onClick={onClose}
+            // Stops the pointerdown from bubbling to the header's own
+            // onPointerDown (handlePointerDown above) — without this, on a
+            // draggable modal (the calculator), clicking this button calls
+            // setPointerCapture on the HEADER, which redirects the
+            // subsequent pointerup/click to the header instead of this
+            // button, so onClick never fired and the modal never closed.
+            onPointerDown={(e) => e.stopPropagation()}
             aria-label="Close"
             style={{
               background: "transparent",

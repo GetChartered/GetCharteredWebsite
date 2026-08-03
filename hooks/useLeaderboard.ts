@@ -1,30 +1,52 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { useExamModules } from "@/hooks/useExamModules";
 import { useExamPrep } from "@/hooks/useExamPrep";
 import type { LeaderboardData } from "@/lib/practice/types";
 
 const COURSE = "ACA";
 
+// Inverse of the `${COURSE}#${examCode}` shape built below for the internal
+// /api/leaderboard fetch — also GetChartered_app's own examKey convention
+// (its leaderboard screen's handleInvite shares a link carrying this same
+// param). Used to preselect an exam when the page is opened via a shared
+// link rather than picked from the dropdown.
+function examCodeFromKey(examKey: string | null): string | null {
+  if (!examKey) return null;
+  const prefix = `${COURSE}#`;
+  return examKey.startsWith(prefix) ? examKey.slice(prefix.length) : null;
+}
+
 export function useLeaderboard() {
   const { loading: examsLoading, exams, error: examsError } = useExamModules();
   const { examPrep, loading: examPrepLoading, primaryExam } = useExamPrep();
+  const searchParams = useSearchParams();
   const [selectedExamCode, setSelectedExamCode] = useState<string | null>(null);
   const [leaderboardLoading, setLeaderboardLoading] = useState(false);
   const [leaderboardData, setLeaderboardData] = useState<LeaderboardData | null>(null);
   const [leaderboardError, setLeaderboardError] = useState<string | null>(null);
 
-  // Default to the user's real exam sitting (POST/GET /exam-prep — a
-  // specific exam code the user actually registered via My Exams, not the
-  // coarse onboarding target_exam_window bucket), falling back to the first
-  // exam in the tree if they haven't set one up yet. Mirrors
-  // GetChartered_app's own default-selection rule in
+  // Default to (in priority order): an exam shared via ?examKey= (someone's
+  // invite link — see ShareLeaderboardButton in LeaderboardClient.tsx), then
+  // the user's real exam sitting (POST/GET /exam-prep — a specific exam code
+  // the user actually registered via My Exams, not the coarse onboarding
+  // target_exam_window bucket), then just the first exam in the tree.
+  // Mirrors GetChartered_app's own default-selection rule in
   // hooks/useBackendLeaderboard.ts: `entries.find(e => e.isPrimary) ??
-  // entries[0]`. Waits for both fetches so this doesn't flash "first exam"
-  // and then jump to the real one a beat later.
+  // entries[0]` (the app has no ?examKey= equivalent of its own — its
+  // handleInvite link only pre-fills the recipient's *picker selection*
+  // client-side, it doesn't grant access to anything or record a
+  // relationship between inviter and invitee, and neither does this).
+  // Waits for both fetches so this doesn't flash "first exam" and then jump
+  // to the real one a beat later.
   if (!examsLoading && !examPrepLoading && selectedExamCode === null && exams.length > 0) {
-    const defaultCode = primaryExam?.examCode ?? exams[0].code;
+    const sharedCode = examCodeFromKey(searchParams.get("examKey"));
+    const defaultCode =
+      (sharedCode && exams.some((e) => e.code === sharedCode) ? sharedCode : null) ??
+      primaryExam?.examCode ??
+      exams[0].code;
     setSelectedExamCode(exams.some((e) => e.code === defaultCode) ? defaultCode : exams[0].code);
   }
 

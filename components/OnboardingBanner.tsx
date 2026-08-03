@@ -42,7 +42,7 @@ export function OnboardingBanner() {
         if (!res.ok) return;
         const data = await res.json();
         if (cancelled) return;
-        if (data?.metadata?.onboarding_completed !== true) {
+        if (data?.profile?.onboardingCompleted !== true) {
           setNeedsOnboarding(true);
         }
       } catch {

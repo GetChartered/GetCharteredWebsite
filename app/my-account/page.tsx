@@ -72,8 +72,9 @@ export default async function MyAccountPage({
         )}
       </div>
 
-      {/* My Exams */}
-      <div>
+      {/* My Exams — id'd so other pages (e.g. Progress's "Next Exam" tile)
+          can deep-link straight to this section via /my-account#my-exams. */}
+      <div id="my-exams">
         <h2 className="text-title mb-2" style={{ fontWeight: 700, color: "var(--color-text)" }}>
           My Exams
         </h2>

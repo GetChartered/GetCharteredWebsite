@@ -2,18 +2,33 @@ import 'server-only';
 import { invalidateCachedUserMetadata, setCachedUserMetadata } from '@/lib/onboardingCache';
 
 // Validate environment variables at module load time
-const AUTH0_DOMAIN = process.env.AUTH0_DOMAIN;
 const AUTH0_CLIENT_ID = process.env.AUTH0_CLIENT_ID;
 const AUTH0_CLIENT_SECRET = process.env.AUTH0_CLIENT_SECRET;
 
-if (!AUTH0_DOMAIN || !AUTH0_CLIENT_ID || !AUTH0_CLIENT_SECRET) {
+if (!AUTH0_CLIENT_ID || !AUTH0_CLIENT_SECRET) {
   throw new Error(
-    'Missing required Auth0 environment variables: AUTH0_DOMAIN, AUTH0_CLIENT_ID, AUTH0_CLIENT_SECRET'
+    'Missing required Auth0 environment variables: AUTH0_CLIENT_ID, AUTH0_CLIENT_SECRET'
   );
 }
 
-const AUTH0_MGMT_DOMAIN = process.env.AUTH0_MANAGEMENT_DOMAIN || AUTH0_DOMAIN;
-const AUTH0_BASE = `https://${AUTH0_MGMT_DOMAIN}`;
+// DELIBERATELY NOT process.env.AUTH0_DOMAIN, and DELIBERATELY NOT the same
+// value as that env var — Auth0's Management API does not work over a
+// custom domain at all, confirmed via a live 403: "Service not enabled
+// within domain: https://auth.getchartered.app/api/v2/". AUTH0_DOMAIN was
+// migrated to the custom domain (auth.getchartered.app) for everything
+// else in this app — login, token issuance, the JWT-based GC backend calls
+// (lib/auth0Client.ts's Auth0Client reads it implicitly; lib/gcApi.ts's
+// callGcApi relies on tokens issued against it) — and needs to STAY that
+// custom domain for all of that to keep working. The Management API calls
+// in this file are a completely separate concern that only ever works
+// against the raw tenant domain, custom domain or not, forever, per Auth0's
+// own platform limitation. If a future domain rotation changes the tenant
+// itself (not just adding/changing a custom domain in front of it), update
+// this constant too — but do NOT "simplify" this back to reusing
+// AUTH0_DOMAIN or an env-var fallback that silently resolves to it (that's
+// exactly the bug this constant exists to prevent from recurring).
+const AUTH0_MANAGEMENT_TENANT_DOMAIN = 'dev-1lqwk84wufvuexsg.us.auth0.com';
+const AUTH0_BASE = `https://${AUTH0_MANAGEMENT_TENANT_DOMAIN}`;
 
 let cachedToken: { token: string; expiresAt: number } | null = null;
 

@@ -11,11 +11,26 @@ import type { WeeklyStat } from "@/lib/practice/types";
 // Important constraint carried over from the backend contract (confirmed
 // against BackendWeeklyStat in GetChartered_app's components/
 // useBackendData.tsx): `dailyBreakdown` is a date -> completed-SESSION-COUNT
-// map, not a per-day score/correct breakdown. There is no backend field
-// anywhere that gives per-day score/correct resolution — only weekly
-// aggregates (`score`, `newCorrect`, `reviewCorrect`) do. So the "This week"
-// daily view plots real session counts (a metric daily data actually
-// supports), not a fabricated daily score.
+// map, not a per-day score breakdown, and there is still no backend field
+// giving per-day SCORE resolution — only the weekly aggregate (`score`)
+// does. So the "This week" daily view plots real session counts (a metric
+// daily data actually supports), not a fabricated daily score.
+//
+// `dailyNewCorrect`/`dailyReviewCorrect` (added later) DO give per-day
+// resolution for new-vs-review correctness specifically — see
+// buildCurrentWeekNewReviewDailySeries below, used by NewVsReviewChart's
+// "week" range. Same "missing day/week means 0" contract as dailyBreakdown.
+//
+// `examBreakdown` (per week) and `dailyNewCorrectByExam`/
+// `dailyReviewCorrectByExam` (per day, added later still) split
+// score/newCorrect/reviewCorrect by exam code — see resolveWeekTotals below
+// and buildCurrentWeekNewReviewDailySeries's `examCodes` param. Every
+// build*Series function here takes an optional `examCodes: Set<string> |
+// null` — null (the default) preserves the original unfiltered behavior
+// exactly; a Set sums only those exam codes' contributions instead of using
+// the flat fields. There's still no per-day SESSION-COUNT-by-exam field, so
+// the "This week" daily-sessions view (buildCurrentWeekDailySeries) has no
+// examCodes param — it can't be exam-scoped.
 
 export const WEEKS_IN_FRAME = 12;
 export const WEEKS_PAST_3_MONTHS = 13;
@@ -54,6 +69,13 @@ export type MonthPoint = {
   monthKey: string;
   score: number;
   correct: number;
+  /** newCorrect + reviewCorrect breakdown of `correct` above — added for
+   *  NewVsReviewChart's 6-month/all-time views (buildWeekSeries already had
+   *  this split at week granularity; monthly aggregation previously
+   *  collapsed it into `correct` only, which was fine while nothing read
+   *  the split at month granularity). */
+  newCorrect: number;
+  reviewCorrect: number;
   isCurrent: boolean;
 };
 
@@ -73,6 +95,38 @@ function toDateKey(d: Date): string {
 
 function monthKeyOf(year: number, monthIndex0: number): string {
   return `${year}-${String(monthIndex0 + 1).padStart(2, "0")}`;
+}
+
+/**
+ * A week's effective score/newCorrect/reviewCorrect: the flat fields when
+ * `examCodes` is null (unfiltered — the original, unchanged behavior), or
+ * summed from `examBreakdown` across only the given exam codes when it
+ * isn't. A week with no examBreakdown at all (recorded before that field
+ * existed on the backend), or with none of the requested codes present in
+ * it, resolves to all-zero rather than erroring — same "missing means 0"
+ * contract dailyBreakdown/dailyNewCorrect already have elsewhere in this
+ * file.
+ */
+function resolveWeekTotals(
+  stat: WeeklyStat | undefined,
+  examCodes: Set<string> | null
+): { score: number; newCorrect: number; reviewCorrect: number } {
+  if (!stat) return { score: 0, newCorrect: 0, reviewCorrect: 0 };
+  if (!examCodes) {
+    return { score: stat.score ?? 0, newCorrect: stat.newCorrect ?? 0, reviewCorrect: stat.reviewCorrect ?? 0 };
+  }
+  const breakdown = stat.examBreakdown ?? {};
+  let score = 0;
+  let newCorrect = 0;
+  let reviewCorrect = 0;
+  for (const code of examCodes) {
+    const entry = breakdown[code];
+    if (!entry) continue;
+    score += entry.score ?? 0;
+    newCorrect += entry.newCorrect ?? 0;
+    reviewCorrect += entry.reviewCorrect ?? 0;
+  }
+  return { score, newCorrect, reviewCorrect };
 }
 
 // Monday-start week, matching the app's convention (ISO 8601 weeks start
@@ -127,7 +181,11 @@ export function buildWeekSeries(
   weeklyStats: WeeklyStat[],
   weeksInFrame: number = WEEKS_IN_FRAME,
   anchorWeekStartISO: string = getCurrentWeekStartISO(),
-  now: Date = new Date()
+  now: Date = new Date(),
+  /** When set, score/newCorrect/reviewCorrect are summed from each week's
+   *  examBreakdown across just these exam codes instead of using the flat
+   *  fields — see resolveWeekTotals. */
+  examCodes: Set<string> | null = null
 ): WeekPoint[] {
   const byWeek = new Map<string, WeeklyStat>();
   for (const w of weeklyStats) {
@@ -141,12 +199,13 @@ export function buildWeekSeries(
   for (let i = weeksInFrame - 1; i >= 0; i--) {
     const iso = shiftWeekStartISO(anchorWeekStartISO, -i);
     const stat = byWeek.get(iso);
+    const totals = resolveWeekTotals(stat, examCodes);
     points.push({
       weekStartISO: iso,
-      score: stat?.score ?? 0,
-      correct: (stat?.newCorrect ?? 0) + (stat?.reviewCorrect ?? 0),
-      newCorrect: stat?.newCorrect ?? 0,
-      reviewCorrect: stat?.reviewCorrect ?? 0,
+      score: totals.score,
+      correct: totals.newCorrect + totals.reviewCorrect,
+      newCorrect: totals.newCorrect,
+      reviewCorrect: totals.reviewCorrect,
       hasData: stat != null,
       isCurrent: iso === currentWeekISO,
     });
@@ -165,16 +224,20 @@ export function buildMonthlySeries(
   weeklyStats: WeeklyStat[],
   monthsInFrame: number = MONTHS_IN_FRAME,
   anchorMonthKey: string = getCurrentMonthKey(),
-  now: Date = new Date()
+  now: Date = new Date(),
+  /** Same meaning as buildWeekSeries's examCodes param. */
+  examCodes: Set<string> | null = null
 ): MonthPoint[] {
-  const byMonth = new Map<string, { score: number; correct: number }>();
+  const byMonth = new Map<string, { score: number; newCorrect: number; reviewCorrect: number }>();
   for (const w of weeklyStats) {
     const d = new Date(w.weekStartISO);
     if (Number.isNaN(d.getTime())) continue;
     const key = monthKeyOf(d.getFullYear(), d.getMonth());
-    const existing = byMonth.get(key) ?? { score: 0, correct: 0 };
-    existing.score += w.score ?? 0;
-    existing.correct += (w.newCorrect ?? 0) + (w.reviewCorrect ?? 0);
+    const totals = resolveWeekTotals(w, examCodes);
+    const existing = byMonth.get(key) ?? { score: 0, newCorrect: 0, reviewCorrect: 0 };
+    existing.score += totals.score;
+    existing.newCorrect += totals.newCorrect;
+    existing.reviewCorrect += totals.reviewCorrect;
     byMonth.set(key, existing);
   }
 
@@ -187,7 +250,9 @@ export function buildMonthlySeries(
     points.push({
       monthKey: key,
       score: agg?.score ?? 0,
-      correct: agg?.correct ?? 0,
+      correct: (agg?.newCorrect ?? 0) + (agg?.reviewCorrect ?? 0),
+      newCorrect: agg?.newCorrect ?? 0,
+      reviewCorrect: agg?.reviewCorrect ?? 0,
       isCurrent: key === currentMonthKey,
     });
   }
@@ -210,15 +275,20 @@ export function getEarliestMonthKey(weeklyStats: WeeklyStat[]): string | null {
 /** Monthly series spanning every month from the user's earliest recorded
  *  activity through the current month. Falls back to a single current-month
  *  point when there's no history yet, rather than an empty/undefined frame. */
-export function buildAllTimeMonthlySeries(weeklyStats: WeeklyStat[], now: Date = new Date()): MonthPoint[] {
+export function buildAllTimeMonthlySeries(
+  weeklyStats: WeeklyStat[],
+  now: Date = new Date(),
+  /** Same meaning as buildWeekSeries's examCodes param. */
+  examCodes: Set<string> | null = null
+): MonthPoint[] {
   const currentMonthKey = getCurrentMonthKey(now);
   const earliest = getEarliestMonthKey(weeklyStats);
-  if (!earliest) return buildMonthlySeries(weeklyStats, 1, currentMonthKey, now);
+  if (!earliest) return buildMonthlySeries(weeklyStats, 1, currentMonthKey, now, examCodes);
 
   const [ey, em] = earliest.split("-").map(Number);
   const [cy, cm] = currentMonthKey.split("-").map(Number);
   const monthsSpan = (cy - ey) * 12 + (cm - em) + 1;
-  return buildMonthlySeries(weeklyStats, monthsSpan, currentMonthKey, now);
+  return buildMonthlySeries(weeklyStats, monthsSpan, currentMonthKey, now, examCodes);
 }
 
 /**
@@ -244,19 +314,88 @@ export function buildCurrentWeekDailySeries(weeklyStats: WeeklyStat[], now: Date
   return points;
 }
 
+export type NewReviewDayPoint = {
+  /** "YYYY-MM-DD" */
+  dateISO: string;
+  newCorrect: number;
+  reviewCorrect: number;
+  isCurrent: boolean;
+};
+
+/**
+ * Same Monday-through-today day range as buildCurrentWeekDailySeries above
+ * (see its doc comment for why future days in the week aren't included),
+ * but reading dailyNewCorrect/dailyReviewCorrect instead of dailyBreakdown —
+ * for NewVsReviewChart's "week" range, which needs the new-vs-review split
+ * at daily resolution rather than a session count.
+ *
+ * A week with no dailyNewCorrect/dailyReviewCorrect data at all (any week
+ * recorded before these fields existed on the backend) defaults every day
+ * to 0/0 rather than erroring — same "missing means zero, not omitted on
+ * purpose" contract dailyBreakdown itself already has.
+ */
+export function buildCurrentWeekNewReviewDailySeries(
+  weeklyStats: WeeklyStat[],
+  now: Date = new Date(),
+  /** When set, each day's newCorrect/reviewCorrect are summed from
+   *  dailyNewCorrectByExam/dailyReviewCorrectByExam across just these exam
+   *  codes instead of the flat dailyNewCorrect/dailyReviewCorrect maps. A
+   *  day/week with no *ByExam data at all (recorded before those fields
+   *  existed) resolves to 0 rather than erroring — same contract as the
+   *  unfiltered case already has. */
+  examCodes: Set<string> | null = null
+): NewReviewDayPoint[] {
+  const weekStartISO = getCurrentWeekStartISO(now);
+  const match = weeklyStats.find((w) => weekKeyOf(w.weekStartISO) === weekStartISO);
+  const newBreakdown = match?.dailyNewCorrect ?? {};
+  const reviewBreakdown = match?.dailyReviewCorrect ?? {};
+  const newByExam = match?.dailyNewCorrectByExam ?? {};
+  const reviewByExam = match?.dailyReviewCorrectByExam ?? {};
+  const todayKey = toDateKey(now);
+
+  const resolveDay = (key: string): { newCorrect: number; reviewCorrect: number } => {
+    if (!examCodes) {
+      return { newCorrect: newBreakdown[key] ?? 0, reviewCorrect: reviewBreakdown[key] ?? 0 };
+    }
+    let newCorrect = 0;
+    let reviewCorrect = 0;
+    const newForDay = newByExam[key] ?? {};
+    const reviewForDay = reviewByExam[key] ?? {};
+    for (const code of examCodes) {
+      newCorrect += newForDay[code] ?? 0;
+      reviewCorrect += reviewForDay[code] ?? 0;
+    }
+    return { newCorrect, reviewCorrect };
+  };
+
+  const [y, m, d] = weekStartISO.split("-").map(Number);
+  const points: NewReviewDayPoint[] = [];
+  for (let i = 0; i < 7; i++) {
+    const day = new Date(y, (m ?? 1) - 1, (d ?? 1) + i);
+    const key = toDateKey(day);
+    if (key > todayKey) break;
+    const { newCorrect, reviewCorrect } = resolveDay(key);
+    points.push({ dateISO: key, newCorrect, reviewCorrect, isCurrent: key === todayKey });
+  }
+  return points;
+}
+
 /** Score/Correct for the current week specifically — 0/false when the
  *  backend hasn't written a row for this week yet. Always the real current
  *  week, independent of whatever range is selected in the chart above it. */
 export function getCurrentWeekStat(
   weeklyStats: WeeklyStat[],
-  now: Date = new Date()
+  now: Date = new Date(),
+  /** Same meaning as buildWeekSeries's examCodes param. */
+  examCodes: Set<string> | null = null
 ): { score: number; correct: number; hasData: boolean } {
   const currentKey = getCurrentWeekStartISO(now);
   const match = weeklyStats.find((w) => weekKeyOf(w.weekStartISO) === currentKey);
   if (!match) return { score: 0, correct: 0, hasData: false };
+  const totals = resolveWeekTotals(match, examCodes);
   return {
-    score: match.score,
-    correct: (match.newCorrect ?? 0) + (match.reviewCorrect ?? 0),
+    score: totals.score,
+    correct: totals.newCorrect + totals.reviewCorrect,
     hasData: true,
   };
 }

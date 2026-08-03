@@ -116,12 +116,41 @@ export interface ModuleStat {
   masteredCount: number;
 }
 
+export interface ExamBreakdownEntry {
+  newCorrect: number;
+  reviewCorrect: number;
+  score: number;
+}
+
 export interface WeeklyStat {
   weekStartISO: string;
   newCorrect: number;
   reviewCorrect: number;
   score: number;
   dailyBreakdown?: Record<string, number>;
+  /** Date-string ("YYYY-MM-DD") -> correct-on-first-attempt count for that
+   *  day. Same "missing day/week means 0, not omitted-on-purpose" contract
+   *  as dailyBreakdown — absent entirely on weeks recorded before this field
+   *  existed on the backend. */
+  dailyNewCorrect?: Record<string, number>;
+  /** Date-string ("YYYY-MM-DD") -> correct-on-a-previously-seen-question
+   *  count for that day. Same contract as dailyNewCorrect above. */
+  dailyReviewCorrect?: Record<string, number>;
+  /** Exam code (e.g. "BIP", derived server-side from the module code prefix
+   *  — same codes My Exams/exam-prep already use) -> that week's
+   *  newCorrect/reviewCorrect/score for just that exam. Same "missing means
+   *  0, absent entirely on weeks before this field existed" contract as
+   *  dailyBreakdown. Powers the exam-scope filter's per-exam recompute of
+   *  Weekly Activity — see lib/practice/weeklyActivityChart.ts. */
+  examBreakdown?: Record<string, ExamBreakdownEntry>;
+  /** Date-string -> (exam code -> correct-on-first-attempt count for that
+   *  exam that day). Same contract as examBreakdown/dailyNewCorrect. Powers
+   *  the exam-scope filter's per-exam recompute of New vs Review's "week"
+   *  range. */
+  dailyNewCorrectByExam?: Record<string, Record<string, number>>;
+  /** Date-string -> (exam code -> correct-on-a-previously-seen-question
+   *  count for that exam that day). Same contract as dailyNewCorrectByExam. */
+  dailyReviewCorrectByExam?: Record<string, Record<string, number>>;
 }
 
 export interface ProgressData {

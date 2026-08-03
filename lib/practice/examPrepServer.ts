@@ -51,3 +51,37 @@ export async function postExamPrepEntry(params: PostExamPrepParams): Promise<Pos
 
   return { ok: true, examPrep: parseExamPrepData((data as { examPrep?: unknown } | null)?.examPrep) };
 }
+
+export interface DeleteExamPrepParams {
+  course: string;
+  examCode: string;
+}
+
+export type DeleteExamPrepResult =
+  | { ok: true; examPrep: ExamPrepEntry[] }
+  | { ok: false; status: number };
+
+/** DELETE /exam-prep — removes a single (course, examCode) entry
+ *  server-side, same (course, examCode) composite POST already upserts by.
+ *  Mirrors postExamPrepEntry's shape: same callGcApi usage, same
+ *  ok/status error handling, and the response is assumed to carry the same
+ *  { examPrep: [...] } full-list shape GET/POST already return (that
+ *  assumption isn't independently verified against a live response the way
+ *  the rest of this file's shapes were — see MyExamsSection's Save flow,
+ *  which deliberately doesn't depend on this response's exact shape for
+ *  correctness: it tracks the post-delete state itself and only uses this
+ *  call's success/failure, not its body). */
+export async function deleteExamPrepEntry(params: DeleteExamPrepParams): Promise<DeleteExamPrepResult> {
+  const response = await callGcApi("/exam-prep", {
+    method: "DELETE",
+    body: JSON.stringify(params),
+  });
+  const data = await response.json().catch(() => null);
+
+  if (!response.ok) {
+    console.error("[deleteExamPrepEntry] DELETE /exam-prep failed", response.status, data);
+    return { ok: false, status: response.status };
+  }
+
+  return { ok: true, examPrep: parseExamPrepData((data as { examPrep?: unknown } | null)?.examPrep) };
+}
