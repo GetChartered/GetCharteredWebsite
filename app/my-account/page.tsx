@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { CreditCard, Calendar, Sparkles, Target, TrendingUp, Flame, ArrowRight, LucideIcon } from "lucide-react";
+import { Button } from "@/components/ui";
 import SubscriptionDetails from "@/components/SubscriptionDetails";
 import { CancelSubscriptionDialog } from "@/components/account/CancelSubscriptionDialog";
 import { BillingPortalButton } from "@/components/BillingPortalButton";
@@ -483,6 +484,27 @@ function WaitlistPlaceholder() {
           style={{ color: "var(--color-text-muted)" }}
         >
           You&apos;ll be among the first to know when subscriptions open.
+        </p>
+
+        {/* Coming-soon preview of the real action this card will eventually
+            host — disabled via Button's own `disabled` prop (same
+            opacity/not-allowed-cursor treatment as every other disabled
+            button on the site, see .btn:disabled in globals.css), not a
+            one-off style, so it reads as "not yet" rather than "broken". */}
+        <Button
+          variant="outline"
+          size="md"
+          leftIcon={CreditCard}
+          disabled
+          style={{ marginTop: 20 }}
+        >
+          Manage subscription
+        </Button>
+        <p
+          className="text-caption"
+          style={{ color: "var(--color-text-muted)", marginTop: 8 }}
+        >
+          Available once subscriptions open
         </p>
       </div>
     </div>
