@@ -138,7 +138,7 @@ function ModuleCoverageCard({
           width: 36,
           height: 36,
           flexShrink: 0,
-          backgroundColor: visual.tint + "20",
+          backgroundColor: visual.bg ?? `color-mix(in srgb, ${visual.tint} 20%, var(--color-card))`,
         }}
       >
         <Icon size={18} style={{ color: visual.tint }} />
