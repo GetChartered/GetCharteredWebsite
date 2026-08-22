@@ -168,6 +168,25 @@ export function Footer() {
             <ul className="space-y-2" style={{ listStyle: "none" }}>
               <li>
                 <Link
+                  href="/about"
+                  className="text-sm transition-colors"
+                  style={{
+                    color: "var(--color-text-secondary)",
+                    textDecoration: "none",
+                  }}
+                  onMouseEnter={(e) =>
+                    (e.currentTarget.style.color = "var(--color-tint)")
+                  }
+                  onMouseLeave={(e) =>
+                    (e.currentTarget.style.color =
+                      "var(--color-text-secondary)")
+                  }
+                >
+                  About Us
+                </Link>
+              </li>
+              <li>
+                <Link
                   href="/contact"
                   className="text-sm transition-colors"
                   style={{

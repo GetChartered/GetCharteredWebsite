@@ -94,6 +94,13 @@
   --color-overlay: rgba(0, 0, 0, 0.7);
 }
 
+/* ICAEW partner badge is a single-colour (black) mark on a transparent
+   background; invert it in dark mode so it stays visible against dark
+   cards instead of nearly disappearing. */
+[data-theme="dark"] .icaew-logo {
+  filter: invert(1);
+}
+
 /* ============================================
    BASE STYLES
    ============================================ */

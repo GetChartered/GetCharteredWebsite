@@ -152,6 +152,11 @@ export function Navigation() {
                 </Link>
               </>
             )}
+            <Link href="/about" style={{ textDecoration: "none" }}>
+              <Button variant="ghost" size="sm">
+                About
+              </Button>
+            </Link>
             <Link href="/faq" style={{ textDecoration: "none" }}>
               <Button variant="ghost" size="sm">
                 FAQ
@@ -257,6 +262,15 @@ export function Navigation() {
                   </Link>
                 </>
               )}
+              <Link
+                href="/about"
+                style={{ textDecoration: "none" }}
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                <Button variant="ghost" size="md" fullWidth>
+                  About
+                </Button>
+              </Link>
               <Link
                 href="/faq"
                 style={{ textDecoration: "none" }}
