@@ -1,9 +1,10 @@
-import { auth0, getUserMetadataCached } from "@/lib/auth0";
+import { auth0, getUserMetadataCached, getProfileCached, isNextControlFlowError } from "@/lib/auth0";
 import type { OnboardingMetadata } from "@/lib/auth0-management";
 import { redirect } from "next/navigation";
-import LogoutButton from "@/components/LogoutButton";
 import { Navigation } from "@/components/Navigation";
 import { Footer } from "@/components/Footer";
+import { AvatarUpload } from "@/components/account/AvatarUpload";
+import { AccountSidebarNav } from "@/components/account/AccountSidebarNav";
 
 // Resolve a display name from the user's onboarding metadata, falling back
 // to whatever the IdP supplied. Treats email-shaped names ("foo@bar.com")
@@ -53,108 +54,58 @@ export default async function AccountLayout({
   const displayName = pickDisplayName(metadata.full_name, user.name, user.email);
   const initials = getInitials(displayName, user.email);
 
+  // Database (email/password) users get a "Security" jump-link since that
+  // section only renders for them — see app/my-account/page.tsx's own
+  // identical check for why (social-login credentials live with the IdP).
+  const isDatabaseUser = user.sub?.startsWith("auth0|") ?? false;
+
+  // A custom uploaded avatar (once backend-reference/updateUserPhoto.js is
+  // deployed) takes priority over the IdP picture — see AvatarUpload's own
+  // fallback chain (photoUrl -> fallbackPictureUrl -> initials). Never let a
+  // profile-fetch failure break the whole account section: same defensive
+  // try/catch shape as requireOnboardedSession's own profile lookup.
+  let photoUrl: string | undefined;
+  try {
+    const profile = await getProfileCached(user.sub);
+    photoUrl = profile.photoUrl;
+  } catch (error) {
+    if (isNextControlFlowError(error)) throw error;
+    console.error("AccountLayout: failed to fetch profile for avatar photoUrl", { userId: user.sub, error });
+  }
+
   return (
     <div className="min-h-screen">
       <Navigation />
 
-      <div className="container py-12" style={{ paddingTop: "80px" }}>
-        <div className="mb-8">
-          <h1 className="text-display mb-2">My Account</h1>
-          <p className="text-body text-text-secondary">
-            Manage your profile, subscription, and preferences
-          </p>
-        </div>
+      {/* Two-column page shell: a sticky left sidebar (identity + jump
+          nav + Log Out) and the actual account content on the right,
+          genuinely occupying its own grid track (1fr) rather than one
+          centred column with a header strip above it. */}
+      <div className="account-page-header">
+        <h1 className="text-display mb-2">My Account</h1>
+        <p className="text-body" style={{ color: "var(--color-text-secondary)" }}>
+          Manage your profile, subscription, and preferences
+        </p>
+      </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          {/* Sidebar Navigation */}
-          <aside className="lg:col-span-1">
-            <div className="card sticky top-8" style={{ padding: 0 }}>
-              {/* User Info */}
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "12px",
-                  padding: "18px 16px",
-                  borderBottom: "1px solid var(--color-border-subtle)",
-                }}
-              >
-                {user.picture ? (
-                  <img
-                    src={user.picture}
-                    alt={displayName || user.email || "User"}
-                    className="rounded-full"
-                    style={{
-                      width: "44px",
-                      height: "44px",
-                      flexShrink: 0,
-                      objectFit: "cover",
-                      border: "1px solid var(--color-border-subtle)",
-                    }}
-                  />
-                ) : (
-                  <div
-                    aria-hidden
-                    className="rounded-full flex items-center justify-center"
-                    style={{
-                      width: "44px",
-                      height: "44px",
-                      flexShrink: 0,
-                      backgroundColor:
-                        "color-mix(in srgb, var(--color-tint) 14%, transparent)",
-                      color: "var(--color-tint)",
-                      fontSize: "15px",
-                      fontWeight: 600,
-                      letterSpacing: "0.02em",
-                    }}
-                  >
-                    {initials}
-                  </div>
-                )}
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  {displayName && (
-                    <p
-                      style={{
-                        fontSize: "14px",
-                        fontWeight: 600,
-                        color: "var(--color-text)",
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                        whiteSpace: "nowrap",
-                        lineHeight: 1.3,
-                      }}
-                      title={displayName}
-                    >
-                      {displayName}
-                    </p>
-                  )}
-                  <p
-                    style={{
-                      fontSize: "12px",
-                      color: "var(--color-text-secondary)",
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                      whiteSpace: "nowrap",
-                      lineHeight: 1.3,
-                      marginTop: displayName ? "2px" : 0,
-                    }}
-                    title={user.email}
-                  >
-                    {user.email}
-                  </p>
-                </div>
-              </div>
+      <div className="account-layout">
+        <aside className="account-sidebar">
+          <AvatarUpload
+            initialPhotoUrl={photoUrl}
+            fallbackPictureUrl={user.picture}
+            displayName={displayName}
+            email={user.email ?? ""}
+            initials={initials}
+          />
 
-              {/* Logout */}
-              <div style={{ padding: "8px" }}>
-                <LogoutButton />
-              </div>
-            </div>
-          </aside>
+          <AccountSidebarNav includeSecurity={isDatabaseUser} />
 
-          {/* Main Content */}
-          <main className="lg:col-span-3">{children}</main>
-        </div>
+          <a href="/auth/logout" className="account-sidebar-logout">
+            Log Out
+          </a>
+        </aside>
+
+        <main className="account-main">{children}</main>
       </div>
 
       <Footer />

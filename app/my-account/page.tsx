@@ -6,6 +6,8 @@ import { CancelSubscriptionDialog } from "@/components/account/CancelSubscriptio
 import { BillingPortalButton } from "@/components/BillingPortalButton";
 import { ChangePasswordButton } from "@/components/ChangePasswordButton";
 import { MyExamsSection } from "@/components/account/MyExamsSection";
+import { DeleteAccountModal } from "@/components/account/DeleteAccountModal";
+import { ScrollReveal } from "@/components/ScrollReveal";
 import { SUBSCRIPTIONS_ENABLED } from "@/lib/features";
 import { requireOnboardedSession } from "@/lib/auth0";
 import { fetchProgressData } from "@/lib/practice/fetchProgress";
@@ -33,212 +35,176 @@ export default async function MyAccountPage({
   const progressData = await fetchProgressData();
 
   return (
-    <div className="space-y-6">
-      {/* Practice quick stats */}
-      <div>
-        <div className="flex items-center justify-between mb-2">
-          <h2 className="text-title" style={{ fontWeight: 700, color: "var(--color-text)" }}>
-            Practice
-          </h2>
-          <Link
-            href="/practice"
-            style={{
-              fontSize: 13,
-              fontWeight: 600,
-              color: "var(--color-tint)",
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 4,
-              textDecoration: "none",
-            }}
-          >
-            Go to Practice <ArrowRight size={14} />
-          </Link>
-        </div>
-        <p className="text-body mb-4" style={{ color: "var(--color-text-secondary)" }}>
-          Your practice activity at a glance.
-        </p>
-
-        {progressData ? (
-          <QuickStats progressData={progressData} />
-        ) : (
-          <div className="card" style={{ padding: 24, textAlign: "center" }}>
-            <p style={{ color: "var(--color-text-secondary)", fontSize: 14, marginBottom: 12 }}>
-              Couldn&apos;t load your practice stats right now.
+    <div>
+      {/* Primary tier — the content the user cares about regularly, given
+          more visual weight and breathing room than the settings below. */}
+      <div className="my-account-primary">
+        <ScrollReveal>
+          <div id="practice">
+            <SectionHeading
+              title="Practice"
+              action={
+                <Link
+                  href="/practice"
+                  style={{
+                    fontSize: 13,
+                    fontWeight: 600,
+                    color: "var(--color-tint)",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 4,
+                    textDecoration: "none",
+                  }}
+                >
+                  Go to Practice <ArrowRight size={14} />
+                </Link>
+              }
+            />
+            <p className="mb-6" style={{ fontSize: 14, color: "var(--color-text-secondary)" }}>
+              Your practice activity at a glance.
             </p>
-            <Link href="/practice" className="btn btn-primary btn-sm" style={{ textDecoration: "none" }}>
-              Start Practicing
-            </Link>
+
+            {progressData ? (
+              <QuickStats progressData={progressData} />
+            ) : (
+              <div className="card" style={{ padding: 24, textAlign: "center" }}>
+                <p style={{ color: "var(--color-text-secondary)", fontSize: 14, marginBottom: 12 }}>
+                  Couldn&apos;t load your practice stats right now.
+                </p>
+                <Link href="/practice" className="btn btn-primary btn-sm" style={{ textDecoration: "none" }}>
+                  Start Practicing
+                </Link>
+              </div>
+            )}
           </div>
-        )}
+        </ScrollReveal>
+
+        {/* My Exams — id'd so other pages (e.g. Progress's "Next Exam" tile)
+            can deep-link straight to this section via /my-account#my-exams. */}
+        <ScrollReveal delay={0.06}>
+          <div id="my-exams">
+            <SectionHeading title="My Exams" />
+            <p className="mb-6" style={{ fontSize: 14, color: "var(--color-text-secondary)" }}>
+              Set up which exams you&apos;re sitting and when — this powers your Progress
+              countdown and your default Leaderboard.
+            </p>
+            <MyExamsSection />
+          </div>
+        </ScrollReveal>
       </div>
 
-      {/* My Exams — id'd so other pages (e.g. Progress's "Next Exam" tile)
-          can deep-link straight to this section via /my-account#my-exams. */}
-      <div id="my-exams">
-        <h2 className="text-title mb-2" style={{ fontWeight: 700, color: "var(--color-text)" }}>
-          My Exams
-        </h2>
-        <p className="text-body mb-4" style={{ color: "var(--color-text-secondary)" }}>
-          Set up which exams you&apos;re sitting and when — this powers your Progress
-          countdown and your default Leaderboard.
-        </p>
-        <MyExamsSection />
-      </div>
-
-      {/* Error/Success Messages */}
-      {SUBSCRIPTIONS_ENABLED && error === "already_subscribed" && (
-        <div
-          style={{
-            padding: "16px 20px",
-            borderRadius: "var(--radius-md)",
-            backgroundColor: "rgba(239, 68, 68, 0.1)",
-            border: "1px solid rgba(239, 68, 68, 0.3)",
-            color: "#ef4444",
-            fontSize: "14px",
-            lineHeight: "20px",
-          }}
-        >
-          You already have an active subscription. You cannot purchase another
-          subscription while one is active.
-        </div>
-      )}
-
-      {SUBSCRIPTIONS_ENABLED && cancelled === "true" && (
-        <div
-          style={{
-            padding: "16px 20px",
-            borderRadius: "var(--radius-md)",
-            backgroundColor: "rgba(34, 197, 94, 0.1)",
-            border: "1px solid rgba(34, 197, 94, 0.3)",
-            color: "#22c55e",
-            fontSize: "14px",
-            lineHeight: "20px",
-          }}
-        >
-          Your subscription has been cancelled successfully. You will retain
-          access until the end of your current billing period.
-        </div>
-      )}
-
-      {/* Subscription Section */}
-      <div>
-        <h2
-          className="text-title mb-2"
-          style={{ fontWeight: 700, color: "var(--color-text)" }}
-        >
-          Subscription
-        </h2>
-        <p
-          className="text-body mb-4"
-          style={{ color: "var(--color-text-secondary)" }}
-        >
-          {SUBSCRIPTIONS_ENABLED
-            ? "Manage your subscription plan and billing information"
-            : "Subscriptions open when GetChartered launches in late summer 2026"}
-        </p>
-
-        {SUBSCRIPTIONS_ENABLED ? (
-          subscriptionData &&
-          subscriptionData.status === 6 &&
-          subscriptionData.body ? (
-            <CurrentSubscription subscriptionData={subscriptionData.body} />
-          ) : (
-            <NoSubscription status={subscriptionData?.status ?? 0} />
-          )
-        ) : (
-          <WaitlistPlaceholder />
-        )}
-      </div>
-
-      {/* Account Security — only for database (email/password) users.
-          Social-login users (google-oauth2|…, linkedin|…) manage credentials
-          with their IdP, so there's nothing actionable here for them. */}
-      {isDatabaseUser && (
+      <ScrollReveal>
         <div>
-          <h2
-            className="text-title mb-2"
-            style={{ fontWeight: 700, color: "var(--color-text)" }}
-          >
-            Account Security
-          </h2>
-          <p
-            className="text-body mb-4"
-            style={{ color: "var(--color-text-secondary)" }}
-          >
-            Manage your password and security settings
-          </p>
+          {SUBSCRIPTIONS_ENABLED && error === "already_subscribed" && (
+            <div
+              style={{
+                padding: "16px 20px",
+                marginBottom: 16,
+                borderRadius: "var(--radius-md)",
+                backgroundColor: "rgba(239, 68, 68, 0.1)",
+                border: "1px solid rgba(239, 68, 68, 0.3)",
+                color: "#ef4444",
+                fontSize: "14px",
+                lineHeight: "20px",
+              }}
+            >
+              You already have an active subscription. You cannot purchase another
+              subscription while one is active.
+            </div>
+          )}
 
-          <div className="card" style={{ padding: "24px" }}>
-            <div className="p-4 rounded-lg">
-              <div className="flex items-start sm:items-center justify-between gap-3">
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <p
-                    className="text-label mb-1"
-                    style={{ fontWeight: 500, color: "var(--color-text)" }}
-                  >
-                    Password
-                  </p>
-                  <p
-                    className="text-caption"
-                    style={{ color: "var(--color-text-secondary)" }}
-                  >
-                    Manage your password
-                  </p>
+          {SUBSCRIPTIONS_ENABLED && cancelled === "true" && (
+            <div
+              style={{
+                padding: "16px 20px",
+                marginBottom: 16,
+                borderRadius: "var(--radius-md)",
+                backgroundColor: "rgba(34, 197, 94, 0.1)",
+                border: "1px solid rgba(34, 197, 94, 0.3)",
+                color: "#22c55e",
+                fontSize: "14px",
+                lineHeight: "20px",
+              }}
+            >
+              Your subscription has been cancelled successfully. You will retain
+              access until the end of your current billing period.
+            </div>
+          )}
+
+          <div className="my-account-settings">
+            {/* Subscription */}
+            <div id="subscription">
+              <SectionHeading title="Subscription" />
+              <p style={{ fontSize: 13, color: "var(--color-text-secondary)", marginBottom: 14 }}>
+                {SUBSCRIPTIONS_ENABLED
+                  ? "Manage your subscription plan and billing information"
+                  : "Subscriptions open when GetChartered launches in late summer 2026"}
+              </p>
+
+              {SUBSCRIPTIONS_ENABLED ? (
+                subscriptionData &&
+                subscriptionData.status === 6 &&
+                subscriptionData.body ? (
+                  <CurrentSubscription subscriptionData={subscriptionData.body} />
+                ) : (
+                  <NoSubscription status={subscriptionData?.status ?? 0} />
+                )
+              ) : (
+                <WaitlistPlaceholder />
+              )}
+            </div>
+
+            {/* Account Security — only for database (email/password) users.
+                Social-login users (google-oauth2|…, linkedin|…) manage
+                credentials with their IdP, so there's nothing actionable
+                here for them. */}
+            {isDatabaseUser && (
+              <div id="security">
+                <SectionHeading title="Account Security" />
+                <p style={{ fontSize: 13, color: "var(--color-text-secondary)", marginBottom: 14 }}>
+                  Manage your password and security settings
+                </p>
+
+                <div className="card" style={{ padding: "20px 24px" }}>
+                  <div className="flex items-start sm:items-center justify-between gap-3">
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <p style={{ fontSize: 14, fontWeight: 500, color: "var(--color-text)", marginBottom: 2 }}>
+                        Password
+                      </p>
+                      <p style={{ fontSize: 12, color: "var(--color-text-secondary)" }}>
+                        Manage your password
+                      </p>
+                    </div>
+                    <ChangePasswordButton />
+                  </div>
                 </div>
-                <ChangePasswordButton />
+              </div>
+            )}
+
+            {/* Danger Zone */}
+            <div>
+              <SectionHeading title="Danger Zone" accentColor="var(--color-danger)" />
+              <p style={{ fontSize: 13, color: "var(--color-text-secondary)", marginBottom: 14 }}>
+                Irreversible actions for your account
+              </p>
+
+              <div className="card border-2 border-color-danger/20" style={{ padding: "20px 24px" }}>
+                <div className="flex items-start sm:items-center justify-between gap-3">
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p style={{ fontSize: 14, fontWeight: 500, color: "var(--color-text)", marginBottom: 2 }}>
+                      Delete Account
+                    </p>
+                    <p style={{ fontSize: 12, color: "var(--color-text-secondary)" }}>
+                      Permanently delete your account and all associated data
+                    </p>
+                  </div>
+                  <DeleteAccountModal email={session.user.email || ""} />
+                </div>
               </div>
             </div>
           </div>
         </div>
-      )}
-
-      {/* Danger Zone */}
-      <div>
-        <h2
-          className="text-title mb-2"
-          style={{ fontWeight: 700, color: "var(--color-danger)" }}
-        >
-          Danger Zone
-        </h2>
-        <p
-          className="text-body mb-4"
-          style={{ color: "var(--color-text-secondary)" }}
-        >
-          Irreversible actions for your account
-        </p>
-
-        <div
-          className="card border-2 border-color-danger/20"
-          style={{ padding: "24px" }}
-        >
-          <div className="p-4 rounded-lg bg-color-danger/5">
-            <div className="flex items-start sm:items-center justify-between gap-3">
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <p
-                  className="text-label mb-1"
-                  style={{ fontWeight: 500, color: "var(--color-text)" }}
-                >
-                  Delete Account
-                </p>
-                <p
-                  className="text-caption"
-                  style={{ color: "var(--color-text-secondary)" }}
-                >
-                  Permanently delete your account and all associated data
-                </p>
-              </div>
-              <Link
-                href="/account/delete"
-                className="btn btn-danger btn-sm"
-                style={{ flexShrink: 0 }}
-              >
-                Delete Account
-              </Link>
-            </div>
-          </div>
-        </div>
-      </div>
+      </ScrollReveal>
     </div>
   );
 }
@@ -453,60 +419,39 @@ function CurrentSubscription({ subscriptionData }: { subscriptionData: any }) {
 
 function WaitlistPlaceholder() {
   return (
-    <div className="card" style={{ padding: "24px" }}>
-      <div className="text-center py-10">
-        <div
-          className="rounded-full flex items-center justify-center mx-auto mb-4"
-          style={{
-            backgroundColor: "rgba(0, 173, 181, 0.12)",
-            width: "56px",
-            height: "56px",
-            flexShrink: 0,
-          }}
-        >
-          <Sparkles size={24} style={{ color: "var(--accent-blue)" }} />
-        </div>
-        <h3
-          className="text-title mb-2"
-          style={{ fontWeight: 600, color: "var(--color-text)" }}
-        >
+    <div
+      className="card"
+      style={{ padding: 16, display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}
+    >
+      <div
+        className="rounded-full flex items-center justify-center"
+        style={{
+          backgroundColor: "rgba(0, 173, 181, 0.12)",
+          width: "40px",
+          height: "40px",
+          flexShrink: 0,
+        }}
+      >
+        <Sparkles size={18} style={{ color: "var(--accent-blue)" }} />
+      </div>
+      <div style={{ flex: "1 1 220px", minWidth: 0 }}>
+        <p style={{ fontSize: 14, fontWeight: 600, color: "var(--color-text)" }}>
           You&apos;re on the waitlist
-        </h3>
-        <p
-          className="text-body mb-2"
-          style={{ color: "var(--color-text-secondary)" }}
-        >
-          GetChartered is free during our beta period and we aim to launch
-          publicly in late summer 2026.
         </p>
-        <p
-          className="text-caption"
-          style={{ color: "var(--color-text-muted)" }}
-        >
-          You&apos;ll be among the first to know when subscriptions open.
-        </p>
-
-        {/* Coming-soon preview of the real action this card will eventually
-            host — disabled via Button's own `disabled` prop (same
-            opacity/not-allowed-cursor treatment as every other disabled
-            button on the site, see .btn:disabled in globals.css), not a
-            one-off style, so it reads as "not yet" rather than "broken". */}
-        <Button
-          variant="outline"
-          size="md"
-          leftIcon={CreditCard}
-          disabled
-          style={{ marginTop: 20 }}
-        >
-          Manage subscription
-        </Button>
-        <p
-          className="text-caption"
-          style={{ color: "var(--color-text-muted)", marginTop: 8 }}
-        >
-          Available once subscriptions open
+        <p style={{ fontSize: 12, color: "var(--color-text-secondary)", marginTop: 2 }}>
+          Free during our beta, launching publicly in late summer 2026 —
+          you&apos;ll be among the first to know when subscriptions open.
         </p>
       </div>
+
+      {/* Coming-soon preview of the real action this card will eventually
+          host — disabled via Button's own `disabled` prop (same
+          opacity/not-allowed-cursor treatment as every other disabled
+          button on the site, see .btn:disabled in globals.css), not a
+          one-off style, so it reads as "not yet" rather than "broken". */}
+      <Button variant="outline" size="sm" leftIcon={CreditCard} disabled style={{ flexShrink: 0 }}>
+        Manage subscription
+      </Button>
     </div>
   );
 }
@@ -626,6 +571,38 @@ function StatItem({
       </div>
       <p style={{ fontSize: 20, fontWeight: 700, color: "var(--color-text)" }}>{value}</p>
       <p style={{ fontSize: 11, color: "var(--color-text-secondary)" }}>{label}</p>
+    </div>
+  );
+}
+
+// Shared section header for every section on this page (Practice, My
+// Exams, Subscription, Account Security, Danger Zone) — same size/weight
+// throughout, no per-section accent marker, so headings read as one
+// consistent hierarchy rather than a "primary tier vs. secondary tier"
+// distinction. `accentColor` only affects the title's own text colour now
+// (still used for Danger Zone's red heading).
+function SectionHeading({
+  title,
+  accentColor = "var(--color-text)",
+  action,
+}: {
+  title: string;
+  accentColor?: string;
+  action?: React.ReactNode;
+}) {
+  return (
+    <div className="flex items-center justify-between" style={{ gap: 12, marginBottom: 6 }}>
+      <h2
+        style={{
+          fontSize: 20,
+          fontWeight: 700,
+          color: accentColor,
+          minWidth: 0,
+        }}
+      >
+        {title}
+      </h2>
+      {action}
     </div>
   );
 }

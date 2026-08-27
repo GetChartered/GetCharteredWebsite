@@ -1,0 +1,22 @@
+<!doctype html>
+<!--
+  Static replica of the feedback form in components/FeedbackForm.tsx.
+
+  Netlify's form detection parses static HTML in the publish directory at
+  build/deploy time. The real form lives on "/", but that page reads the
+  session cookie (getOptionalSession in app/page.tsx) so Next renders it
+  per-request rather than emitting static HTML Netlify's crawler can scan.
+  This file exists purely so Netlify registers the "feedback" form — it is
+  never linked to or rendered for visitors. Keep its fields in sync with the
+  live form's `name` attributes if that form ever changes.
+-->
+<html>
+  <head><meta charset="utf-8" /></head>
+  <body>
+    <form name="feedback" data-netlify="true" hidden>
+      <input type="text" name="name" />
+      <input type="email" name="email" />
+      <textarea name="message"></textarea>
+    </form>
+  </body>
+</html>

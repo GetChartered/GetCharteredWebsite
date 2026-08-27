@@ -126,6 +126,11 @@ export function Navigation() {
 
           {/* Desktop Navigation Buttons */}
           <div className="nav-desktop items-center gap-3">
+            <Link href="/" style={{ textDecoration: "none" }}>
+              <Button variant="ghost" size="sm">
+                Home
+              </Button>
+            </Link>
             {SUBSCRIPTIONS_ENABLED && (
               <Link href="/purchase" style={{ textDecoration: "none" }}>
                 <Button variant="ghost" size="sm">
@@ -145,6 +150,11 @@ export function Navigation() {
                     Progress
                   </Button>
                 </Link>
+                <Link href="/planner" style={{ textDecoration: "none" }}>
+                  <Button variant="ghost" size="sm">
+                    Planner
+                  </Button>
+                </Link>
                 <Link href="/leaderboard" style={{ textDecoration: "none" }}>
                   <Button variant="ghost" size="sm">
                     Leaderboard
@@ -152,6 +162,11 @@ export function Navigation() {
                 </Link>
               </>
             )}
+            <Link href="/about" style={{ textDecoration: "none" }}>
+              <Button variant="ghost" size="sm">
+                About
+              </Button>
+            </Link>
             <Link href="/faq" style={{ textDecoration: "none" }}>
               <Button variant="ghost" size="sm">
                 FAQ
@@ -215,6 +230,15 @@ export function Navigation() {
             }}
           >
             <div className="flex flex-col gap-2">
+              <Link
+                href="/"
+                style={{ textDecoration: "none" }}
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                <Button variant="ghost" size="md" fullWidth>
+                  Home
+                </Button>
+              </Link>
               {SUBSCRIPTIONS_ENABLED && (
                 <Link
                   href="/purchase"
@@ -247,6 +271,15 @@ export function Navigation() {
                     </Button>
                   </Link>
                   <Link
+                    href="/planner"
+                    style={{ textDecoration: "none" }}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    <Button variant="ghost" size="md" fullWidth>
+                      Planner
+                    </Button>
+                  </Link>
+                  <Link
                     href="/leaderboard"
                     style={{ textDecoration: "none" }}
                     onClick={() => setIsMobileMenuOpen(false)}
@@ -257,6 +290,15 @@ export function Navigation() {
                   </Link>
                 </>
               )}
+              <Link
+                href="/about"
+                style={{ textDecoration: "none" }}
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                <Button variant="ghost" size="md" fullWidth>
+                  About
+                </Button>
+              </Link>
               <Link
                 href="/faq"
                 style={{ textDecoration: "none" }}

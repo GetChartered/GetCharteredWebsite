@@ -1,4 +1,6 @@
-import type { ExamPrepEntry } from "@/lib/practice/types";
+import type { ExamLevel, ExamPrepEntry } from "@/lib/practice/types";
+
+const VALID_EXAM_LEVELS: ExamLevel[] = ["certificate", "professional", "advanced"];
 
 // Pure parsing + selection logic for the exam-prep contract — no
 // server-only imports here (unlike lib/practice/examPrepServer.ts) so this
@@ -22,6 +24,17 @@ export function parseExamPrepData(raw: unknown): ExamPrepEntry[] {
       session: typeof e.session === "string" ? e.session : undefined,
       examDate: typeof e.examDate === "string" ? e.examDate : undefined,
       isPrimary: typeof e.isPrimary === "boolean" ? e.isPrimary : undefined,
+      sat: typeof e.sat === "boolean" ? e.sat : undefined,
+      gradePercent:
+        typeof e.gradePercent === "number"
+          ? e.gradePercent
+          : e.gradePercent === null
+            ? null
+            : undefined,
+      examLevel:
+        typeof e.examLevel === "string" && (VALID_EXAM_LEVELS as string[]).includes(e.examLevel)
+          ? (e.examLevel as ExamLevel)
+          : undefined,
     });
   }
   return entries;

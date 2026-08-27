@@ -13,7 +13,17 @@ const REASONS = [
   { value: "Other", label: "Other" },
 ] as const;
 
-export function DeleteAccountForm({ email }: { email: string }) {
+interface DeleteAccountFormProps {
+  email: string;
+  /** When set, this form is rendered inside a modal (DeleteAccountModal)
+   *  rather than as the standalone /account/delete page: skips its own
+   *  header/card chrome (the modal shell already provides a title and close
+   *  affordance) and the Cancel action closes the modal instead of
+   *  navigating to /my-account. */
+  onCancel?: () => void;
+}
+
+export function DeleteAccountForm({ email, onCancel }: DeleteAccountFormProps) {
   const [reason, setReason] = useState<string>("");
   const [otherDetail, setOtherDetail] = useState("");
   const [confirmEmail, setConfirmEmail] = useState("");
@@ -68,41 +78,60 @@ export function DeleteAccountForm({ email }: { email: string }) {
     }
   };
 
+  const embedded = !!onCancel;
+
   return (
     <div
-      className="card"
-      style={{ padding: "32px", maxWidth: 520, width: "100%" }}
+      className={embedded ? undefined : "card"}
+      style={embedded ? undefined : { padding: "32px", maxWidth: 520, width: "100%" }}
     >
-      {/* Header */}
-      <div style={{ textAlign: "center", marginBottom: 32 }}>
-        <div
-          style={{
-            width: 64,
-            height: 64,
-            borderRadius: 999,
-            backgroundColor: "rgba(239, 68, 68, 0.1)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            margin: "0 auto 16px",
-          }}
-        >
-          <AlertTriangle size={28} style={{ color: "#ef4444" }} />
+      {/* Header — skipped when embedded in a modal, which already shows a
+          title and close affordance of its own. */}
+      {!embedded && (
+        <div style={{ textAlign: "center", marginBottom: 32 }}>
+          <div
+            style={{
+              width: 64,
+              height: 64,
+              borderRadius: 999,
+              backgroundColor: "rgba(239, 68, 68, 0.1)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              margin: "0 auto 16px",
+            }}
+          >
+            <AlertTriangle size={28} style={{ color: "#ef4444" }} />
+          </div>
+          <h1
+            className="text-title"
+            style={{ fontWeight: 700, color: "var(--color-text)", marginBottom: 8 }}
+          >
+            Delete your account
+          </h1>
+          <p
+            className="text-body"
+            style={{ color: "var(--color-text-secondary)", lineHeight: 1.5 }}
+          >
+            This action is permanent. All your data, subscription, and progress
+            will be removed and can&apos;t be recovered.
+          </p>
         </div>
-        <h1
-          className="text-title"
-          style={{ fontWeight: 700, color: "var(--color-text)", marginBottom: 8 }}
-        >
-          Delete your account
-        </h1>
+      )}
+
+      {embedded && (
         <p
-          className="text-body"
-          style={{ color: "var(--color-text-secondary)", lineHeight: 1.5 }}
+          style={{
+            fontSize: 14,
+            color: "var(--color-text-secondary)",
+            lineHeight: 1.5,
+            marginBottom: 24,
+          }}
         >
           This action is permanent. All your data, subscription, and progress
           will be removed and can&apos;t be recovered.
         </p>
-      </div>
+      )}
 
       {/* Reason */}
       <div style={{ marginBottom: 24 }}>
@@ -262,18 +291,31 @@ export function DeleteAccountForm({ email }: { email: string }) {
         >
           Permanently delete account
         </Button>
-        <Link
-          href="/my-account"
-          className="btn btn-outline btn-lg btn-full"
-          style={{
-            textDecoration: "none",
-            textAlign: "center",
-            pointerEvents: submitting ? "none" : "auto",
-            opacity: submitting ? 0.5 : 1,
-          }}
-        >
-          Cancel
-        </Link>
+        {embedded ? (
+          <Button
+            type="button"
+            variant="outline"
+            size="lg"
+            fullWidth
+            disabled={submitting}
+            onClick={onCancel}
+          >
+            Cancel
+          </Button>
+        ) : (
+          <Link
+            href="/my-account"
+            className="btn btn-outline btn-lg btn-full"
+            style={{
+              textDecoration: "none",
+              textAlign: "center",
+              pointerEvents: submitting ? "none" : "auto",
+              opacity: submitting ? 0.5 : 1,
+            }}
+          >
+            Cancel
+          </Link>
+        )}
       </div>
     </div>
   );

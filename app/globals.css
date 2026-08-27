@@ -93,6 +93,414 @@
   --color-overlay: rgba(0, 0, 0, 0.7);
 }
 
+/* ICAEW partner badge is a single-colour (black) mark on a transparent
+   background; invert it in dark mode so it stays visible against dark
+   cards instead of nearly disappearing. */
+[data-theme="dark"] .icaew-logo {
+  filter: invert(1);
+}
+
+/* ============================================
+   EXPANDED TYPE SCALE — hero/eyebrow/lead
+   Introduced for /about's redesign; generic enough for reuse on any
+   marketing-style page that needs a clearer headline/subhead/body split
+   than .text-display's single size gives.
+   ============================================ */
+
+.text-hero {
+  font-weight: 800;
+  font-size: clamp(2rem, 1.1rem + 3.6vw, 3.375rem);
+  line-height: 1.08;
+  letter-spacing: -0.02em;
+}
+
+.text-eyebrow {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  color: var(--color-tint);
+}
+
+.text-lead {
+  font-size: 19px;
+  line-height: 1.6;
+  font-weight: 400;
+}
+
+/* ============================================
+   AMBIENT DEPTH — soft blurred brand-colour shapes used behind content
+   instead of flat, hard-edged section backgrounds. Deliberately just a
+   position/blur/opacity primitive — each blob's size/placement/gradient
+   colour is set per-use via inline style so this stays reusable rather
+   than /about-specific.
+   ============================================ */
+.ambient-blob {
+  position: absolute;
+  border-radius: 999px;
+  filter: blur(70px);
+  pointer-events: none;
+  z-index: 0;
+  opacity: var(--blob-opacity, 0.18);
+}
+
+[data-theme="dark"] {
+  --blob-opacity: 0.26;
+}
+
+/* Credibility badge panel (ICAEW recognition) — soft corner highlight +
+   diagonal brand-gradient wash, read as a premium "achievement" surface
+   rather than a plain tinted rectangle. (Previously a dot-grid pattern —
+   dropped for reading as placeholder/debug texture rather than an
+   intentional surface.) */
+.credibility-panel {
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(120% 140% at 12% 10%, rgba(15, 155, 175, 0.16), transparent 60%),
+    linear-gradient(135deg, rgba(0, 157, 158, 0.11), rgba(15, 155, 175, 0.02) 60%, transparent);
+}
+
+[data-theme="dark"] .credibility-panel {
+  background:
+    radial-gradient(120% 140% at 12% 10%, rgba(15, 155, 175, 0.26), transparent 60%),
+    linear-gradient(135deg, rgba(0, 157, 158, 0.18), rgba(15, 155, 175, 0.05) 60%, transparent);
+}
+
+/* ============================================
+   /about SECTION LAYOUT
+   Plain custom classes + explicit @media, deliberately NOT Tailwind's
+   sm:/md: responsive prefixes — this project's Tailwind build isn't
+   currently generating any breakpoint-variant utilities at all (confirmed
+   against both the dev bundle and a clean `next build` output; even the
+   homepage's existing `lg:grid-cols-4`/`sm:flex-row` render as their
+   unprefixed base classes at every width right now). Same working pattern
+   already used by .nav-desktop/.nav-mobile and the sitewide
+   `@media (max-width: 768px)` block.
+   ============================================ */
+
+.about-hero-section {
+  padding-top: 80px;
+  padding-bottom: 64px;
+}
+
+.about-mission-section {
+  padding-top: 64px;
+  padding-bottom: 64px;
+}
+
+.about-mission-quote {
+  margin-left: 0;
+}
+
+.about-story-section {
+  padding-top: 80px;
+  padding-bottom: 88px;
+}
+
+.about-story-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 40px;
+}
+
+.about-icaew-section {
+  padding-top: 8px;
+  padding-bottom: 80px;
+}
+
+/* Decorative abstract graphic beside the hero headline — hidden below
+   900px, where there's no longer spare width beside the text for it to
+   occupy without crowding the headline. */
+.hero-graphic {
+  display: none;
+}
+
+.credibility-lockup {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 24px;
+}
+
+.credibility-lockup-badge-row {
+  justify-content: center;
+}
+
+@media (min-width: 640px) {
+  .credibility-lockup {
+    flex-direction: row;
+    align-items: flex-start;
+    text-align: left;
+  }
+
+  .credibility-lockup-badge-row {
+    justify-content: flex-start;
+  }
+}
+
+@media (min-width: 900px) {
+  .about-story-grid {
+    grid-template-columns: 3fr 2fr;
+    gap: 64px;
+  }
+
+  .hero-graphic {
+    display: block;
+  }
+}
+
+@media (min-width: 768px) {
+  .about-hero-section {
+    padding-top: 112px;
+    padding-bottom: 80px;
+  }
+
+  .about-mission-section {
+    padding-top: 88px;
+    padding-bottom: 96px;
+  }
+
+  .about-mission-quote {
+    margin-left: 10%;
+  }
+
+  .about-story-section {
+    padding-top: 104px;
+    padding-bottom: 120px;
+  }
+
+  .about-icaew-section {
+    padding-bottom: 112px;
+  }
+}
+
+/* ============================================
+   HOME (/) SECTION LAYOUT
+   Same rationale as the /about block above — plain classes + explicit
+   @media, since this project's Tailwind build isn't generating
+   breakpoint-prefixed utilities. Shares /about's generic building blocks
+   (.credibility-panel, .credibility-lockup, .hero-graphic, .ambient-blob,
+   .card) so the two pages read as one system; only section-specific
+   spacing/grids live here.
+   ============================================ */
+
+.home-hero-section {
+  padding-top: 80px;
+  padding-bottom: 64px;
+}
+
+.home-icaew-section {
+  padding-top: 40px;
+  padding-bottom: 40px;
+}
+
+.home-disclosure-section {
+  padding-top: 28px;
+  padding-bottom: 28px;
+  border-top: 1px solid var(--color-border-subtle);
+  border-bottom: 1px solid var(--color-border-subtle);
+}
+
+.home-demo-section {
+  padding-top: 64px;
+  padding-bottom: 64px;
+}
+
+.home-pricing-section {
+  padding-top: 64px;
+  padding-bottom: 64px;
+  padding-left: 16px;
+  padding-right: 16px;
+}
+
+.pricing-tier-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 28px;
+  align-items: stretch;
+  /* Extra top clearance (vs. the usual 24px) so the "Best Value" badge can
+     sit fully above the highlighted card's border instead of overlapping
+     it — the whole row shifts down together to make room, so all four
+     cards' top edges stay aligned rather than just the highlighted one
+     dropping out of line. */
+  margin-top: 64px;
+}
+
+.pricing-tier-grid > * {
+  min-width: 0;
+}
+
+/* Every card in a row is stretched to match the tallest (a pricier tier
+   with more features genuinely needs more room), and the description block
+   below is pinned to a shared height so the first bullet in every feature
+   list starts on the same row regardless of how many lines a given tier's
+   description wraps to. Whatever height is left over after that just
+   collects as breathing room above the shorter cards' feature lists,
+   instead of being forced into an oversized description box. */
+.pricing-card-description {
+  min-height: 2.7em;
+  margin-top: 8px;
+  margin-bottom: 24px;
+}
+
+@media (max-width: 768px) {
+  .pricing-card-description {
+    min-height: 0;
+  }
+}
+
+.container-pricing {
+  width: 100%;
+  max-width: 1320px;
+  margin: 0 auto;
+  padding: 0 16px;
+}
+
+.home-enterprise-section {
+  padding-top: 64px;
+  padding-bottom: 80px;
+}
+
+.home-enterprise-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 40px;
+  align-items: start;
+}
+
+.home-feedback-section {
+  padding-top: 64px;
+  padding-bottom: 96px;
+}
+
+@media (min-width: 900px) {
+  .home-enterprise-grid {
+    grid-template-columns: 3fr 2fr;
+    gap: 64px;
+  }
+}
+
+@media (min-width: 768px) {
+  .home-hero-section {
+    padding-top: 112px;
+    padding-bottom: 80px;
+  }
+
+  .home-icaew-section {
+    padding-top: 52px;
+    padding-bottom: 44px;
+  }
+
+  .home-demo-section {
+    padding-top: 88px;
+    padding-bottom: 96px;
+  }
+
+  .home-pricing-section {
+    padding-top: 80px;
+    padding-bottom: 96px;
+  }
+
+  .home-enterprise-section {
+    padding-top: 96px;
+    padding-bottom: 120px;
+  }
+
+  .home-feedback-section {
+    padding-top: 80px;
+    padding-bottom: 128px;
+  }
+}
+
+/* Demo video placeholder — a real <video>/embed can replace the play-button
+   children later without touching this frame's sizing/gradient treatment. */
+.demo-video-frame {
+  position: relative;
+  overflow: hidden;
+  aspect-ratio: 16 / 9;
+  width: 100%;
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--color-border-subtle);
+  background:
+    radial-gradient(120% 140% at 85% 12%, rgba(15, 155, 175, 0.18), transparent 55%),
+    linear-gradient(135deg, rgba(0, 157, 158, 0.14), rgba(15, 155, 175, 0.04) 55%, var(--color-card-alt));
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+}
+
+[data-theme="dark"] .demo-video-frame {
+  background:
+    radial-gradient(120% 140% at 85% 12%, rgba(15, 155, 175, 0.3), transparent 55%),
+    linear-gradient(135deg, rgba(0, 157, 158, 0.22), rgba(15, 155, 175, 0.06) 55%, var(--color-card-alt));
+}
+
+.demo-play-button {
+  width: 72px;
+  height: 72px;
+  border-radius: 999px;
+  background-color: var(--color-tint);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 24px rgba(0, 157, 158, 0.38);
+  transition: transform var(--transition-normal);
+}
+
+.demo-video-frame:hover .demo-play-button {
+  transform: scale(1.06);
+}
+
+/* Feedback form */
+.feedback-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.feedback-form-row {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 20px;
+}
+
+@media (min-width: 640px) {
+  .feedback-form-row {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.textarea {
+  width: 100%;
+  font-family: var(--font-family);
+  font-size: 14px;
+  color: var(--color-text);
+  background-color: var(--color-card);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-md);
+  padding: 12px 16px;
+  min-height: 140px;
+  resize: vertical;
+  transition: all var(--transition-normal);
+}
+
+.textarea::placeholder {
+  color: var(--color-text-secondary);
+}
+
+.textarea:focus {
+  outline: none;
+  border-color: var(--color-tint);
+  border-width: 2px;
+  padding: 11px 15px;
+}
+
 /* ============================================
    BASE STYLES
    ============================================ */
@@ -257,11 +665,11 @@ body {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-/* My Exams row's remove button (MyExamsSection.tsx) — a danger-tinted hover,
+/* My Exams card's remove button (MyExamsSection.tsx) — a danger-tinted hover,
    same "hover needs a real CSS class, inline styles can't express :hover"
-   reasoning as .exam-chip above. */
-.exam-row-remove:hover {
-  border-color: var(--color-danger);
+   reasoning as .exam-chip above. Visibility (opacity 0 until the card is
+   hovered/focused) is handled separately in the my-account grid block below. */
+.exam-card-remove:hover {
   color: var(--color-danger);
   background-color: color-mix(in srgb, var(--color-danger) 8%, transparent);
 }
@@ -344,6 +752,12 @@ body {
   background-color: rgba(0, 173, 181, 0.12);
   color: var(--accent-blue);
   border-color: var(--accent-blue);
+}
+
+.badge-danger {
+  background-color: color-mix(in srgb, var(--color-danger) 12%, transparent);
+  color: var(--color-danger);
+  border-color: var(--color-danger);
 }
 
 /* Typography */
@@ -545,6 +959,24 @@ body {
 }
 
 /* Pricing Card Layout */
+/* Hover lift on the pricing cards — small scale + shadow so the row feels
+   a bit more alive/interactive rather than static; .card already carries
+   `transition: all var(--transition-normal)` so this rides that. */
+.pricing-card {
+  transition: transform var(--transition-normal), box-shadow var(--transition-normal), border-color var(--transition-normal);
+  will-change: transform;
+}
+
+.pricing-card:hover {
+  transform: translateY(-6px) scale(1.03);
+  box-shadow: 0 16px 32px rgba(0, 0, 0, 0.14);
+  /* !important: PricingCard sets borderColor inline (it varies by
+     highlighted state), which otherwise beats a plain stylesheet rule
+     regardless of :hover. */
+  border-color: var(--color-tint) !important;
+  z-index: 2;
+}
+
 .pricing-card-content {
   display: flex;
   flex-direction: column;
@@ -638,5 +1070,1148 @@ body {
   .legal-content {
     padding: 24px !important;
     border-radius: var(--radius-lg) !important;
+  }
+}
+
+/* ============================================
+   TOAST NOTIFICATIONS (components/ui/Toast.tsx)
+   Same fade+small-slide language as ScrollReveal — see
+   components/ScrollReveal.tsx — rather than a bouncier entrance.
+   ============================================ */
+@keyframes toast-slide-in {
+  from {
+    opacity: 0;
+    transform: translateX(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.toast-card {
+  animation: toast-slide-in 220ms ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .toast-card {
+    animation: none;
+  }
+}
+
+/* ============================================
+   /my-account LAYOUT — genuine two-column CSS grid shell: a sticky left
+   sidebar (identity + jump nav + Log Out) in a fixed 280px track, and the
+   actual account content in the remaining 1fr track. Collapses to a single
+   stacked column below 900px (see the max-width:899px block), with the
+   sidebar's sticky positioning explicitly turned off there — sticky
+   sidebars next to a much taller single column are exactly the kind of
+   thing that breaks on small screens.
+   ============================================ */
+
+:root {
+  /* Nav bar's own height once shrunk on scroll (12px padding + 43px logo +
+     12px padding + 1px border ≈ 68px) plus 24px breathing room — the sticky
+     sidebar's `top` offset, and every jump-target section's
+     scroll-margin-top so smooth-scrolling lands below the sticky nav
+     instead of behind it. Mirrored as a literal in AccountSidebarNav.tsx's
+     STICKY_OFFSET (an IntersectionObserver rootMargin can't reference a
+     custom property) — keep both in sync if this changes. */
+  --account-sidebar-sticky-top: 96px;
+}
+
+/* Page title, sat above the two-column shell rather than inside the (1fr)
+   main content track — same max-width/horizontal padding as .account-layout
+   below so the title lines up with the sidebar+content grid under it. */
+.account-page-header {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 40px 16px 0;
+}
+
+@media (min-width: 900px) {
+  .account-page-header {
+    padding-top: 56px;
+  }
+}
+
+.account-layout {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 48px;
+  max-width: 1200px; /* matches .container's max-width */
+  margin: 0 auto;
+  padding: 24px 16px 80px;
+  align-items: start;
+}
+
+.account-sidebar {
+  position: sticky;
+  top: var(--account-sidebar-sticky-top);
+  align-self: start;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  /* Caps the sidebar to the viewport space below its sticky offset so a
+     long identity block + nav list scrolls internally rather than ever
+     pushing Log Out off-screen. */
+  max-height: calc(100vh - var(--account-sidebar-sticky-top) - 24px);
+  overflow-y: auto;
+}
+
+.account-main {
+  min-width: 0; /* lets the 1fr track actually shrink instead of overflowing on wide inline content */
+}
+
+.account-sidebar-identity {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.account-sidebar-name {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--color-text);
+  line-height: 1.3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+.account-sidebar-email {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  line-height: 1.3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+  margin-top: 2px;
+}
+
+.account-sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.account-sidebar-nav-link {
+  display: block;
+  padding: 9px 12px;
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  text-decoration: none;
+  border-left: 2px solid transparent;
+  transition: all var(--transition-normal);
+}
+
+.account-sidebar-nav-link:hover {
+  color: var(--color-text);
+  background-color: var(--color-card-alt);
+}
+
+.account-sidebar-nav-link.active {
+  color: var(--color-tint);
+  font-weight: 700;
+  border-left-color: var(--color-tint);
+  background-color: color-mix(in srgb, var(--color-tint) 8%, transparent);
+}
+
+.account-sidebar-logout {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  text-decoration: none;
+  transition: color var(--transition-normal);
+  /* Pins to the bottom of the sidebar's flex column regardless of how tall
+     the identity block / nav list end up being — "at the very bottom" of
+     the sidebar, not just last in source order. */
+  margin-top: auto;
+  padding-top: 8px;
+}
+
+.account-sidebar-logout:hover {
+  color: var(--color-danger);
+}
+
+@media (max-width: 899px) {
+  .account-layout {
+    display: block; /* collapse the grid entirely, not just single-column it */
+    padding-top: 24px;
+  }
+
+  .account-sidebar {
+    position: static;
+    max-height: none;
+    overflow: visible;
+    gap: 16px;
+    margin-bottom: 32px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--color-border-subtle);
+  }
+
+  .account-sidebar-identity {
+    flex-direction: row;
+    align-items: center;
+  }
+
+  .account-sidebar-nav {
+    flex-direction: row;
+    gap: 8px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 2px;
+  }
+
+  .account-sidebar-nav-link {
+    flex-shrink: 0;
+    border-left: none;
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--radius-full);
+    white-space: nowrap;
+  }
+
+  .account-sidebar-nav-link.active {
+    border-color: var(--color-tint);
+  }
+
+  .account-sidebar-logout {
+    margin-top: 4px;
+    padding-top: 0;
+  }
+}
+
+#practice,
+#my-exams,
+#subscription,
+#security {
+  scroll-margin-top: var(--account-sidebar-sticky-top);
+}
+
+/* Avatar upload (components/account/AvatarUpload.tsx) — click/hover the
+   circle to reveal a camera-icon overlay. Hidden-until-hover only on
+   devices that actually support hover; touch devices see a faint
+   always-on affordance instead, same reasoning as .exam-card-remove.
+   Sized via .account-sidebar-avatar (large on desktop, shrunk on mobile —
+   see the max-width:899px block above) rather than an inline style, so
+   this breakpoint can actually take effect. */
+.avatar-upload {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.account-sidebar-avatar {
+  width: 96px;
+  height: 96px;
+}
+
+@media (max-width: 899px) {
+  .account-sidebar-avatar {
+    width: 56px;
+    height: 56px;
+  }
+}
+
+.avatar-upload-trigger {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: none;
+  border-radius: 999px;
+  overflow: hidden;
+  cursor: pointer;
+  background: transparent;
+  display: block;
+}
+
+.avatar-upload-trigger:disabled {
+  cursor: default;
+}
+
+.avatar-upload-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 999px;
+  border: 1px solid var(--color-border-subtle);
+  display: block;
+}
+
+.avatar-upload-initials {
+  width: 100%;
+  height: 100%;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: color-mix(in srgb, var(--color-tint) 14%, transparent);
+  color: var(--color-tint);
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.avatar-upload-overlay {
+  position: absolute;
+  inset: 0;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(0, 0, 0, 0.45);
+  opacity: 0.85;
+  transition: opacity var(--transition-normal);
+}
+
+.avatar-upload-overlay.is-active {
+  opacity: 1;
+}
+
+@media (hover: hover) {
+  .avatar-upload-overlay {
+    opacity: 0;
+  }
+
+  .avatar-upload-trigger:hover .avatar-upload-overlay,
+  .avatar-upload-trigger:focus-visible .avatar-upload-overlay,
+  .avatar-upload-overlay.is-active {
+    opacity: 1;
+  }
+}
+
+.avatar-upload-retry {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 2px;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-danger);
+}
+
+.avatar-upload-retry:hover {
+  text-decoration: underline;
+}
+
+/* Generous gap — the primary tier (Practice, My Exams) gets more breathing
+   room than the settings tier below, so weight is felt through spacing
+   rather than a container boundary. */
+.my-account-primary {
+  display: flex;
+  flex-direction: column;
+  gap: 56px;
+}
+
+/* Settings tier — Subscription/Account Security/Danger Zone. Each section
+   is its own .card now (back to a real bordered panel per section, same as
+   the primary tier's cards below) rather than rows sharing one soft-wash
+   zone — a plain flex column with the primary tier's own rhythm gives each
+   setting its own clear boundary again. */
+.my-account-settings {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  margin-top: 24px;
+}
+
+/* ============================================
+   MY EXAMS — responsive card grid (MyExamsSection.tsx), replacing a
+   full-width stacked-rows layout. Remove button is icon-only and hidden
+   until hover, but only on devices that actually support hover — touch
+   devices always show it, since there's no hover state to reveal it there.
+   ============================================ */
+
+.my-exams-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+}
+
+@media (min-width: 640px) {
+  .my-exams-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* Softened to read as a list item, not a heavy tile — low-opacity 1px
+   border and a faint tint instead of .card's solid border + shadow. */
+.exam-card {
+  position: relative;
+  padding: 16px;
+  border-radius: var(--radius-lg);
+  border: 1px solid color-mix(in srgb, var(--color-border-subtle) 65%, transparent);
+  background-color: color-mix(in srgb, var(--color-card-alt) 55%, transparent);
+  transition: background-color var(--transition-normal), border-color var(--transition-normal);
+}
+
+.exam-card:hover {
+  background-color: var(--color-card-alt);
+  border-color: var(--color-border-subtle);
+}
+
+@media (hover: hover) {
+  .exam-card .exam-card-remove {
+    opacity: 0;
+  }
+
+  .exam-card:hover .exam-card-remove,
+  .exam-card .exam-card-remove:focus-visible {
+    opacity: 1;
+  }
+}
+
+/* Upcoming/Previous tab switcher — a compact two-segment pill, same rounded
+   "active segment gets a filled background" idea as the app's own My Exams
+   toggle (components/profile/ProfileExamCard.tsx), restyled with this
+   site's own tokens instead of porting the app's fixed hex colours. */
+.exam-tabs {
+  display: inline-flex;
+  padding: 4px;
+  border-radius: var(--radius-full);
+  background-color: var(--color-card-alt);
+  gap: 4px;
+}
+
+.exam-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 16px;
+  border-radius: var(--radius-full);
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  transition: all var(--transition-normal);
+}
+
+.exam-tab:hover {
+  color: var(--color-text);
+}
+
+.exam-tab.active {
+  background-color: var(--color-tint);
+  color: #ffffff;
+  box-shadow: var(--shadow-button);
+}
+
+/* Result field group inside ExamResultModal — label + input pairs, consistent
+   vertical rhythm without a whole form-library. */
+.exam-result-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+
+.exam-result-field label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+/* ============================================================
+   Study Planner — v2 redesign
+   Inspired by Google Calendar / Todoist / Notion Calendar.
+   Two-column desktop layout (calendar + day detail), stacking
+   on mobile.  Every selector is prefixed planner-* to avoid
+   collisions with the rest of the design system.
+   ============================================================ */
+
+/* ---------- top-level layout ---------- */
+.planner-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* On desktop ≥ 900 px the controls card (calendar) and day card sit
+   side-by-side; on smaller screens they stack naturally. */
+@media (min-width: 900px) {
+  .planner-layout {
+    display: grid;
+    grid-template-columns: 340px 1fr;
+    gap: 28px;
+    align-items: start;
+  }
+}
+
+/* ---------- controls card (left column) ---------- */
+.planner-controls-card {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* ---------- exam filter chips ---------- */
+.planner-exam-filter-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.planner-exam-chip {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--color-border-subtle);
+  background-color: var(--color-card);
+  color: var(--color-text-secondary);
+  border-radius: var(--radius-full);
+  padding: 7px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 150ms ease;
+  white-space: nowrap;
+}
+
+.planner-exam-chip:hover {
+  border-color: var(--color-tint);
+  color: var(--color-tint);
+}
+
+.planner-exam-chip--selected {
+  border-color: var(--color-tint);
+  background-color: color-mix(in srgb, var(--color-tint) 12%, var(--color-card));
+  color: var(--color-tint);
+}
+
+/* ---------- view toggle row ---------- */
+.planner-view-toggle-row {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* ---------- week nav arrows ---------- */
+.planner-week-nav-btn {
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--color-border-subtle);
+  background-color: var(--color-card);
+  color: var(--color-text-secondary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 150ms ease;
+}
+
+.planner-week-nav-btn:hover {
+  border-color: var(--color-tint);
+  color: var(--color-tint);
+  background-color: color-mix(in srgb, var(--color-tint) 6%, var(--color-card));
+}
+
+/* ---------- week strip ---------- */
+.planner-week-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.planner-week-label {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--color-text);
+  text-align: center;
+  flex: 1;
+}
+
+.planner-week-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 6px;
+}
+
+.planner-day-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 4px 8px;
+  border-radius: var(--radius-md);
+  border: 2px solid transparent;
+  background-color: var(--color-card-alt);
+  cursor: pointer;
+  transition: all 150ms ease;
+  position: relative;
+}
+
+.planner-day-cell:hover {
+  border-color: color-mix(in srgb, var(--color-tint) 40%, transparent);
+}
+
+.planner-day-cell--today {
+  border-color: var(--color-tint);
+}
+
+.planner-day-cell--selected {
+  background-color: var(--color-tint);
+  border-color: var(--color-tint);
+}
+
+.planner-day-cell--selected .planner-day-name,
+.planner-day-cell--selected .planner-day-number {
+  color: #fff;
+}
+
+.planner-day-name {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  line-height: 1;
+}
+
+.planner-day-number {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--color-text);
+  line-height: 1;
+}
+
+.planner-day-dots {
+  display: flex;
+  gap: 3px;
+  min-height: 6px;
+  margin-top: 2px;
+}
+
+.planner-day-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: var(--radius-full);
+  background-color: var(--color-tint);
+}
+
+.planner-day-dot--exam {
+  background-color: var(--accent-gold);
+}
+
+/* ---------- month calendar ---------- */
+.planner-month-calendar {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.planner-month-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 2px;
+}
+
+.planner-month-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.planner-month-nav {
+  display: flex;
+  gap: 6px;
+}
+
+.planner-month-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+  margin-bottom: 2px;
+}
+
+.planner-month-weekday-label {
+  text-align: center;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-text-muted);
+  padding: 6px 0;
+}
+
+.planner-month-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+}
+
+.planner-month-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  aspect-ratio: 1;
+  border-radius: var(--radius-sm);
+  border: 2px solid transparent;
+  background-color: transparent;
+  color: var(--color-text);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 150ms ease;
+  position: relative;
+}
+
+.planner-month-cell:hover {
+  background-color: var(--color-card-alt);
+}
+
+.planner-month-cell--dim {
+  color: var(--color-text-muted);
+  opacity: 0.4;
+}
+
+.planner-month-cell--today {
+  border-color: var(--color-tint);
+  background-color: color-mix(in srgb, var(--color-tint) 8%, transparent);
+}
+
+.planner-month-cell--selected {
+  background-color: var(--color-tint);
+  border-color: var(--color-tint);
+  color: #fff;
+}
+
+.planner-month-cell--selected:hover {
+  background-color: var(--color-tint-hover);
+}
+
+.planner-today-link {
+  align-self: center;
+  background: none;
+  border: none;
+  color: var(--color-tint);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 6px 12px;
+  border-radius: var(--radius-full);
+  transition: background-color 150ms ease;
+}
+
+.planner-today-link:hover {
+  background-color: color-mix(in srgb, var(--color-tint) 8%, transparent);
+}
+
+/* ---------- view toggle button ---------- */
+.planner-view-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 6px 2px;
+  transition: color 150ms ease;
+}
+
+.planner-view-btn:hover {
+  color: var(--color-tint);
+}
+
+/* ---------- day panel (right column) ---------- */
+.planner-day-card {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.planner-day-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.planner-day-heading {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--color-text);
+  line-height: 1.3;
+}
+
+.planner-day-subheading {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  margin-top: 2px;
+}
+
+/* ---------- session list ---------- */
+.planner-session-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.planner-session-list-label {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  margin-bottom: 2px;
+}
+
+/* ---------- session card ---------- */
+.planner-session-card {
+  display: flex;
+  align-items: stretch;
+  gap: 14px;
+  padding: 14px 16px;
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-lg);
+  background-color: var(--color-card);
+  transition: border-color 150ms ease, box-shadow 150ms ease;
+}
+
+.planner-session-card:hover {
+  border-color: color-mix(in srgb, var(--color-tint) 40%, var(--color-border-subtle));
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.planner-session-card--completed {
+  opacity: 0.7;
+}
+
+.planner-session-accent {
+  flex-shrink: 0;
+  width: 4px;
+  border-radius: 2px;
+  align-self: stretch;
+}
+
+.planner-session-icon {
+  flex-shrink: 0;
+  width: 42px;
+  height: 42px;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.planner-session-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  text-align: left;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  color: inherit;
+}
+
+.planner-session-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.planner-session-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--color-text);
+  line-height: 1.3;
+}
+
+.planner-session-subtitle {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  line-height: 1.3;
+}
+
+.planner-session-meta-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-top: 4px;
+}
+
+.planner-session-meta-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+
+.planner-session-actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+  align-items: center;
+}
+
+.planner-session-icon-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--color-border-subtle);
+  background-color: var(--color-card);
+  color: var(--color-text-secondary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 150ms ease;
+}
+
+.planner-session-icon-btn:hover {
+  border-color: var(--color-tint);
+  color: var(--color-tint);
+  background-color: color-mix(in srgb, var(--color-tint) 6%, transparent);
+}
+
+.planner-session-icon-btn--primary {
+  background-color: var(--color-tint);
+  border-color: var(--color-tint);
+  color: #fff;
+}
+
+.planner-session-icon-btn--primary:hover {
+  background-color: var(--color-tint-hover);
+  border-color: var(--color-tint-hover);
+  color: #fff;
+}
+
+/* ---------- empty state ---------- */
+.planner-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 40px 24px;
+  border: 2px dashed var(--color-border-subtle);
+  border-radius: var(--radius-lg);
+  background-color: var(--color-card-alt);
+  text-align: center;
+}
+
+.planner-empty-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-full);
+  background-color: color-mix(in srgb, var(--color-tint) 10%, transparent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-tint);
+}
+
+.planner-empty-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.planner-empty-desc {
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  max-width: 280px;
+}
+
+/* ---------- modal ---------- */
+.planner-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background-color: var(--color-overlay);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  z-index: 100;
+  animation: planner-fade-in 150ms ease;
+}
+
+@keyframes planner-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes planner-slide-up {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.planner-modal {
+  background-color: var(--color-card);
+  border-radius: var(--radius-xl);
+  max-width: 520px;
+  width: 100%;
+  max-height: 88vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.25);
+  overflow: hidden;
+  animation: planner-slide-up 200ms ease;
+}
+
+.planner-modal-header {
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--color-border-subtle);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+
+.planner-modal-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.planner-modal-body {
+  padding: 20px 24px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.planner-modal-footer {
+  padding: 16px 24px;
+  border-top: 1px solid var(--color-border-subtle);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+/* ---------- type picker grid ---------- */
+.planner-type-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+
+.planner-type-tile {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: var(--radius-md);
+  border: 2px solid var(--color-border-subtle);
+  background-color: var(--color-card);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 150ms ease;
+  text-align: left;
+  color: var(--color-text);
+}
+
+.planner-type-tile:hover {
+  border-color: var(--color-tint);
+}
+
+.planner-type-tile--active {
+  border-width: 2px;
+}
+
+.planner-type-tile-icon {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ---------- form fields ---------- */
+.planner-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+}
+
+.planner-field-row {
+  display: flex;
+  gap: 12px;
+}
+
+.planner-field-label {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-text-secondary);
+}
+
+.planner-input {
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-md);
+  background-color: var(--color-card-alt);
+  color: var(--color-text);
+  padding: 10px 14px;
+  font-size: 14px;
+  width: 100%;
+  transition: border-color 150ms ease;
+  font-family: var(--font-family);
+}
+
+.planner-input:focus {
+  outline: none;
+  border-color: var(--color-tint);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-tint) 12%, transparent);
+}
+
+.planner-delete-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  color: var(--accent-red);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 8px 4px;
+  border-radius: var(--radius-sm);
+  transition: background-color 150ms ease;
+}
+
+.planner-delete-btn:hover {
+  background-color: color-mix(in srgb, var(--accent-red) 8%, transparent);
+}
+
+/* ---------- responsive ---------- */
+@media (max-width: 640px) {
+  .planner-field-row {
+    flex-direction: column;
+  }
+  .planner-type-grid {
+    grid-template-columns: 1fr;
   }
 }
