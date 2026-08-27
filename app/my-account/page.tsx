@@ -6,6 +6,7 @@ import { CancelSubscriptionDialog } from "@/components/account/CancelSubscriptio
 import { BillingPortalButton } from "@/components/BillingPortalButton";
 import { ChangePasswordButton } from "@/components/ChangePasswordButton";
 import { MyExamsSection } from "@/components/account/MyExamsSection";
+import { SubscribeButtons } from "@/components/account/SubscribeButtons";
 import { DeleteAccountModal } from "@/components/account/DeleteAccountModal";
 import { ScrollReveal } from "@/components/ScrollReveal";
 import { SUBSCRIPTIONS_ENABLED } from "@/lib/features";
@@ -489,13 +490,7 @@ function NoSubscription({ status }: { status: number }) {
         >
           {description}
         </p>
-        {(status === 3 || status === 5) && (
-          <form action="/api/checkout_sessions" method="POST">
-            <button type="submit" className="btn btn-primary btn-sm">
-              Subscribe Now
-            </button>
-          </form>
-        )}
+        {(status === 3 || status === 5) && <SubscribeButtons />}
         {status === 1 && (
           <Link href="/auth/login" className="btn btn-primary btn-sm">
             Log In
