@@ -1,6 +1,5 @@
 /* app/globals.css - REPLACE ENTIRE FILE */
-@import "tailwindcss/preflight";
-@tailwind utilities;
+@import "tailwindcss";
 
 /* ============================================
    DESIGN SYSTEM - CSS VARIABLES

@@ -14,15 +14,18 @@ import { getExamVisual } from "@/lib/practice/examVisuals";
  * registered, labeled by exam name (resolved from GET /courses) when
  * known, falling back to the raw code.
  *
- * Chips, not plain checkbox+text rows — reuses the same icon+tint-per-exam
- * visual language the Coverage list's exam cards already establish
- * (lib/practice/examVisuals.ts: each exam code has its own lucide icon and
- * brand-accent tint), so an exam reads as the same visual "thing" whether
- * you're picking it here or looking at its coverage further down the page.
- * Selected = filled icon badge + tint border/text; unselected = muted gray,
- * same shape. `aria-pressed` carries the on/off semantics now that these
- * are buttons rather than native checkboxes (kept toggle-only — this was
- * never a form, so there's no submission semantics to preserve either way).
+ * Chips, not plain checkbox+text rows — still uses each exam's icon shape
+ * from lib/practice/examVisuals.ts so exams stay distinguishable at a
+ * glance, but deliberately does NOT use that file's per-exam tint/bg
+ * colours (that produced a "rainbow" of exam-specific hues here — see
+ * ProgressDashboardClient's module-coverage cards for where that per-exam
+ * colour scheme is still intentionally used). This filter is a flat
+ * two-state control instead: unselected = --color-tint outline/text/icon on
+ * --color-card, selected = solid --color-tint fill with white text/icon,
+ * matching the site's single brand teal rather than an exam-identity
+ * palette. `aria-pressed` carries the on/off semantics now that these are
+ * buttons rather than native checkboxes (kept toggle-only — this was never
+ * a form, so there's no submission semantics to preserve either way).
  *
  * Renders nothing when the user hasn't configured any exams yet — an empty
  * chip row with only "Select all/Deselect all" controls and nothing to
@@ -80,8 +83,8 @@ export function ExamScopeFilter({
       <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
         {examCodes.map((code) => {
           const isSelected = selected.has(code);
-          const visual = getExamVisual(code);
-          const Icon = visual.icon;
+          const Icon = getExamVisual(code).icon;
+          const color = isSelected ? "#ffffff" : "var(--color-tint)";
           return (
             <button
               key={code}
@@ -93,39 +96,18 @@ export function ExamScopeFilter({
                 display: "flex",
                 alignItems: "center",
                 gap: 8,
-                padding: "5px 12px 5px 5px",
+                padding: "6px 14px",
                 borderRadius: "var(--radius-full)",
-                border: `2px solid ${isSelected ? "var(--color-tint)" : "var(--color-border-subtle)"}`,
-                backgroundColor: isSelected
-                  ? "color-mix(in srgb, var(--color-tint) 10%, var(--color-card))"
-                  : "var(--color-card)",
+                border: "2px solid var(--color-tint)",
+                backgroundColor: isSelected ? "var(--color-tint)" : "var(--color-card)",
                 cursor: "pointer",
               }}
             >
-              <span
-                style={{
-                  width: 22,
-                  height: 22,
-                  borderRadius: "50%",
-                  flexShrink: 0,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  backgroundColor: isSelected ? "color-mix(in srgb, var(--color-tint) 20%, transparent)" : "var(--color-border-subtle)",
-                }}
-              >
-                <Icon size={12} style={{ color: isSelected ? "var(--color-tint)" : "var(--color-text-muted)" }} />
-              </span>
-              <span
-                style={{
-                  fontSize: 13,
-                  fontWeight: 600,
-                  color: isSelected ? "var(--color-tint)" : "var(--color-text-secondary)",
-                }}
-              >
+              <Icon size={14} style={{ color, flexShrink: 0 }} />
+              <span style={{ fontSize: 13, fontWeight: 600, color }}>
                 {examNameByCode[code] || code}
               </span>
-              {isSelected && <Check size={14} style={{ color: "var(--color-tint)", flexShrink: 0 }} />}
+              {isSelected && <Check size={14} style={{ color, flexShrink: 0 }} />}
             </button>
           );
         })}
