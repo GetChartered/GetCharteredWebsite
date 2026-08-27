@@ -1,5 +1,7 @@
-import Link from "next/link";
 import { PricingCard } from "@/components/PricingCard";
+import { Button } from "@/components/ui";
+import { ScrollReveal } from "@/components/ScrollReveal";
+import { AmbientBlob } from "@/components/AmbientBlob";
 import { SUBSCRIPTIONS_ENABLED } from "@/lib/features";
 
 interface PricingData {
@@ -65,25 +67,142 @@ function formatPeriod(interval: string, intervalCount: number): string {
   return `/${intervalCount} ${period}s`;
 }
 
-export async function PricingSection() {
-  if (!SUBSCRIPTIONS_ENABLED) {
-    return (
-      <section id="pricing" className="py-24">
-        <div className="container">
-          <div className="max-w-xl mx-auto text-center">
-            <h2 className="text-display mb-4">Pricing Coming Soon</h2>
-            <p style={{ color: "var(--color-text-secondary)" }}>
-              We&apos;ll publish plan details when GetChartered launches on the App
-              Store. Want early access or pricing updates? Reach out via our{" "}
-              <Link href="/contact" style={{ color: "var(--color-tint)" }}>
-                contact page
-              </Link>
-              .
+// Pre-launch pricing, shown while Stripe/checkout isn't wired up yet
+// (SUBSCRIPTIONS_ENABLED off). Confirmed with Pierce: Free / £15 per month /
+// £100 per year / £25 per exam. Feature bullets below are draft copy only —
+// Hugo/Pierce to refine wording before this ships; the prices and billing
+// periods are the confirmed part.
+// No per-card CTAs — every card is header + description + features only,
+// so all four line up symmetrically. One shared CTA sits below the whole
+// grid instead (real action right now is account signup; it's the same
+// flow whichever tier someone actually wants).
+const PRELAUNCH_TIERS = [
+  {
+    title: "Free",
+    description: "Get a feel for GetChartered before you commit.",
+    price: "£0",
+    period: "/forever",
+    features: [
+      "A sample of practice questions per module",
+      "Basic progress tracking",
+      "Study planner & calendar",
+    ],
+    highlighted: false,
+  },
+  {
+    title: "Monthly",
+    description: "Full access, cancel anytime.",
+    price: "£15",
+    period: "/month",
+    features: [
+      "Unlimited practice across all your modules",
+      "Full progress analytics & coverage tracking",
+      "Study planner & calendar",
+      "Mock exams",
+    ],
+    highlighted: false,
+  },
+  {
+    title: "Annual",
+    description: "Everything in Monthly — best value across a full study year.",
+    price: "£100",
+    period: "/year",
+    features: [
+      "Save vs. paying monthly across the year",
+      "Priority support",
+      "First access to new question banks",
+      "One renewal, no monthly admin",
+    ],
+    highlighted: true,
+    badge: "Best Value",
+  },
+  {
+    title: "Per Exam",
+    description: "Full access scoped to a single upcoming exam sitting.",
+    price: "£25",
+    period: "/exam",
+    features: [
+      "Unlimited practice for one exam",
+      "Full progress analytics for that exam",
+      "Study planner & calendar",
+    ],
+    highlighted: false,
+  },
+];
+
+function PrelaunchPricing() {
+  return (
+    <section
+      id="pricing"
+      className="home-pricing-section"
+      style={{ position: "relative", overflow: "hidden", zIndex: 1 }}
+    >
+      <AmbientBlob
+        style={{
+          width: 420,
+          height: 420,
+          top: -60,
+          left: "-12%",
+          background:
+            "radial-gradient(circle, #0F9BAF 0%, rgba(15,155,175,0) 70%)",
+        }}
+        duration={12}
+        delay={0.4}
+      />
+      <div className="container-pricing" style={{ position: "relative" }}>
+        <ScrollReveal>
+          <div style={{ maxWidth: 640, margin: "0 auto", textAlign: "center", marginBottom: 40 }}>
+            <span className="text-eyebrow mb-3" style={{ display: "block" }}>
+              Pricing
+            </span>
+            <h2 className="text-display mb-4" style={{ color: "var(--color-text)" }}>
+              Simple, transparent pricing
+            </h2>
+            <p className="text-lg" style={{ color: "var(--color-text-secondary)" }}>
+              Start free, then choose whatever fits how you study — monthly,
+              annually, or scoped to a single exam.
             </p>
           </div>
+        </ScrollReveal>
+
+        <div className="pricing-tier-grid">
+          {PRELAUNCH_TIERS.map((tier, i) => (
+            <ScrollReveal key={tier.title} delay={0.1 + i * 0.08} y={18}>
+              <PricingCard
+                title={tier.title}
+                description={tier.description}
+                price={tier.price}
+                period={tier.period}
+                features={tier.features}
+                highlighted={tier.highlighted}
+                badge={tier.badge}
+              />
+            </ScrollReveal>
+          ))}
         </div>
-      </section>
-    );
+
+        <div style={{ textAlign: "center", marginTop: 40 }}>
+          <a href="/auth/login?screen_hint=signup" style={{ textDecoration: "none" }}>
+            <Button variant="primary" size="lg">
+              Get Started Free
+            </Button>
+          </a>
+          <p
+            className="text-sm"
+            style={{ marginTop: 16, color: "var(--color-text-muted)" }}
+          >
+            Sign up free today — we&apos;ll email you the moment paid plans
+            are ready to go live.
+          </p>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+export async function PricingSection() {
+  if (!SUBSCRIPTIONS_ENABLED) {
+    return <PrelaunchPricing />;
   }
 
   const pricingData = await getPricing();

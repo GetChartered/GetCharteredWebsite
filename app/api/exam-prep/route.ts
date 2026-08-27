@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 import { requireOnboardedSession } from "@/lib/auth0";
 import { deleteExamPrepEntry, fetchExamPrepData, postExamPrepEntry } from "@/lib/practice/examPrepServer";
+import type { ExamLevel } from "@/lib/practice/types";
+
+const VALID_EXAM_LEVELS: ExamLevel[] = ["certificate", "professional", "advanced"];
 
 // GET /api/exam-prep — same-origin proxy to the GC backend's GET /exam-prep.
 // Returns { examPrep: ExamPrepEntry[] }, the user's full exam-prep list
@@ -38,7 +41,35 @@ export async function POST(request: Request) {
   const year = typeof body?.year === "number" ? body.year : undefined;
   const session = typeof body?.session === "string" ? body.session : undefined;
 
-  const result = await postExamPrepEntry({ course, examCode, examDate, isPrimary, year, session });
+  // Result fields — see lib/practice/types.ts's ExamPrepEntry and
+  // backend-reference/updateExamResult.md. The real backend doesn't persist
+  // these yet (that Lambda change isn't deployed), but there's no reason for
+  // this proxy route to withhold them once it exists — same "pass whatever
+  // the client validated straight through" approach POST already takes for
+  // isPrimary/year/session.
+  const sat = typeof body?.sat === "boolean" ? body.sat : undefined;
+  const gradePercent =
+    typeof body?.gradePercent === "number"
+      ? body.gradePercent
+      : body?.gradePercent === null
+        ? null
+        : undefined;
+  const examLevel =
+    typeof body?.examLevel === "string" && (VALID_EXAM_LEVELS as string[]).includes(body.examLevel)
+      ? (body.examLevel as ExamLevel)
+      : undefined;
+
+  const result = await postExamPrepEntry({
+    course,
+    examCode,
+    examDate,
+    isPrimary,
+    year,
+    session,
+    sat,
+    gradePercent,
+    examLevel,
+  });
   if (!result.ok) {
     return NextResponse.json({ error: "Failed to register exam" }, { status: 502 });
   }

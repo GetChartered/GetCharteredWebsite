@@ -34,6 +34,7 @@ export function parseProfileData(data: unknown): ProfileResponse {
     targetExamWindow: str(raw.targetExamWindow),
     qualificationStage: str(raw.qualificationStage),
     marketingConsent: bool(raw.marketingConsent),
+    photoUrl: str(raw.photoUrl),
   };
 }
 

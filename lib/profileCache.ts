@@ -38,6 +38,11 @@ export interface ProfileResponse {
   targetExamWindow?: string;
   qualificationStage?: string;
   marketingConsent?: boolean;
+  /** Set once a user uploads a custom avatar via POST /api/user/photo (see
+   *  backend-reference/updateUserPhoto.js) — undefined until the backend
+   *  Lambda that writes it is deployed. Falls back to the Auth0 IdP picture,
+   *  then initials, in app/my-account/layout.tsx. */
+  photoUrl?: string;
 }
 
 type CacheEntry = { profile: ProfileResponse; expiresAt: number };

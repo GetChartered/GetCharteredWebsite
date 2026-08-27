@@ -180,6 +180,31 @@ export interface LeaderboardEntry {
 // (hooks/useBackendLeaderboard.ts) defaults its exam selection to
 // `entries.find(e => e.isPrimary) ?? entries[0]` — the pattern this website
 // now mirrors wherever a "the user's real exam" default is needed.
+/** Which ICAEW ACA syllabus tier an exam belongs to — determines its pass
+ *  mark (see lib/practice/examResults.ts's getPassMark). Not tracked
+ *  anywhere in the /courses catalogue as of this writing (confirmed: no
+ *  `level` field on PracticeExamGroup/PracticeModule, and GET /courses
+ *  itself never returns one) — lib/practice/examLevels.ts adds a
+ *  code/name-based lookup on top of the existing catalogue instead. */
+export type ExamLevel = "certificate" | "professional" | "advanced";
+
+// Shapes for POST/GET /exam-prep, confirmed against GetChartered_app's
+// components/useBackendData.tsx (ExamPrepEntry / SetExamPrepParams) — a real
+// per-user exam registration (specific exam code + specific date + a
+// "primary" flag), distinct from and more specific than onboarding's coarse
+// user_metadata.target_exam_window bucket. The app's own leaderboard hook
+// (hooks/useBackendLeaderboard.ts) defaults its exam selection to
+// `entries.find(e => e.isPrimary) ?? entries[0]` — the pattern this website
+// now mirrors wherever a "the user's real exam" default is needed.
+//
+// `sat`/`gradePercent`/`examLevel` are a website-side addition on top of
+// that confirmed app contract — the app has no result-recording feature at
+// all (see backend-reference/updateExamResult.md), so there was nothing to
+// mirror here. No backend currently persists or returns these three fields;
+// until backend-reference/updateExamResult.md is deployed, POSTing them is a
+// no-op as far as the real backend is concerned (the fields are simply
+// dropped), and every website session will see `sat`/`gradePercent`/
+// `examLevel` as undefined on every GET /exam-prep response.
 export interface ExamPrepEntry {
   course: string;
   examCode: string;
@@ -190,6 +215,21 @@ export interface ExamPrepEntry {
   session?: string;
   examDate?: string;
   isPrimary?: boolean;
+  /** Has the user actually sat this exam, vs. just scheduled it? Drives the
+   *  My Exams Upcoming/Previous split. Undefined is treated the same as
+   *  false (not sat) everywhere this is read. */
+  sat?: boolean;
+  /** The raw mark out of 100 the user entered, once sat. `null` is a real,
+   *  distinct value here — reserved for "sat is true but no grade was
+   *  entered" (not currently reachable through the UI, which requires a
+   *  grade to mark an exam sat, but kept nullable to match the task's
+   *  `number | null` spec and to leave room for a future "I sat it but
+   *  don't know the mark yet" flow without a shape change). */
+  gradePercent?: number | null;
+  /** Needed to resolve the correct pass mark (getPassMark) — see
+   *  lib/practice/examLevels.ts for how this is suggested for a given
+   *  exam, and why that suggestion isn't fully trustworthy yet. */
+  examLevel?: ExamLevel;
 }
 
 export type LeaderboardData =

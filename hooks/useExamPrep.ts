@@ -2,13 +2,19 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { selectPrimaryExamPrep } from "@/lib/practice/examPrep";
-import type { ExamPrepEntry } from "@/lib/practice/types";
+import type { ExamLevel, ExamPrepEntry } from "@/lib/practice/types";
 
 export interface SaveExamPrepParams {
   course: string;
   examCode: string;
   examDate?: string;
   isPrimary?: boolean;
+  /** Result fields — see lib/practice/types.ts's ExamPrepEntry. Omit for a
+   *  plain scheduling save (My Exams' Save button); MyExamsSection's result
+   *  form is the only caller that sets these. */
+  sat?: boolean;
+  gradePercent?: number | null;
+  examLevel?: ExamLevel;
 }
 
 export interface DeleteExamPrepParams {

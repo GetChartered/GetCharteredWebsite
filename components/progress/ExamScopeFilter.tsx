@@ -95,9 +95,9 @@ export function ExamScopeFilter({
                 gap: 8,
                 padding: "5px 12px 5px 5px",
                 borderRadius: "var(--radius-full)",
-                border: `2px solid ${isSelected ? visual.tint : "var(--color-border-subtle)"}`,
+                border: `2px solid ${isSelected ? "var(--color-tint)" : "var(--color-border-subtle)"}`,
                 backgroundColor: isSelected
-                  ? `color-mix(in srgb, ${visual.tint} 10%, var(--color-card))`
+                  ? "color-mix(in srgb, var(--color-tint) 10%, var(--color-card))"
                   : "var(--color-card)",
                 cursor: "pointer",
               }}
@@ -111,21 +111,21 @@ export function ExamScopeFilter({
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  backgroundColor: isSelected ? visual.tint + "20" : "var(--color-border-subtle)",
+                  backgroundColor: isSelected ? "color-mix(in srgb, var(--color-tint) 20%, transparent)" : "var(--color-border-subtle)",
                 }}
               >
-                <Icon size={12} style={{ color: isSelected ? visual.tint : "var(--color-text-muted)" }} />
+                <Icon size={12} style={{ color: isSelected ? "var(--color-tint)" : "var(--color-text-muted)" }} />
               </span>
               <span
                 style={{
                   fontSize: 13,
                   fontWeight: 600,
-                  color: isSelected ? visual.tint : "var(--color-text-secondary)",
+                  color: isSelected ? "var(--color-tint)" : "var(--color-text-secondary)",
                 }}
               >
                 {examNameByCode[code] || code}
               </span>
-              {isSelected && <Check size={14} style={{ color: visual.tint, flexShrink: 0 }} />}
+              {isSelected && <Check size={14} style={{ color: "var(--color-tint)", flexShrink: 0 }} />}
             </button>
           );
         })}

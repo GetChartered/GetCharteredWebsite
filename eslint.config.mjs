@@ -21,6 +21,11 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Standalone AWS Lambda reference code (see backend-reference/README.md)
+    // — plain CommonJS Node.js meant to be zipped and deployed on its own,
+    // not part of this Next.js app's build, so this project's ESM-oriented
+    // TypeScript/Next lint rules (e.g. no-require-imports) don't apply to it.
+    "backend-reference/**",
   ]),
 ]);
 

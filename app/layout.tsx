@@ -4,6 +4,7 @@ import "./globals.css";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { TourProvider } from "@/lib/tour/TourProvider";
 import { TourOverlay } from "@/components/tour/TourOverlay";
+import { ToastProvider } from "@/components/ui/Toast";
 
 // Runs synchronously in <head> before first paint so the correct theme
 // attribute is on <html> before any CSS is applied. Must stay self-contained.
@@ -46,16 +47,22 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} ${poppins.variable} antialiased`}
       >
         <ThemeProvider>
-          {/* TourProvider/TourOverlay mounted here (not per-page) so tour
-              state survives client-side navigation between pages — every
-              page.tsx renders its own <Navigation /> rather than sharing one
-              persistent client layout, so this root layout is the only place
-              state can outlive a route change without extra plumbing. Not
-              wired to any real trigger yet — see lib/tour/tourConfig.ts. */}
-          <TourProvider>
-            {children}
-            <TourOverlay />
-          </TourProvider>
+          {/* ToastProvider mounted here so any client component anywhere on
+              the site can call useToast() without its own wiring — see
+              components/ui/Toast.tsx. First usage is MyExamsSection's Save
+              action. */}
+          <ToastProvider>
+            {/* TourProvider/TourOverlay mounted here (not per-page) so tour
+                state survives client-side navigation between pages — every
+                page.tsx renders its own <Navigation /> rather than sharing one
+                persistent client layout, so this root layout is the only place
+                state can outlive a route change without extra plumbing. Not
+                wired to any real trigger yet — see lib/tour/tourConfig.ts. */}
+            <TourProvider>
+              {children}
+              <TourOverlay />
+            </TourProvider>
+          </ToastProvider>
         </ThemeProvider>
       </body>
     </html>
