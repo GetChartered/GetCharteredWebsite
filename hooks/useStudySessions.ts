@@ -1,12 +1,14 @@
 // Ported from GetChartered_app's StudyPlanner/hooks/useStudySessions.ts —
 // this hook was already plain React with no RN-specific API beyond the
-// repository import, so only that import changed (AsyncStorage-backed repo
-// -> localStorage-backed repo).
+// repository import. Now backed by the real study-sessions API (see
+// lib/studyPlanner/apiRepository.ts) instead of localStorage — the app's
+// equivalent hook was swapped the same way, both against the same backend,
+// so a session added on one now shows up on the other.
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 
-import { createStudySessionLocalRepository } from "@/lib/studyPlanner/localRepository";
+import { createStudySessionApiRepository } from "@/lib/studyPlanner/apiRepository";
 import {
   markStudySessionCompleted,
   saveStudySession,
@@ -18,7 +20,7 @@ import type { StudySession, StudySessionDraft, StudySessionFilters } from "@/lib
 const DEFAULT_FILTERS: StudySessionFilters = {};
 
 export function useStudySessions(filters: StudySessionFilters = DEFAULT_FILTERS) {
-  const repository = useMemo(() => createStudySessionLocalRepository(), []);
+  const repository = useMemo(() => createStudySessionApiRepository(), []);
   const filtersKey = JSON.stringify(filters);
   const stableFilters = useMemo(
     () => JSON.parse(filtersKey) as StudySessionFilters,
