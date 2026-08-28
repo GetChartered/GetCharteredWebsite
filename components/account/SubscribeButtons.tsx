@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useToast } from "@/components/ui/Toast";
 
 // Replaces the old <form action="/api/checkout_sessions"> single-price
@@ -18,9 +18,20 @@ const PLANS = [
   { key: "annual" as const, label: "Annual — £100/yr (Best Value)" },
 ];
 
-export function SubscribeButtons() {
+interface SubscribeButtonsProps {
+  // Set when the user arrived here via a landing-page pricing card click
+  // (?subscribe=monthly|annual — see PricingSection.tsx and
+  // app/my-account/page.tsx, which thread this through a login/signup round
+  // trip if needed). Auto-fires checkout for that plan on mount so "click
+  // Subscribe on the pricing page" goes straight to Stripe instead of
+  // making an already-decided user click a second button.
+  autoSubscribePlan?: "monthly" | "annual";
+}
+
+export function SubscribeButtons({ autoSubscribePlan }: SubscribeButtonsProps = {}) {
   const { showToast } = useToast();
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
+  const autoFired = useRef(false);
 
   const subscribe = async (plan: "monthly" | "annual") => {
     setLoadingPlan(plan);
@@ -42,6 +53,14 @@ export function SubscribeButtons() {
       showToast(error instanceof Error ? error.message : "Couldn't start checkout", "error");
     }
   };
+
+  useEffect(() => {
+    if (autoSubscribePlan && !autoFired.current) {
+      autoFired.current = true;
+      void subscribe(autoSubscribePlan);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoSubscribePlan]);
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 10, alignItems: "center" }}>

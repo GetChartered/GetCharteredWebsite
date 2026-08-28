@@ -20,14 +20,29 @@ export default async function MyAccountPage({
 }: {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
-  const session = await requireOnboardedSession("/my-account");
-  const params = await searchParams;
+  // Resolved before requireOnboardedSession so a landing-page pricing click
+  // (?subscribe=monthly|annual, see PricingSection.tsx) survives a
+  // login/signup round trip for a not-yet-authenticated visitor — the
+  // default requireOnboardedSession("/my-account") would otherwise drop the
+  // query string, landing them back with no memory of which plan they
+  // wanted.
+  const preAuthParams = await searchParams;
+  const subscribeIntent = preAuthParams.subscribe as string | undefined;
+  const returnTo =
+    subscribeIntent === "monthly" || subscribeIntent === "annual"
+      ? `/my-account?subscribe=${subscribeIntent}`
+      : "/my-account";
+
+  const session = await requireOnboardedSession(returnTo);
+  const params = preAuthParams;
   // Database (email/password) users have a sub prefixed with `auth0|`.
   // Social-login users (google-oauth2|…, linkedin|…) can't change a password
   // here — their credentials live with the IdP — so hide the section entirely.
   const isDatabaseUser = session.user.sub?.startsWith("auth0|") ?? false;
   const error = params.error as string | undefined;
   const cancelled = params.cancelled as string | undefined;
+  const autoSubscribePlan =
+    subscribeIntent === "monthly" || subscribeIntent === "annual" ? subscribeIntent : undefined;
 
   const subscriptionData = SUBSCRIPTIONS_ENABLED
     ? await SubscriptionDetails()
@@ -148,7 +163,7 @@ export default async function MyAccountPage({
                 subscriptionData.body ? (
                   <CurrentSubscription subscriptionData={subscriptionData.body} />
                 ) : (
-                  <NoSubscription status={subscriptionData?.status ?? 0} />
+                  <NoSubscription status={subscriptionData?.status ?? 0} autoSubscribePlan={autoSubscribePlan} />
                 )
               ) : (
                 <WaitlistPlaceholder />
@@ -457,7 +472,7 @@ function WaitlistPlaceholder() {
   );
 }
 
-function NoSubscription({ status }: { status: number }) {
+function NoSubscription({ status, autoSubscribePlan }: { status: number; autoSubscribePlan?: "monthly" | "annual" }) {
   let message = "You don't have an active subscription";
   let description = "Subscribe to get access to all features";
 
@@ -490,7 +505,7 @@ function NoSubscription({ status }: { status: number }) {
         >
           {description}
         </p>
-        {(status === 3 || status === 5) && <SubscribeButtons />}
+        {(status === 3 || status === 5) && <SubscribeButtons autoSubscribePlan={autoSubscribePlan} />}
         {status === 1 && (
           <Link href="/auth/login" className="btn btn-primary btn-sm">
             Log In
