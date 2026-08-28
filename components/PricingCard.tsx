@@ -1,7 +1,6 @@
 "use client";
 
 import { Check } from "lucide-react";
-import { Button } from "@/components/ui";
 
 interface PricingCardProps {
   title: string;
@@ -26,14 +25,29 @@ export function PricingCard({
   highlighted = false,
   badge,
 }: PricingCardProps) {
+  // Whole card is the click target when a destination is given (Pierce's
+  // call — a small button at the bottom was easy to miss/skip past; the
+  // entire card being clickable is a much bigger, more obvious target).
+  // Falls back to a plain div for the rare case a card has no CTA at all.
+  // Deliberately a real <a> rather than a div+onClick, so it's a normal
+  // link: cmd/ctrl-click opens in a new tab, right-click gives "open in new
+  // tab", crawlers can follow it — none of which a JS click handler gets
+  // for free.
+  const Wrapper = ctaHref ? "a" : "div";
+
   return (
-    <div
+    <Wrapper
+      {...(ctaHref ? { href: ctaHref } : {})}
       className="card relative pricing-card"
       style={{
         borderColor: highlighted
           ? "var(--color-tint)"
           : "var(--color-border-subtle)",
         borderWidth: highlighted ? "2px" : "1px",
+        display: "block",
+        textDecoration: "none",
+        color: "inherit",
+        cursor: ctaHref ? "pointer" : undefined,
       }}
     >
       {/* Badge */}
@@ -87,21 +101,19 @@ export function PricingCard({
           {description}
         </p>
 
-        {/* CTA Button — only Free has its own (it's the one tier that's
-            actually actionable right now); the paid tiers share a single
-            CTA below the whole grid instead of repeating "Join the
-            Waitlist" on every card. */}
-        {ctaHref && ctaLabel && (
+        {/* Visual CTA — a styled pill, not a real nested <button>, since the
+            whole card above is already the actual <a>. A <button> inside an
+            <a> is invalid HTML (interactive-in-interactive); this keeps the
+            same look Button. variant=highlighted?"primary":"outline" gave
+            without nesting a second interactive element inside the link. */}
+        {ctaLabel && (
           <div className="pricing-card-button">
-            <a href={ctaHref} style={{ textDecoration: "none" }}>
-              <Button
-                variant={highlighted ? "primary" : "outline"}
-                size="md"
-                fullWidth
-              >
-                {ctaLabel}
-              </Button>
-            </a>
+            <span
+              className={`btn btn-${highlighted ? "primary" : "outline"} btn-md btn-full`}
+              style={{ pointerEvents: "none" }}
+            >
+              {ctaLabel}
+            </span>
           </div>
         )}
 
@@ -121,6 +133,6 @@ export function PricingCard({
           ))}
         </ul>
       </div>
-    </div>
+    </Wrapper>
   );
 }
