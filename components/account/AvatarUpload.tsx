@@ -1,6 +1,7 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Camera, RotateCcw } from "lucide-react";
 import { useToast } from "@/components/ui/Toast";
 import { BrandedLoader } from "@/components/BrandedLoader";
@@ -34,12 +35,25 @@ interface AvatarUploadProps {
  */
 export function AvatarUpload({ initialPhotoUrl, fallbackPictureUrl, displayName, email, initials }: AvatarUploadProps) {
   const { showToast } = useToast();
+  const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [photoUrl, setPhotoUrl] = useState(initialPhotoUrl);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [status, setStatus] = useState<UploadStatus>("idle");
   const [pendingImage, setPendingImage] = useState<string | null>(null);
+
+
+  // initialPhotoUrl only seeds state on first mount (useState ignores later
+  // prop changes on an already-mounted instance). Next's client Router
+  // Cache can restore this exact component instance when navigating back
+  // to /my-account instead of remounting it fresh, so without this effect
+  // a router.refresh()-driven prop update (see upload() below) never makes
+  // it into local state and the UI reverts to whatever photo was on file
+  // at the very first render of the session.
+  useEffect(() => {
+    setPhotoUrl(initialPhotoUrl);
+  }, [initialPhotoUrl]);
 
   const displayedPhoto = previewUrl ?? photoUrl ?? fallbackPictureUrl;
 
@@ -64,6 +78,16 @@ export function AvatarUpload({ initialPhotoUrl, fallbackPictureUrl, displayName,
       setPendingImage(null);
       setStatus("idle");
       showToast("Profile photo updated", "success");
+      // The route handler invalidates the server-side profile cache
+      // (lib/profileCache.ts) so a fresh server render would already see
+      // the new photoUrl — but Next's client-side Router Cache doesn't
+      // know that, and will happily keep serving the pre-upload RSC
+      // payload for app/my-account/layout.tsx (where this photoUrl prop
+      // originates) on the next navigation into /my-account, wiping this
+      // local state back to "no photo". router.refresh() re-requests the
+      // current route's Server Components, picking up the new photoUrl
+      // for good rather than only until the next navigation.
+      router.refresh();
     } catch (error) {
       setStatus("error");
       showToast(error instanceof Error ? error.message : "Couldn't upload photo", "error");

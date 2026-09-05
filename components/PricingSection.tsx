@@ -1,5 +1,4 @@
 import { PricingCard } from "@/components/PricingCard";
-import { Button } from "@/components/ui";
 import { ScrollReveal } from "@/components/ScrollReveal";
 import { AmbientBlob } from "@/components/AmbientBlob";
 import { SUBSCRIPTIONS_ENABLED } from "@/lib/features";
@@ -88,6 +87,9 @@ const PRELAUNCH_TIERS = [
       "Study planner & calendar",
     ],
     highlighted: false,
+    ctaLabel: "Get Started Free",
+    // Plain login/signup — nothing to buy on this tier.
+    ctaHref: "/auth/login?screen_hint=signup",
   },
   {
     title: "Monthly",
@@ -101,6 +103,14 @@ const PRELAUNCH_TIERS = [
       "Mock exams",
     ],
     highlighted: false,
+    ctaLabel: "Subscribe Monthly",
+    // /my-account?subscribe=monthly: signed-in users land on the account
+    // page and checkout fires automatically (SubscribeButtons'
+    // autoSubscribePlan); a not-yet-signed-in visitor is bounced through
+    // login/signup first and the intent survives the round trip (see
+    // app/my-account/page.tsx's returnTo handling) — either way this one
+    // click ends at a real Stripe Checkout page.
+    ctaHref: "/my-account?subscribe=monthly",
   },
   {
     title: "Annual",
@@ -115,6 +125,8 @@ const PRELAUNCH_TIERS = [
     ],
     highlighted: true,
     badge: "Best Value",
+    ctaLabel: "Subscribe Annual",
+    ctaHref: "/my-account?subscribe=annual",
   },
   {
     title: "Per Exam",
@@ -127,6 +139,13 @@ const PRELAUNCH_TIERS = [
       "Study planner & calendar",
     ],
     highlighted: false,
+    ctaLabel: "Choose Your Exam",
+    // No auto-checkout here (unlike Monthly/Annual) — per-exam purchases
+    // need to know *which* exam, which isn't decidable from this generic
+    // landing-page card. Sends them to the account page's subscription
+    // section for now; a real per-exam picker is still on the to-do list
+    // (claude/launch-todo-list.md item 9).
+    ctaHref: "/my-account#subscription",
   },
 ];
 
@@ -176,25 +195,20 @@ function PrelaunchPricing() {
                 features={tier.features}
                 highlighted={tier.highlighted}
                 badge={tier.badge}
+                ctaLabel={tier.ctaLabel}
+                ctaHref={tier.ctaHref}
               />
             </ScrollReveal>
           ))}
         </div>
 
-        <div style={{ textAlign: "center", marginTop: 40 }}>
-          <a href="/auth/login?screen_hint=signup" style={{ textDecoration: "none" }}>
-            <Button variant="primary" size="lg">
-              Get Started Free
-            </Button>
-          </a>
-          <p
-            className="text-sm"
-            style={{ marginTop: 16, color: "var(--color-text-muted)" }}
-          >
-            Sign up free today — we&apos;ll email you the moment paid plans
-            are ready to go live.
-          </p>
-        </div>
+        <p
+          className="text-sm"
+          style={{ textAlign: "center", marginTop: 8, color: "var(--color-text-muted)" }}
+        >
+          Every paid tier links straight to secure Stripe checkout — no
+          waitlist, sign up and subscribe in one flow.
+        </p>
       </div>
     </section>
   );
