@@ -2,6 +2,12 @@ import { Mail } from "lucide-react";
 import { Navigation } from "@/components/Navigation";
 import { Footer } from "@/components/Footer";
 
+export const metadata = {
+  title: "Contact",
+  description: "Get in touch with the GetChartered team.",
+};
+
+
 const SUPPORT_EMAIL = "support@getchartered.app";
 
 export default function ContactPage() {

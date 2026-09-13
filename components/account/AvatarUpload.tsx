@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Camera, RotateCcw } from "lucide-react";
 import { useToast } from "@/components/ui/Toast";
@@ -38,24 +38,13 @@ export function AvatarUpload({ initialPhotoUrl, fallbackPictureUrl, displayName,
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const [photoUrl, setPhotoUrl] = useState(initialPhotoUrl);
+  const [uploadedPhotoUrl, setUploadedPhotoUrl] = useState<string | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [status, setStatus] = useState<UploadStatus>("idle");
   const [pendingImage, setPendingImage] = useState<string | null>(null);
 
 
-  // initialPhotoUrl only seeds state on first mount (useState ignores later
-  // prop changes on an already-mounted instance). Next's client Router
-  // Cache can restore this exact component instance when navigating back
-  // to /my-account instead of remounting it fresh, so without this effect
-  // a router.refresh()-driven prop update (see upload() below) never makes
-  // it into local state and the UI reverts to whatever photo was on file
-  // at the very first render of the session.
-  useEffect(() => {
-    setPhotoUrl(initialPhotoUrl);
-  }, [initialPhotoUrl]);
-
-  const displayedPhoto = previewUrl ?? photoUrl ?? fallbackPictureUrl;
+  const displayedPhoto = previewUrl ?? uploadedPhotoUrl ?? initialPhotoUrl ?? fallbackPictureUrl;
 
   const upload = async (imageBase64: string) => {
     setStatus("uploading");
@@ -73,7 +62,7 @@ export function AvatarUpload({ initialPhotoUrl, fallbackPictureUrl, displayName,
         throw new Error(typeof data?.error === "string" ? data.error : "Upload failed");
       }
 
-      setPhotoUrl(data.photoUrl as string);
+      setUploadedPhotoUrl(data.photoUrl as string);
       setPreviewUrl(null);
       setPendingImage(null);
       setStatus("idle");

@@ -2,6 +2,12 @@ import { Navigation } from "@/components/Navigation";
 import { Footer } from "@/components/Footer";
 import { LegalContent } from "@/components/LegalContent";
 
+export const metadata = {
+  title: "Terms of Service",
+  description: "GetChartered terms of service.",
+};
+
+
 export default function TermsPage() {
   return (
     <>

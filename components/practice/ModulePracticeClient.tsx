@@ -8,9 +8,11 @@ import { ModuleSelector } from "@/components/practice/ModuleSelector";
 import { QuestionCard } from "@/components/practice/QuestionCard";
 import { PracticeSummary } from "@/components/practice/PracticeSummary";
 import { usePracticeRunner } from "@/hooks/usePracticeRunner";
+import { usePracticePreferences } from "@/hooks/usePracticePreferences";
 import { useExamModules } from "@/hooks/useExamModules";
 
 export function ModulePracticeClient() {
+  const prefs = usePracticePreferences();
   const { loading: modulesLoading, exams, error: modulesError, retry } = useExamModules();
   const [selectedModules, setSelectedModules] = useState<string[]>([]);
 
@@ -104,6 +106,7 @@ export function ModulePracticeClient() {
           onNext={runner.handleNext}
           isFlagged={runner.flaggedIds.has(current.questionId)}
           onToggleFlag={() => runner.toggleFlag(current.questionId)}
+          prefs={prefs}
         />
       </div>
     );

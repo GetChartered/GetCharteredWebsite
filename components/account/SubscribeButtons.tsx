@@ -7,25 +7,26 @@ import { useToast } from "@/components/ui/Toast";
 // submit button — that route only ever supported one hardcoded Stripe price
 // and its webhook never wrote anything anywhere (see claude/launch-todo-list.md
 // item 9). This calls the new proxy (app/api/stripe/checkout/route.ts ->
-// Lambda stripeCreateCheckoutSession) which supports monthly/annual/per_exam
-// distinctly and actually updates the user's entitlement on completion.
+// Lambda stripeCreateCheckoutSession), which actually updates the user's
+// entitlement on completion.
 //
-// Per-exam purchases aren't offered here — they need an examId (which exam
-// paper), which only makes sense from an exam-specific context (e.g. a
-// locked exam's own page), not this general account-page subscribe card.
+// Monthly was dropped as a plan (Pierce, 2026-09-09) — Annual is the only
+// plan offered from this account-page card now. Per-exam purchases aren't
+// offered here — they need an examId (which exam paper), which only makes
+// sense from an exam-specific context (e.g. a locked exam's own page), not
+// this general account-page subscribe card.
 const PLANS = [
-  { key: "monthly" as const, label: "Monthly — £15/mo" },
-  { key: "annual" as const, label: "Annual — £100/yr (Best Value)" },
+  { key: "annual" as const, label: "Annual — £100/yr" },
 ];
 
 interface SubscribeButtonsProps {
   // Set when the user arrived here via a landing-page pricing card click
-  // (?subscribe=monthly|annual — see PricingSection.tsx and
-  // app/my-account/page.tsx, which thread this through a login/signup round
-  // trip if needed). Auto-fires checkout for that plan on mount so "click
-  // Subscribe on the pricing page" goes straight to Stripe instead of
-  // making an already-decided user click a second button.
-  autoSubscribePlan?: "monthly" | "annual";
+  // (?subscribe=annual — see PricingSection.tsx and app/my-account/page.tsx,
+  // which threads this through a login/signup round trip if needed).
+  // Auto-fires checkout on mount so "click Subscribe on the pricing page"
+  // goes straight to Stripe instead of making an already-decided user click
+  // a second button.
+  autoSubscribePlan?: "annual";
 }
 
 export function SubscribeButtons({ autoSubscribePlan }: SubscribeButtonsProps = {}) {
@@ -33,7 +34,7 @@ export function SubscribeButtons({ autoSubscribePlan }: SubscribeButtonsProps = 
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
   const autoFired = useRef(false);
 
-  const subscribe = async (plan: "monthly" | "annual") => {
+  const subscribe = async (plan: "annual") => {
     setLoadingPlan(plan);
     try {
       const res = await fetch("/api/stripe/checkout", {

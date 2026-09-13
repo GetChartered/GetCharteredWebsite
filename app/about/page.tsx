@@ -246,7 +246,7 @@ export default function AboutPage() {
                     flexShrink: 0,
                     padding: 16,
                     borderRadius: "var(--radius-lg)",
-                    backgroundColor: "var(--color-card)",
+                    backgroundColor: "#ffffff", // ICAEW guidance: logo must always sit on white, in both themes
                     boxShadow: "var(--shadow-card)",
                   }}
                 >

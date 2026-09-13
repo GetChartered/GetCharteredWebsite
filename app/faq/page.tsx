@@ -4,6 +4,12 @@ import { Footer } from "@/components/Footer";
 import { FaqAccordion, type FaqItem } from "@/components/FaqAccordion";
 import { getOptionalSession } from "@/lib/auth0";
 
+export const metadata = {
+  title: "FAQ",
+  description: "Frequently asked questions about GetChartered.",
+};
+
+
 const faqs: FaqItem[] = [
   {
     question: "When is GetChartered launching publicly?",
@@ -131,7 +137,7 @@ const faqs: FaqItem[] = [
     answer: (
       <>
         <p>
-          GetChartered is free to download with the option to upgrade to a premium subscription. 
+          GetChartered is free to download with the option to upgrade to a paid plan. 
           We offer plans for both independent learners and enterprises.
         </p>
         <p>

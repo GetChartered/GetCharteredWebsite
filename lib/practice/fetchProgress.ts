@@ -178,7 +178,7 @@ const KNOWN_TOP_LEVEL_KEYS = new Set(["userId", "moduleStats", "weeklyStats", "g
  * components/useBackendData.tsx (fetchProgress / ProgressResponse). Shared by
  * the /api/progress route (client-side dashboard fetch) and any Server
  * Component that wants progress data directly (e.g. my-account's quick-stats
- * card), matching the pattern SubscriptionDetails.tsx uses for Stripe.
+ * card), matching the parseProfileData/fetchProfileData pattern in lib/profile.ts.
  *
  * Logs the FULL raw response on every call (not just on an empty/error
  * result) — this is deliberate: GET /progress's documented shape is strictly
@@ -191,12 +191,6 @@ const KNOWN_TOP_LEVEL_KEYS = new Set(["userId", "moduleStats", "weeklyStats", "g
 export async function fetchProgressData(): Promise<ProgressData | null> {
   const response = await callGcApi("/progress");
   const data = await response.json().catch(() => null);
-
-  console.log(
-    "[fetchProgressData] GET /progress raw response:",
-    response.status,
-    JSON.stringify(data)?.slice(0, 4000)
-  );
 
   if (!response.ok || !data) {
     console.error("[fetchProgressData] GET /progress returned a non-OK or unparsable response", response.status);

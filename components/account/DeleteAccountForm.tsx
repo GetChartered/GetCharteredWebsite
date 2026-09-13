@@ -113,7 +113,7 @@ export function DeleteAccountForm({ email, onCancel }: DeleteAccountFormProps) {
             className="text-body"
             style={{ color: "var(--color-text-secondary)", lineHeight: 1.5 }}
           >
-            This action is permanent. All your data, subscription, and progress
+            This action is permanent. All your data, purchases, and progress
             will be removed and can&apos;t be recovered.
           </p>
         </div>
@@ -128,7 +128,7 @@ export function DeleteAccountForm({ email, onCancel }: DeleteAccountFormProps) {
             marginBottom: 24,
           }}
         >
-          This action is permanent. All your data, subscription, and progress
+          This action is permanent. All your data, purchases, and progress
           will be removed and can&apos;t be recovered.
         </p>
       )}

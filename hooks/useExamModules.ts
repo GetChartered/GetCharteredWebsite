@@ -7,6 +7,13 @@ type FetchResult =
   | { ok: true; exams: PracticeExamGroup[]; moduleQuestionCounts: Record<string, number> }
   | { ok: false; error: string };
 
+// Module-level cache — this data is static course structure that doesn't
+// change between renders or navigations. Prevents redundant fetches when
+// 3+ components on the same page each call useExamModules independently.
+let _cachedResult: FetchResult | null = null;
+let _cacheExpiresAt = 0;
+const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+
 /**
  * Fetches ACA's exam/module tree from /api/practice/modules. Shared by every
  * practice mode's module-selection step (Quick, Module, Timed use it
@@ -23,13 +30,17 @@ export function useExamModules() {
   // Pure fetch — no setState here, so it's safe to call from an effect body
   // without triggering synchronous cascading renders.
   const fetchModules = useCallback(async (): Promise<FetchResult> => {
+    // Return cached result if still valid
+    if (_cachedResult && Date.now() < _cacheExpiresAt) {
+      return _cachedResult;
+    }
     try {
       const res = await fetch("/api/practice/modules");
       const data = await res.json().catch(() => null);
       if (!res.ok || !data || !Array.isArray(data.exams)) {
         return { ok: false, error: "Couldn't load modules. Please try again." };
       }
-      return {
+      const result: FetchResult = {
         ok: true,
         exams: data.exams as PracticeExamGroup[],
         moduleQuestionCounts:
@@ -37,6 +48,9 @@ export function useExamModules() {
             ? (data.moduleQuestionCounts as Record<string, number>)
             : {},
       };
+      _cachedResult = result;
+      _cacheExpiresAt = Date.now() + CACHE_TTL_MS;
+      return result;
     } catch {
       return { ok: false, error: "Couldn't load modules. Please try again." };
     }

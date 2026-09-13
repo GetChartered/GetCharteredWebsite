@@ -4,11 +4,14 @@ import { callGcApi } from "@/lib/gcApi";
 
 // POST /api/stripe/checkout — same-origin proxy to the GC backend's POST
 // /stripe/checkout (Lambda stripeCreateCheckoutSession). Body: { plan:
-// "monthly" | "annual" | "per_exam", examId?: string } — examId is required
-// only for plan "per_exam" (which exam paper is being unlocked; the Lambda
-// rejects the request without it). Returns { url } — the caller redirects
-// the browser there (a real Stripe-hosted Checkout page), same pattern as
-// every other proxy route in this directory (see app/api/user/photo/route.ts).
+// "annual" | "per_exam", examId?: string } — examId is required only for
+// plan "per_exam" (which exam paper is being unlocked; the Lambda rejects
+// the request without it). Returns { url } — the caller redirects the
+// browser there (a real Stripe-hosted Checkout page), same pattern as every
+// other proxy route in this directory (see app/api/user/photo/route.ts).
+//
+// Monthly was dropped as a plan (Pierce, 2026-09-09) — Annual + Per Exam
+// only now, both one-time payments.
 //
 // This supersedes the older app/api/checkout_sessions/route.js, which posted
 // straight to Stripe from this app with no plan selection and a webhook that
@@ -21,7 +24,7 @@ export async function POST(request: Request) {
     | { plan?: unknown; examId?: unknown }
     | null;
   const plan = body?.plan;
-  if (plan !== "monthly" && plan !== "annual" && plan !== "per_exam") {
+  if (plan !== "annual" && plan !== "per_exam") {
     return NextResponse.json({ error: "Invalid or missing plan" }, { status: 400 });
   }
 

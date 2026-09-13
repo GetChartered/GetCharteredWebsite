@@ -1,5 +1,6 @@
 "use client";
 
+
 import { useCallback, useEffect, useState } from "react";
 
 // Shared preferences for practice sessions (all 5 modes), mirroring
@@ -67,3 +68,6 @@ export function usePracticePreferences() {
     toggleShuffleOrder,
   };
 }
+
+/** The shape returned by usePracticePreferences — use this for prop drilling. */
+export type PracticePreferences = ReturnType<typeof usePracticePreferences>;

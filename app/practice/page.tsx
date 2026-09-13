@@ -4,6 +4,12 @@ import { Navigation } from "@/components/Navigation";
 import { Footer } from "@/components/Footer";
 import { requireOnboardedSession } from "@/lib/auth0";
 
+export const metadata = {
+  title: "Practice",
+  description: "Choose your practice mode and start studying.",
+};
+
+
 type ModeCard = {
   href: string;
   icon: LucideIcon;

@@ -88,6 +88,7 @@ export function useLeaderboard() {
   // now does the same via a link to /my-account.
   useEffect(() => {
     if (!selectedExamCode) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- data fetch on exam change
     void fetchLeaderboardFor(selectedExamCode);
   }, [selectedExamCode, fetchLeaderboardFor]);
 

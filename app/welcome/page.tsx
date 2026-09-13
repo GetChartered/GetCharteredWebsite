@@ -2,21 +2,29 @@ import Link from "next/link";
 import { CheckCircle2, ArrowRight } from "lucide-react";
 import { Navigation } from "@/components/Navigation";
 import { Footer } from "@/components/Footer";
-import { requireOnboardedSession } from "@/lib/auth0";
-import {
-  getUserMetadata,
-  type OnboardingMetadata,
-} from "@/lib/auth0-management";
+import { requireOnboardedSession, getProfileCached } from "@/lib/auth0";
+import type { ProfileResponse } from "@/lib/profileCache";
+
+export const metadata = {
+  title: "Welcome",
+  description: "Welcome to GetChartered — let's get you set up.",
+};
+
 
 export default async function WelcomePage() {
   const session = await requireOnboardedSession("/welcome");
-  const metadata: OnboardingMetadata = await getUserMetadata(
-    session.user.sub,
-  ).catch(() => ({}));
-  const firstName = (metadata.full_name || session.user.name || "")
-    .toString()
-    .trim()
-    .split(/\s+/)[0];
+  // DynamoDB (via GET /profile) is the source of truth for the name a user
+  // gave during onboarding — Auth0's user_metadata.full_name hasn't been
+  // written since onboarding moved off it, so it's not a reliable fallback
+  // here; session.user.name (raw Auth0 profile name) is, for a database
+  // signup with no real name yet.
+  const profile: ProfileResponse = await getProfileCached(session.user.sub).catch(
+    () => ({} as ProfileResponse)
+  );
+  const rawName = profile.fullName || session.user.name || "";
+  const firstName = rawName.includes("@")
+    ? ""
+    : rawName.toString().trim().split(/\s+/)[0];
 
   return (
     <div className="min-h-screen">

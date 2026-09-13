@@ -8,6 +8,7 @@ import { ExamPicker } from "@/components/practice/ExamPicker";
 import { QuestionCard } from "@/components/practice/QuestionCard";
 import { PracticeSummary } from "@/components/practice/PracticeSummary";
 import { usePracticeRunner } from "@/hooks/usePracticeRunner";
+import { usePracticePreferences } from "@/hooks/usePracticePreferences";
 import { useExamModules } from "@/hooks/useExamModules";
 
 const NUM_QUESTIONS = 70;
@@ -21,6 +22,7 @@ function formatTime(seconds: number): string {
 }
 
 export function MockExamClient() {
+  const prefs = usePracticePreferences();
   const { loading: modulesLoading, exams, error: modulesError, retry } = useExamModules();
   const [selectedExamCode, setSelectedExamCode] = useState<string | null>(null);
 
@@ -116,6 +118,7 @@ export function MockExamClient() {
           timerUrgent={!runner.isDrill && timeLeft <= 600}
           isFlagged={runner.flaggedIds.has(current.questionId)}
           onToggleFlag={() => runner.toggleFlag(current.questionId)}
+          prefs={prefs}
         />
       </div>
     );

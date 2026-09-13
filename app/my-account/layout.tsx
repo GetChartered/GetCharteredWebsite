@@ -6,15 +6,22 @@ import { Footer } from "@/components/Footer";
 import { AvatarUpload } from "@/components/account/AvatarUpload";
 import { AccountSidebarNav } from "@/components/account/AccountSidebarNav";
 
-// Resolve a display name from the user's onboarding metadata, falling back
-// to whatever the IdP supplied. Treats email-shaped names ("foo@bar.com")
-// as missing — Auth0 stamps these in for database users that haven't picked
-// a real name yet.
+// Resolve a display name, preferring the DynamoDB-backed profile (the name
+// a user actually gave during onboarding — see lib/profile.ts) over Auth0's
+// user_metadata.full_name, which stopped being written once onboarding
+// moved off it (app/api/onboarding/route.ts writes straight to the backend
+// now, Auth0 stays identity/login only) and is empty for anyone who
+// onboarded through the current flow. metadataName is kept as a fallback
+// for any pre-migration user whose name still only lives in Auth0. Treats
+// email-shaped names ("foo@bar.com") as missing — Auth0 stamps these in for
+// database users that haven't picked a real name yet.
 function pickDisplayName(
+  profileName: string | undefined,
   metadataName: string | undefined,
   sessionName: string | undefined,
   email: string | undefined
 ): string {
+  if (profileName && profileName.trim()) return profileName.trim();
   if (metadataName && metadataName.trim()) return metadataName.trim();
   if (sessionName && !sessionName.includes("@")) {
     if (!email || sessionName.toLowerCase() !== email.toLowerCase()) {
@@ -51,27 +58,29 @@ export default async function AccountLayout({
   const metadata = await getUserMetadataCached(user.sub).catch(
     (): OnboardingMetadata => ({})
   );
-  const displayName = pickDisplayName(metadata.full_name, user.name, user.email);
+
+  // Fetched here (rather than only below for photoUrl) so pickDisplayName
+  // can prefer it — same defensive try/catch shape as elsewhere in this
+  // file: a profile-fetch failure degrades gracefully instead of crashing
+  // the whole account section.
+  let profileFullName: string | undefined;
+  let photoUrl: string | undefined;
+  try {
+    const profile = await getProfileCached(user.sub);
+    profileFullName = profile.fullName;
+    photoUrl = profile.photoUrl;
+  } catch (error) {
+    if (isNextControlFlowError(error)) throw error;
+    console.error("AccountLayout: failed to fetch profile for name/avatar", { userId: user.sub, error });
+  }
+
+  const displayName = pickDisplayName(profileFullName, metadata.full_name, user.name, user.email);
   const initials = getInitials(displayName, user.email);
 
   // Database (email/password) users get a "Security" jump-link since that
   // section only renders for them — see app/my-account/page.tsx's own
   // identical check for why (social-login credentials live with the IdP).
   const isDatabaseUser = user.sub?.startsWith("auth0|") ?? false;
-
-  // A custom uploaded avatar (once backend-reference/updateUserPhoto.js is
-  // deployed) takes priority over the IdP picture — see AvatarUpload's own
-  // fallback chain (photoUrl -> fallbackPictureUrl -> initials). Never let a
-  // profile-fetch failure break the whole account section: same defensive
-  // try/catch shape as requireOnboardedSession's own profile lookup.
-  let photoUrl: string | undefined;
-  try {
-    const profile = await getProfileCached(user.sub);
-    photoUrl = profile.photoUrl;
-  } catch (error) {
-    if (isNextControlFlowError(error)) throw error;
-    console.error("AccountLayout: failed to fetch profile for avatar photoUrl", { userId: user.sub, error });
-  }
 
   return (
     <div className="min-h-screen">

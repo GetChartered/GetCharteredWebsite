@@ -1,35 +1,30 @@
 import type { ExamLevel } from "@/lib/practice/types";
 
-// Best-effort exam-code -> ICAEW ACA syllabus tier lookup.
+// Exam-code -> ICAEW ACA syllabus tier lookup.
 //
-// IMPORTANT CAVEAT: GET /courses (lib/practice/courses.ts) never returns a
-// level for an exam, and there is no live backend access from this
-// environment to enumerate the *real* full set of exam codes the backend
-// actually serves. The only two ACA exam codes independently confirmed
-// against real source (GetChartered_app/assets/courses.ts) are "BIP" and
-// "ARF" (a third, "AF", is also seeded there but its module list is empty).
-// Neither of those codes matches standard ICAEW paper names 1:1 — "Business,
-// Innovation and People" and "Assurance and Risk Fundamentals" aren't real
-// ICAEW paper titles — which suggests this product's exam catalogue may not
-// map cleanly onto the official syllabus at all, not just that the exact
-// code strings are unverified.
+// Verified 2026-09-09 directly against the live backend (GET /courses):
+// ACA "Certificate Level" currently has 6 exams — BIP, AF, TF, BL, SE, ARF —
+// all with live question banks. This replaces an earlier version of this
+// table that only knew about 3 stale/legacy codes (BIP, AF, ARF, with wrong
+// names) because at the time there was no way to reach the live backend
+// from this environment to check. All 6 are "certificate" level per the
+// backend's own "ACA Certificate Level" course name — there's no
+// Professional/Advanced level content live yet, so the name-pattern
+// fallback below exists only for exam codes/names this table doesn't
+// recognise (e.g. if Professional level ever goes live).
 //
-// Given that, this table is a genuine best guess (standard ICAEW ACA
-// structure, matched by code where seen in the app repo and by exam *name*
-// otherwise), not a verified mapping. resolveExamLevel() returns null for
-// anything it doesn't recognise rather than silently guessing — the exam
-// level field in the result-entry form (components/account/ExamResultModal.tsx)
-// always shows this as an editable dropdown pre-filled from here, never a
-// hidden assumption, specifically because this table might be wrong. If a
-// real code turns out to be missing/misclassified, fix it here — everything
-// else (getPassMark, the UI) is driven off ExamLevel, not off this file's
-// contents directly.
+// resolveExamLevel() still returns null for anything unrecognised rather
+// than guessing — the result-entry form
+// (components/account/ExamResultModal.tsx) always shows this as an
+// editable dropdown pre-filled from here, never a hidden assumption. If a
+// real code turns out to be missing/misclassified, fix it here.
 const EXAM_LEVEL_BY_CODE: Record<string, ExamLevel> = {
-  // Confirmed-existing codes (GetChartered_app/assets/courses.ts) — both
-  // read as introductory/foundational in scope, hence "certificate" here.
-  BIP: "certificate",
-  AF: "certificate",
-  ARF: "certificate",
+  BIP: "certificate", // Business Insight and Performance
+  AF: "certificate", // Accounting Fundamentals
+  TF: "certificate", // Tax Fundamentals
+  BL: "certificate", // Business Law
+  SE: "certificate", // Sustainability and Ethics
+  ARF: "certificate", // Assurance and Risk Fundamentals
 };
 
 // Fallback for exam codes not in the table above: match on the exam's

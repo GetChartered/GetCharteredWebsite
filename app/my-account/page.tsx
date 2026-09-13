@@ -1,19 +1,27 @@
 import Link from "next/link";
 import { CreditCard, Calendar, Sparkles, Target, TrendingUp, Flame, ArrowRight, LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui";
-import SubscriptionDetails from "@/components/SubscriptionDetails";
-import { CancelSubscriptionDialog } from "@/components/account/CancelSubscriptionDialog";
-import { BillingPortalButton } from "@/components/BillingPortalButton";
 import { ChangePasswordButton } from "@/components/ChangePasswordButton";
 import { MyExamsSection } from "@/components/account/MyExamsSection";
 import { SubscribeButtons } from "@/components/account/SubscribeButtons";
+import { PerExamPicker } from "@/components/account/PerExamPicker";
+import { fetchAcaCourseData } from "@/lib/practice/courses";
+import type { PracticeExamGroup } from "@/lib/practice/types";
 import { DeleteAccountModal } from "@/components/account/DeleteAccountModal";
 import { ScrollReveal } from "@/components/ScrollReveal";
 import { SUBSCRIPTIONS_ENABLED } from "@/lib/features";
 import { requireOnboardedSession } from "@/lib/auth0";
+import { fetchProfileData } from "@/lib/profile";
+import type { ProfileResponse } from "@/lib/profileCache";
 import { fetchProgressData } from "@/lib/practice/fetchProgress";
 import { computeStreak, mergeDailyBreakdowns } from "@/lib/practice/progressStats";
 import type { ProgressData } from "@/lib/practice/types";
+
+export const metadata = {
+  title: "My Account",
+  description: "Manage your GetChartered account and subscription.",
+};
+
 
 export default async function MyAccountPage({
   searchParams,
@@ -21,34 +29,36 @@ export default async function MyAccountPage({
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
   // Resolved before requireOnboardedSession so a landing-page pricing click
-  // (?subscribe=monthly|annual, see PricingSection.tsx) survives a
-  // login/signup round trip for a not-yet-authenticated visitor — the
-  // default requireOnboardedSession("/my-account") would otherwise drop the
-  // query string, landing them back with no memory of which plan they
-  // wanted.
+  // (?subscribe=annual, see PricingSection.tsx) survives a login/signup
+  // round trip for a not-yet-authenticated visitor — the default
+  // requireOnboardedSession("/my-account") would otherwise drop the query
+  // string, landing them back with no memory of which plan they wanted.
+  // Monthly was dropped as a plan (Pierce, 2026-09-09) — Annual + Per Exam
+  // only now.
   const preAuthParams = await searchParams;
   const subscribeIntent = preAuthParams.subscribe as string | undefined;
   const returnTo =
-    subscribeIntent === "monthly" || subscribeIntent === "annual"
+    subscribeIntent === "annual" || subscribeIntent === "per_exam"
       ? `/my-account?subscribe=${subscribeIntent}`
       : "/my-account";
 
   const session = await requireOnboardedSession(returnTo);
-  const params = preAuthParams;
   // Database (email/password) users have a sub prefixed with `auth0|`.
   // Social-login users (google-oauth2|…, linkedin|…) can't change a password
   // here — their credentials live with the IdP — so hide the section entirely.
   const isDatabaseUser = session.user.sub?.startsWith("auth0|") ?? false;
-  const error = params.error as string | undefined;
-  const cancelled = params.cancelled as string | undefined;
-  const autoSubscribePlan =
-    subscribeIntent === "monthly" || subscribeIntent === "annual" ? subscribeIntent : undefined;
+  const autoSubscribePlan = subscribeIntent === "annual" ? subscribeIntent : undefined;
 
-  const subscriptionData = SUBSCRIPTIONS_ENABLED
-    ? await SubscriptionDetails()
-    : null;
+  // Both paid tiers (Annual, Per Exam) are one-time Stripe payments — there is
+  // no Stripe Subscription object to look up anymore, so entitlement comes
+  // straight from GET /profile (premium / subscriptionPlan / annualExpiresAt
+  // / purchasedExams) instead of a Stripe subscription-status lookup.
+  // Pierce's call, 2026-09-10 — see lib/profile.ts.
+  const profileData = SUBSCRIPTIONS_ENABLED ? await fetchProfileData() : null;
 
   const progressData = await fetchProgressData();
+  const acaCourseData = SUBSCRIPTIONS_ENABLED ? await fetchAcaCourseData().catch(() => null) : null;
+  const examOptions = acaCourseData?.exams ?? [];
 
   return (
     <div>
@@ -111,60 +121,22 @@ export default async function MyAccountPage({
 
       <ScrollReveal>
         <div>
-          {SUBSCRIPTIONS_ENABLED && error === "already_subscribed" && (
-            <div
-              style={{
-                padding: "16px 20px",
-                marginBottom: 16,
-                borderRadius: "var(--radius-md)",
-                backgroundColor: "rgba(239, 68, 68, 0.1)",
-                border: "1px solid rgba(239, 68, 68, 0.3)",
-                color: "#ef4444",
-                fontSize: "14px",
-                lineHeight: "20px",
-              }}
-            >
-              You already have an active subscription. You cannot purchase another
-              subscription while one is active.
-            </div>
-          )}
-
-          {SUBSCRIPTIONS_ENABLED && cancelled === "true" && (
-            <div
-              style={{
-                padding: "16px 20px",
-                marginBottom: 16,
-                borderRadius: "var(--radius-md)",
-                backgroundColor: "rgba(34, 197, 94, 0.1)",
-                border: "1px solid rgba(34, 197, 94, 0.3)",
-                color: "#22c55e",
-                fontSize: "14px",
-                lineHeight: "20px",
-              }}
-            >
-              Your subscription has been cancelled successfully. You will retain
-              access until the end of your current billing period.
-            </div>
-          )}
-
           <div className="my-account-settings">
             {/* Subscription */}
             <div id="subscription">
               <SectionHeading title="Subscription" />
               <p style={{ fontSize: 13, color: "var(--color-text-secondary)", marginBottom: 14 }}>
                 {SUBSCRIPTIONS_ENABLED
-                  ? "Manage your subscription plan and billing information"
-                  : "Subscriptions open when GetChartered launches in late summer 2026"}
+                  ? "Manage your plan and see what you've purchased"
+                  : "Plans open when GetChartered launches in late summer 2026"}
               </p>
 
-              {SUBSCRIPTIONS_ENABLED ? (
-                subscriptionData &&
-                subscriptionData.status === 6 &&
-                subscriptionData.body ? (
-                  <CurrentSubscription subscriptionData={subscriptionData.body} />
-                ) : (
-                  <NoSubscription status={subscriptionData?.status ?? 0} autoSubscribePlan={autoSubscribePlan} />
-                )
+              {SUBSCRIPTIONS_ENABLED && profileData ? (
+                <PlanStatus
+                  profileData={profileData}
+                  autoSubscribePlan={autoSubscribePlan}
+                  examOptions={examOptions}
+                />
               ) : (
                 <WaitlistPlaceholder />
               )}
@@ -225,100 +197,107 @@ export default async function MyAccountPage({
   );
 }
 
-function formatDate(timestamp: number | undefined): string {
-  if (!timestamp) {
-    return "N/A";
+// Both paid tiers are one-time Stripe payments (Pierce, 2026-09-09/10) — no
+// Stripe Subscription object exists to manage, so there's no billing-portal
+// link or cancellation flow here anymore. Branches purely on GET /profile
+// data: an active Annual plan, one or more purchased single exams, or
+// neither (offer to buy).
+function PlanStatus({
+  profileData,
+  autoSubscribePlan,
+  examOptions,
+}: {
+  profileData: ProfileResponse;
+  autoSubscribePlan?: "annual";
+  examOptions: PracticeExamGroup[];
+}) {
+  const { premium, subscriptionPlan, annualExpiresAt, purchasedExams } = profileData;
+
+  if (premium && subscriptionPlan === "annual") {
+    return <AnnualPlanCard expiresAt={annualExpiresAt} />;
   }
-  const date = new Date(timestamp * 1000);
-  if (isNaN(date.getTime())) {
-    return "N/A";
+
+  const purchasedExamGroups = examOptions.filter((exam) => purchasedExams.includes(exam.code));
+  const remainingExamOptions = examOptions.filter((exam) => !purchasedExams.includes(exam.code));
+
+  if (purchasedExamGroups.length > 0) {
+    return (
+      <div className="space-y-6">
+        <div className="card" style={{ padding: "24px" }}>
+          <h3 className="mb-4" style={{ fontWeight: 700, color: "var(--color-text)", fontSize: "14px" }}>
+            Exams purchased
+          </h3>
+          <div className="space-y-2">
+            {purchasedExamGroups.map((exam) => (
+              <div
+                key={exam.code}
+                className="flex items-center gap-2"
+                style={{ fontSize: 14, color: "var(--color-text-secondary)" }}
+              >
+                <span style={{ color: "var(--color-success)" }}>✓</span>
+                {exam.name}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {remainingExamOptions.length > 0 && (
+          <div className="card" style={{ padding: "24px" }}>
+            <p className="text-sm" style={{ color: "var(--color-text-secondary)", marginBottom: 10 }}>
+              Buy access to another exam — £25
+            </p>
+            <PerExamPicker exams={remainingExamOptions} />
+            <div style={{ marginTop: 16, paddingTop: 16, borderTop: "1px solid var(--color-border-subtle)" }}>
+              <SubscribeButtons autoSubscribePlan={autoSubscribePlan} />
+            </div>
+          </div>
+        )}
+      </div>
+    );
   }
-  return date.toLocaleDateString();
+
+  return (
+    <div className="card" style={{ padding: "24px" }}>
+      <div className="text-center py-10">
+        <div
+          className="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-4"
+          style={{ backgroundColor: "rgba(0, 173, 181, 0.12)" }}
+        >
+          <CreditCard size={24} style={{ color: "var(--accent-blue)" }} />
+        </div>
+        <h3 className="text-title mb-2" style={{ fontWeight: 600, color: "var(--color-text)" }}>
+          You don&apos;t have an active plan
+        </h3>
+        <p className="text-body mb-6" style={{ color: "var(--color-text-secondary)" }}>
+          Buy Annual access, or pick a single exam
+        </p>
+        <div style={{ display: "flex", flexDirection: "column", gap: 20, alignItems: "center" }}>
+          <SubscribeButtons autoSubscribePlan={autoSubscribePlan} />
+          {examOptions.length > 0 && (
+            <div style={{ width: "100%", maxWidth: 320 }}>
+              <p
+                className="text-sm"
+                style={{ color: "var(--color-text-secondary)", marginBottom: 10, textAlign: "center" }}
+              >
+                Or buy access to a single exam — £25
+              </p>
+              <PerExamPicker exams={examOptions} />
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
 }
 
-function CurrentSubscription({ subscriptionData }: { subscriptionData: any }) {
-  const status = subscriptionData.status;
-
-  // Extract price information from subscription
-  const priceData = subscriptionData.items?.data?.[0]?.price;
-  const amountInCents = priceData?.unit_amount || 1499;
-  const amountValue = amountInCents / 100;
-
-  // Remove decimals if it's a whole number
-  const amount =
-    amountValue % 1 === 0 ? amountValue.toString() : amountValue.toFixed(2);
-
-  const currency = priceData?.currency?.toUpperCase() || "GBP";
-  const currencySymbol =
-    currency === "GBP" ? "£" : currency === "USD" ? "$" : "€";
-  const interval = priceData?.recurring?.interval || "month";
-
-  const formattedPrice = `${currencySymbol}${amount}`;
-  const formattedInterval = `/${interval}`;
-
-  // Get the next billing date
-  let nextBillingDate =
-    subscriptionData.current_period_end ||
-    subscriptionData.latest_invoice?.period_end ||
-    null;
-
-  // If the period_end is in the past, calculate the next billing date
-  if (nextBillingDate) {
-    const periodEndDate = new Date(nextBillingDate * 1000);
-    const now = new Date();
-
-    // If the period end is in the past, calculate next billing date
-    if (periodEndDate < now) {
-      const billingDay = periodEndDate.getDate();
-      const nextDate = new Date(now);
-      const intervalCount = priceData?.recurring?.interval_count || 1;
-
-      // Set to the same day in the current period
-      nextDate.setDate(billingDay);
-
-      // If that date has already passed this period, move to next billing period
-      if (nextDate <= now) {
-        // Add the appropriate time based on billing interval
-        switch (interval) {
-          case "day":
-            nextDate.setDate(nextDate.getDate() + intervalCount);
-            break;
-          case "week":
-            nextDate.setDate(nextDate.getDate() + 7 * intervalCount);
-            break;
-          case "month":
-            nextDate.setMonth(nextDate.getMonth() + intervalCount);
-            break;
-          case "year":
-            nextDate.setFullYear(nextDate.getFullYear() + intervalCount);
-            break;
-          default:
-            // Default to monthly if interval is unknown
-            nextDate.setMonth(nextDate.getMonth() + intervalCount);
-        }
-      }
-
-      // Handle edge case where the day doesn't exist in the target month (e.g., 31st in a 30-day month)
-      if (
-        (interval === "month" || interval === "year") &&
-        nextDate.getDate() !== billingDay
-      ) {
-        nextDate.setDate(0); // Set to last day of previous month
-      }
-
-      nextBillingDate = Math.floor(nextDate.getTime() / 1000);
-    }
-  }
+function AnnualPlanCard({ expiresAt }: { expiresAt: string | null }) {
+  const formattedExpiry = expiresAt ? new Date(expiresAt).toLocaleDateString() : "N/A";
 
   return (
     <div className="space-y-6">
       {/* Plan Overview */}
       <div className="card" style={{ padding: "24px" }}>
-        {/* Plan header */}
-        <div
-          className="flex items-start justify-between"
-          style={{ marginBottom: "24px" }}
-        >
+        <div className="flex items-start justify-between" style={{ marginBottom: "24px" }}>
           <div className="flex items-center gap-4">
             <div
               className="w-11 h-11 rounded-full flex items-center justify-center"
@@ -327,88 +306,33 @@ function CurrentSubscription({ subscriptionData }: { subscriptionData: any }) {
               <CreditCard size={22} style={{ color: "var(--accent-blue)" }} />
             </div>
             <div>
-              <h3
-                style={{
-                  fontWeight: 600,
-                  color: "var(--color-text)",
-                  fontSize: "14px",
-                }}
-              >
-                Premium Plan
+              <h3 style={{ fontWeight: 600, color: "var(--color-text)", fontSize: "14px" }}>
+                Annual Plan
               </h3>
               <div className="flex items-baseline gap-1">
-                <span
-                  className="text-title"
-                  style={{ fontWeight: 700, color: "var(--color-text)" }}
-                >
-                  {formattedPrice}
-                </span>
-                <span
-                  style={{
-                    fontSize: "13px",
-                    color: "var(--color-text-secondary)",
-                  }}
-                >
-                  {formattedInterval}
+                <span className="text-title" style={{ fontWeight: 700, color: "var(--color-text)" }}>
+                  Full access
                 </span>
               </div>
             </div>
           </div>
-          <span
-            className={`badge ${status === "active" ? "badge-success" : "badge-info"} capitalize`}
-          >
-            {status}
-          </span>
+          <span className="badge badge-success capitalize">Active</span>
         </div>
 
-        {/* Billing details */}
         <div style={{ marginBottom: "24px" }}>
           <div className="flex items-center gap-3" style={{ fontSize: "14px" }}>
-            <Calendar
-              size={16}
-              style={{ color: "var(--color-text-muted)", flexShrink: 0 }}
-            />
-            <span
-              style={{
-                color: "var(--color-text-secondary)",
-                paddingLeft: "8px",
-              }}
-            >
-              Next bill:{" "}
-              <span style={{ fontWeight: 500, color: "var(--color-text)" }}>
-                {formattedPrice}
-              </span>{" "}
-              on{" "}
-              <span style={{ fontWeight: 500, color: "var(--color-text)" }}>
-                {formatDate(nextBillingDate)}
-              </span>
+            <Calendar size={16} style={{ color: "var(--color-text-muted)", flexShrink: 0 }} />
+            <span style={{ color: "var(--color-text-secondary)", paddingLeft: "8px" }}>
+              Access until{" "}
+              <span style={{ fontWeight: 500, color: "var(--color-text)" }}>{formattedExpiry}</span>
             </span>
           </div>
-        </div>
-
-        {/* Actions */}
-        <div
-          className="flex flex-wrap gap-4"
-          style={{
-            paddingTop: "20px",
-            borderTop: "1px solid var(--color-border-subtle)",
-          }}
-        >
-          <BillingPortalButton />
-          <CancelSubscriptionDialog subscriptionId={subscriptionData.id} />
         </div>
       </div>
 
       {/* What's Included */}
       <div className="card" style={{ padding: "24px" }}>
-        <h3
-          className="mb-4"
-          style={{
-            fontWeight: 700,
-            color: "var(--color-text)",
-            fontSize: "14px",
-          }}
-        >
+        <h3 className="mb-4" style={{ fontWeight: 700, color: "var(--color-text)", fontSize: "14px" }}>
           What&apos;s included
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -456,7 +380,7 @@ function WaitlistPlaceholder() {
         </p>
         <p style={{ fontSize: 12, color: "var(--color-text-secondary)", marginTop: 2 }}>
           Free during our beta, launching publicly in late summer 2026 —
-          you&apos;ll be among the first to know when subscriptions open.
+          you&apos;ll be among the first to know when plans open.
         </p>
       </div>
 
@@ -466,52 +390,8 @@ function WaitlistPlaceholder() {
           button on the site, see .btn:disabled in globals.css), not a
           one-off style, so it reads as "not yet" rather than "broken". */}
       <Button variant="outline" size="sm" leftIcon={CreditCard} disabled style={{ flexShrink: 0 }}>
-        Manage subscription
+        Manage plan
       </Button>
-    </div>
-  );
-}
-
-function NoSubscription({ status, autoSubscribePlan }: { status: number; autoSubscribePlan?: "monthly" | "annual" }) {
-  let message = "You don't have an active subscription";
-  let description = "Subscribe to get access to all features";
-
-  if (status === 1) {
-    message = "Please log in to view subscriptions";
-    description = "You need to be logged in to manage your subscription";
-  } else if (status === 2 || status === 4) {
-    message = "Unable to load subscription data";
-    description = "Please try refreshing the page";
-  }
-
-  return (
-    <div className="card" style={{ padding: "24px" }}>
-      <div className="text-center py-10">
-        <div
-          className="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-4"
-          style={{ backgroundColor: "rgba(0, 173, 181, 0.12)" }}
-        >
-          <CreditCard size={24} style={{ color: "var(--accent-blue)" }} />
-        </div>
-        <h3
-          className="text-title mb-2"
-          style={{ fontWeight: 600, color: "var(--color-text)" }}
-        >
-          {message}
-        </h3>
-        <p
-          className="text-body mb-6"
-          style={{ color: "var(--color-text-secondary)" }}
-        >
-          {description}
-        </p>
-        {(status === 3 || status === 5) && <SubscribeButtons autoSubscribePlan={autoSubscribePlan} />}
-        {status === 1 && (
-          <Link href="/auth/login" className="btn btn-primary btn-sm">
-            Log In
-          </Link>
-        )}
-      </div>
     </div>
   );
 }
