@@ -5,7 +5,16 @@ import { resolveNextExamDisplay, type ExamPrepNextExam } from "@/lib/practice/ex
 import { fetchExamPrepData } from "@/lib/practice/examPrepServer";
 import { selectPrimaryExamPrep } from "@/lib/practice/examPrep";
 import { fetchAcaCourseData } from "@/lib/practice/courses";
-import { ProgressDashboardClient } from "@/components/progress/ProgressDashboardClient";
+// dynamic()/ssr:false call lives in ProgressDashboardClientLoader.tsx (a
+// Client Component) since Next.js 16 disallows it directly in this async
+// Server Component page.
+import { ProgressDashboardClient } from "@/components/progress/ProgressDashboardClientLoader";
+
+export const metadata = {
+  title: "Progress",
+  description: "Track your study progress and exam readiness.",
+};
+
 
 export default async function ProgressPage() {
   await requireOnboardedSession("/progress");

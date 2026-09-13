@@ -7,6 +7,7 @@ import { BrandedLoader } from "@/components/BrandedLoader";
 import { QuestionCard } from "@/components/practice/QuestionCard";
 import { PracticeSummary } from "@/components/practice/PracticeSummary";
 import { usePracticeRunner } from "@/hooks/usePracticeRunner";
+import { usePracticePreferences } from "@/hooks/usePracticePreferences";
 import { useExamModules } from "@/hooks/useExamModules";
 import { useProgressData } from "@/hooks/useProgressData";
 import { rankWeakModules } from "@/lib/practice/weakModules";
@@ -14,6 +15,7 @@ import { rankWeakModules } from "@/lib/practice/weakModules";
 const COURSE = "ACA";
 
 export function FocusPracticeClient() {
+  const prefs = usePracticePreferences();
   const { loading: modulesLoading, exams, error: modulesError } = useExamModules();
   const { loading: progressLoading, data: progressData } = useProgressData();
 
@@ -186,6 +188,7 @@ export function FocusPracticeClient() {
           onNext={runner.handleNext}
           isFlagged={runner.flaggedIds.has(current.questionId)}
           onToggleFlag={() => runner.toggleFlag(current.questionId)}
+          prefs={prefs}
         />
       </div>
     );

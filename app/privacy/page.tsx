@@ -2,6 +2,12 @@ import { Navigation } from "@/components/Navigation";
 import { Footer } from "@/components/Footer";
 import { LegalContent } from "@/components/LegalContent";
 
+export const metadata = {
+  title: "Privacy Policy",
+  description: "GetChartered privacy policy.",
+};
+
+
 export default function PrivacyPolicyPage() {
   return (
     <>

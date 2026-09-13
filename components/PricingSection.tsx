@@ -67,12 +67,14 @@ function formatPeriod(interval: string, intervalCount: number): string {
 }
 
 // Pre-launch pricing, shown while Stripe/checkout isn't wired up yet
-// (SUBSCRIPTIONS_ENABLED off). Confirmed with Pierce: Free / £15 per month /
-// £100 per year / £25 per exam. Feature bullets below are draft copy only —
-// Hugo/Pierce to refine wording before this ships; the prices and billing
-// periods are the confirmed part.
+// (SUBSCRIPTIONS_ENABLED off). Confirmed with Pierce: Free / £100 per year /
+// £25 per exam. Monthly was dropped as a plan (Pierce, 2026-09-09) — Annual
+// + Per Exam only now, both one-time payments, no recurring subscription at
+// all. Feature bullets below are draft copy only — Hugo/Pierce to refine
+// wording before this ships; the prices and billing periods are the
+// confirmed part.
 // No per-card CTAs — every card is header + description + features only,
-// so all four line up symmetrically. One shared CTA sits below the whole
+// so all three line up symmetrically. One shared CTA sits below the whole
 // grid instead (real action right now is account signup; it's the same
 // flow whichever tier someone actually wants).
 const PRELAUNCH_TIERS = [
@@ -82,7 +84,7 @@ const PRELAUNCH_TIERS = [
     price: "£0",
     period: "/forever",
     features: [
-      "A sample of practice questions per module",
+      "10% of the question bank per module",
       "Basic progress tracking",
       "Study planner & calendar",
     ],
@@ -92,40 +94,27 @@ const PRELAUNCH_TIERS = [
     ctaHref: "/auth/login?screen_hint=signup",
   },
   {
-    title: "Monthly",
-    description: "Full access, cancel anytime.",
-    price: "£15",
-    period: "/month",
+    title: "Annual",
+    description: "Full access to everything, for a full study year.",
+    price: "£100",
+    period: "/year",
     features: [
       "Unlimited practice across all your modules",
       "Full progress analytics & coverage tracking",
       "Study planner & calendar",
       "Mock exams",
-    ],
-    highlighted: false,
-    ctaLabel: "Subscribe Monthly",
-    // /my-account?subscribe=monthly: signed-in users land on the account
-    // page and checkout fires automatically (SubscribeButtons'
-    // autoSubscribePlan); a not-yet-signed-in visitor is bounced through
-    // login/signup first and the intent survives the round trip (see
-    // app/my-account/page.tsx's returnTo handling) — either way this one
-    // click ends at a real Stripe Checkout page.
-    ctaHref: "/my-account?subscribe=monthly",
-  },
-  {
-    title: "Annual",
-    description: "Everything in Monthly — best value across a full study year.",
-    price: "£100",
-    period: "/year",
-    features: [
-      "Save vs. paying monthly across the year",
       "Priority support",
       "First access to new question banks",
-      "One renewal, no monthly admin",
     ],
     highlighted: true,
     badge: "Best Value",
     ctaLabel: "Subscribe Annual",
+    // /my-account?subscribe=annual: signed-in users land on the account page
+    // and checkout fires automatically (SubscribeButtons' autoSubscribePlan);
+    // a not-yet-signed-in visitor is bounced through login/signup first and
+    // the intent survives the round trip (see app/my-account/page.tsx's
+    // returnTo handling) — either way this one click ends at a real Stripe
+    // Checkout page.
     ctaHref: "/my-account?subscribe=annual",
   },
   {
@@ -140,12 +129,12 @@ const PRELAUNCH_TIERS = [
     ],
     highlighted: false,
     ctaLabel: "Choose Your Exam",
-    // No auto-checkout here (unlike Monthly/Annual) — per-exam purchases
-    // need to know *which* exam, which isn't decidable from this generic
+    // No auto-checkout here (unlike Annual) — per-exam purchases need to
+    // know *which* exam, which isn't decidable from this generic
     // landing-page card. Sends them to the account page's subscription
-    // section for now; a real per-exam picker is still on the to-do list
-    // (claude/launch-todo-list.md item 9).
-    ctaHref: "/my-account#subscription",
+    // section, where PerExamPicker.tsx lets them actually pick one and
+    // buy it (built 2026-09-09).
+    ctaHref: "/my-account?subscribe=per_exam#subscription",
   },
 ];
 
@@ -178,8 +167,8 @@ function PrelaunchPricing() {
               Simple, transparent pricing
             </h2>
             <p className="text-lg" style={{ color: "var(--color-text-secondary)" }}>
-              Start free, then choose whatever fits how you study — monthly,
-              annually, or scoped to a single exam.
+              Start free, then choose whatever fits how you study — a full
+              study year, or scoped to a single exam.
             </p>
           </div>
         </ScrollReveal>

@@ -35,10 +35,6 @@ async function fetchRawQuestionBatch(args: {
     sessionId
   )}`;
 
-  console.log(
-    `[practice/start] attempt ${attempt}: requesting GetCharteredQuestions with modules="${moduleParam}", mode="${mode}", fetchCount=${fetchCount}`
-  );
-
   const response = await callGcApi(questionsPath);
   const data = await response.json().catch(() => null);
 
@@ -65,10 +61,6 @@ async function fetchRawQuestionBatch(args: {
       .map((q) => (typeof q.module === "string" ? q.module : null))
       .filter((m): m is string => m !== null)
   );
-  console.log(
-    `[practice/start] attempt ${attempt}: GetCharteredQuestions returned ${rawTyped.length} questions covering modules: [${[...modulesReturned].join(", ")}]`
-  );
-
   return { ok: true, raw: rawTyped };
 }
 
@@ -99,12 +91,6 @@ async function orderByPriority(args: {
       }),
     });
     const priorityData = await priorityResponse.json().catch(() => null);
-
-    console.log(
-      "[practice/start] /learning/priority raw response:",
-      priorityResponse.status,
-      JSON.stringify(priorityData)?.slice(0, 2000)
-    );
 
     const ranking = (priorityData as { questions?: unknown } | null)?.questions;
     if (!priorityResponse.ok || !Array.isArray(ranking) || ranking.length === 0) {

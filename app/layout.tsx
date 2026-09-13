@@ -28,8 +28,11 @@ const poppins = Poppins({
 });
 
 export const metadata: Metadata = {
-  title: "GetChartered",
-  description: "GetChartered Website - Master Professional Exams with Smart Practice Questions",
+  title: {
+    default: "GetChartered — Master Professional Exams",
+    template: "%s | GetChartered",
+  },
+  description: "Master professional exams like the ACA, CFA and CISI with smart, adaptive practice questions. Track your progress, focus on weak areas, and pass first time.",
 };
 
 export default function RootLayout({

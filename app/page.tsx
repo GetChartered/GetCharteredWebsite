@@ -13,9 +13,10 @@ import { Navigation } from "@/components/Navigation";
 import { Footer } from "@/components/Footer";
 import { PricingSection } from "@/components/PricingSection";
 import { FeedbackForm } from "@/components/FeedbackForm";
-import { ScrollReveal } from "@/components/ScrollReveal";
-import { AmbientBlob } from "@/components/AmbientBlob";
-import { HeroGraphic } from "@/components/HeroGraphic";
+// dynamic()/ssr:false calls for these three live in HomeDecor.tsx (a Client
+// Component) since Next.js 16 disallows them directly in this async Server
+// Component page.
+import { ScrollReveal, AmbientBlob, HeroGraphic } from "@/components/HomeDecor";
 import { SUBSCRIPTIONS_ENABLED } from "@/lib/features";
 import { getOptionalSession } from "@/lib/auth0";
 
@@ -155,7 +156,7 @@ export default async function Home() {
                     flexShrink: 0,
                     padding: 16,
                     borderRadius: "var(--radius-lg)",
-                    backgroundColor: "var(--color-card)",
+                    backgroundColor: "#ffffff", // ICAEW guidance: logo must always sit on white, in both themes
                     boxShadow: "var(--shadow-card)",
                   }}
                 >

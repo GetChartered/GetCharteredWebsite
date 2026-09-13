@@ -24,6 +24,16 @@ export interface ProfileResponse {
   name: string;
   createdAt: string;
   premium: boolean;
+  /** Exam codes bought individually via the Per Exam plan (£25, one-off,
+   *  no full premium) — see lib/examAccess.ts for how this combines with
+   *  `premium` to decide access to a given exam's content. */
+  purchasedExams: string[];
+  /** Only ever "annual" today (or null) — written by stripeWebhook on an
+   *  Annual purchase. Not a real Stripe subscription; expiry is tracked
+   *  manually via annualExpiresAt + the premiumExpiryCheck Lambda. */
+  subscriptionPlan: string | null;
+  /** ISO date string, or null if the user has never bought Annual. */
+  annualExpiresAt: string | null;
   course: string | null;
   examDate: string | null;
   leaderboardOptIn: boolean | null;
@@ -59,7 +69,25 @@ export function getCachedProfile(userId: string): ProfileResponse | null {
   return entry.profile;
 }
 
+const MAX_CACHE_SIZE = 500;
+
 export function setCachedProfile(userId: string, profile: ProfileResponse): void {
+  // Evict expired entries if the cache is getting large, preventing unbounded growth
+  if (cache.size >= MAX_CACHE_SIZE) {
+    const now = Date.now();
+    for (const [key, entry] of cache) {
+      if (now > entry.expiresAt) cache.delete(key);
+    }
+    // If still over limit after evicting expired, drop oldest entries
+    if (cache.size >= MAX_CACHE_SIZE) {
+      const excess = cache.size - MAX_CACHE_SIZE + 1;
+      const keys = cache.keys();
+      for (let i = 0; i < excess; i++) {
+        const k = keys.next().value;
+        if (k !== undefined) cache.delete(k);
+      }
+    }
+  }
   cache.set(userId, { profile, expiresAt: Date.now() + TTL_MS });
 }
 

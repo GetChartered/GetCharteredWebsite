@@ -111,6 +111,7 @@ export function AddStudySessionModal({
   useEffect(() => {
     if (!open) return;
     const option = optionForSession(editingSession);
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional form-reset when modal opens
     setTypeKey(option.key);
     setTitle(editingSession?.title ?? option.label);
     setDate(editingSession?.localDate ?? selectedDate);

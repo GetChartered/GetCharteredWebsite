@@ -8,7 +8,7 @@
 // once the GetChartered app is launched and ready to take payments.
 
 export const SUBSCRIPTIONS_ENABLED =
-  process.env.NEXT_PUBLIC_SUBSCRIPTIONS_ENABLED === "false"
+  process.env.NEXT_PUBLIC_SUBSCRIPTIONS_ENABLED === "true";
 
 // When true, signed-in users with `onboarding_completed !== true` are
 // redirected to /onboarding from protected pages, and the "Skip for now"

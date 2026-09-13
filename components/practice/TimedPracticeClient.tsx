@@ -8,6 +8,7 @@ import { ModuleSelector } from "@/components/practice/ModuleSelector";
 import { QuestionCard } from "@/components/practice/QuestionCard";
 import { PracticeSummary } from "@/components/practice/PracticeSummary";
 import { usePracticeRunner } from "@/hooks/usePracticeRunner";
+import { usePracticePreferences } from "@/hooks/usePracticePreferences";
 import { useExamModules } from "@/hooks/useExamModules";
 
 // The 2-minute preset keeps its original fixed 10-question feel. No fixed
@@ -40,6 +41,7 @@ function formatTime(seconds: number): string {
 }
 
 export function TimedPracticeClient() {
+  const prefs = usePracticePreferences();
   const { loading: modulesLoading, exams, error: modulesError, retry } = useExamModules();
   const [selectedModules, setSelectedModules] = useState<string[]>([]);
   const [selectionInitialised, setSelectionInitialised] = useState(false);
@@ -198,6 +200,7 @@ export function TimedPracticeClient() {
           timerUrgent={!runner.isDrill && timeLeft <= 20}
           isFlagged={runner.flaggedIds.has(current.questionId)}
           onToggleFlag={() => runner.toggleFlag(current.questionId)}
+          prefs={prefs}
         />
       </div>
     );

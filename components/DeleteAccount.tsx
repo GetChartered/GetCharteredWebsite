@@ -1,9 +1,7 @@
 "use server";
 
-import CancelSubscription from "@/components/CancelSubscription";
 import { auth0 } from "@/lib/auth0";
 import { deleteUser } from "@/lib/auth0-management";
-import { SUBSCRIPTIONS_ENABLED } from "@/lib/features";
 
 export type DeleteAccountResult =
   | { success: true }
@@ -29,19 +27,14 @@ export default async function DeleteAccount(
     return { success: false, error: "You're not signed in." };
   }
 
-  if (SUBSCRIPTIONS_ENABLED) {
-    try {
-      await CancelSubscription(formData);
-    } catch (error) {
-      console.error("Cancel subscription failed during account delete:", error);
-      return {
-        success: false,
-        error:
-          "We couldn't cancel your active subscription. Please cancel it from your account page first, then try again.",
-      };
-    }
-  }
-
+  // Nothing to cancel here anymore — Annual and Per Exam are both one-time
+  // Stripe payments (Pierce's call, 2026-09-09), never a recurring
+  // subscription object. This used to call CancelSubscription() first, which
+  // always threw "No active subscription found" once that change shipped
+  // (Stripe never has a subscription to find) — silently failing every
+  // account deletion the moment this code path was reachable. Removed
+  // rather than fixed in place, since there's no subscription concept left
+  // to cancel at all.
   try {
     await deleteUser(session.user.sub);
   } catch (error) {

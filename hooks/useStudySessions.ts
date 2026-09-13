@@ -43,6 +43,7 @@ export function useStudySessions(filters: StudySessionFilters = DEFAULT_FILTERS)
   }, [repository, stableFilters]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- initial data fetch
     refresh();
   }, [refresh]);
 

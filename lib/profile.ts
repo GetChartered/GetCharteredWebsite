@@ -18,6 +18,11 @@ export function parseProfileData(data: unknown): ProfileResponse {
     name: str(raw.name) ?? '',
     createdAt: str(raw.createdAt) ?? '',
     premium: bool(raw.premium) ?? false,
+    purchasedExams: Array.isArray(raw.purchasedExams)
+      ? raw.purchasedExams.filter((c): c is string => typeof c === 'string')
+      : [],
+    subscriptionPlan: str(raw.subscriptionPlan) ?? null,
+    annualExpiresAt: str(raw.annualExpiresAt) ?? null,
     course: str(raw.course) ?? null,
     examDate: str(raw.examDate) ?? null,
     leaderboardOptIn: bool(raw.leaderboardOptIn) ?? null,

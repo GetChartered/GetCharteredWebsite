@@ -5,6 +5,12 @@ import { fetchExamPrepData } from "@/lib/practice/examPrepServer";
 import { fetchAcaCourseData } from "@/lib/practice/courses";
 import { PlannerClient } from "@/components/planner/PlannerClient";
 
+export const metadata = {
+  title: "Study Planner",
+  description: "Plan your study sessions and stay on track.",
+};
+
+
 const COURSE_ID = "ACA";
 
 export default async function PlannerPage() {

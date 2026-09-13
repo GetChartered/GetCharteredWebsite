@@ -93,12 +93,11 @@
   --color-overlay: rgba(0, 0, 0, 0.7);
 }
 
-/* ICAEW partner badge is a single-colour (black) mark on a transparent
-   background; invert it in dark mode so it stays visible against dark
-   cards instead of nearly disappearing. */
-[data-theme="dark"] .icaew-logo {
-  filter: invert(1);
-}
+/* ICAEW brand guidance requires the Partner in Learning mark to always sit
+   on a plain white background, unaltered from the master artwork — its
+   backing plate is pinned to a literal white inline style (not the themed
+   --color-card token) in app/page.tsx and app/about/page.tsx, in both
+   light and dark mode, so no CSS override is needed here. */
 
 /* ============================================
    EXPANDED TYPE SCALE — hero/eyebrow/lead

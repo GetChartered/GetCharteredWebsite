@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { Check, X, ArrowRight, Flag, Clock } from "lucide-react";
 import { Button } from "@/components/ui";
 import { PracticeToolbar } from "@/components/practice/PracticeToolbar";
-import { usePracticePreferences } from "@/hooks/usePracticePreferences";
+import type { PracticePreferences } from "@/hooks/usePracticePreferences";
 import type { PracticeQuestion } from "@/lib/practice/types";
 
 export type QuestionAnswerResult = {
@@ -34,6 +34,8 @@ type QuestionCardProps = {
    * size of the internally pre-fetched batch, not a real session target.
    */
   hideProgress?: boolean;
+  /** Practice display preferences — call usePracticePreferences() in the parent and pass here. */
+  prefs: PracticePreferences;
 };
 
 function arraysEqualAsSets(a: string[], b: string[]): boolean {
@@ -63,8 +65,8 @@ export function QuestionCard({
   isFlagged = false,
   onToggleFlag,
   hideProgress = false,
+  prefs,
 }: QuestionCardProps) {
-  const prefs = usePracticePreferences();
   // Lazy initializer — computed once per mount. QuestionCard remounts per
   // question (key={question.questionId} at every call site), so this
   // reshuffles exactly once per question rather than on every re-render.
