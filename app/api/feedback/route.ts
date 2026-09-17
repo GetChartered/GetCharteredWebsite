@@ -30,7 +30,7 @@ export async function POST(request: Request) {
   }
 
   if (typeof message !== "string" || !message.trim()) {
-    return NextResponse.json({ error: "category and message are required" }, { status: 400 });
+    return NextResponse.json({ error: "message is required" }, { status: 400 });
   }
 
   if (message.length > MAX_MESSAGE_LENGTH) {
