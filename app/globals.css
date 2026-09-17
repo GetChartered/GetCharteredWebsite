@@ -370,11 +370,6 @@
   align-items: start;
 }
 
-.home-feedback-section {
-  padding-top: 64px;
-  padding-bottom: 96px;
-}
-
 @media (min-width: 900px) {
   .home-enterprise-grid {
     grid-template-columns: 3fr 2fr;
@@ -406,11 +401,6 @@
   .home-enterprise-section {
     padding-top: 96px;
     padding-bottom: 120px;
-  }
-
-  .home-feedback-section {
-    padding-top: 80px;
-    padding-bottom: 128px;
   }
 }
 
