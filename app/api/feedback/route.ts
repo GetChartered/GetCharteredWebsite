@@ -1,25 +1,44 @@
 import { NextResponse } from "next/server";
-import { requireOnboardedSession } from "@/lib/auth0";
+import { requireSession } from "@/lib/auth0";
 import { callGcApi } from "@/lib/gcApi";
+
+// Same allow-lists as backend/feedbackLambda's ALLOWED_CATEGORIES/AREAS and
+// FeedbackForm.tsx's CATEGORIES/AREAS — keep all three in sync.
+const ALLOWED_CATEGORIES = ["bug", "feature", "general"];
+const ALLOWED_AREAS = ["general", "practice", "progress", "planner", "leaderboard", "profile"];
+const MAX_MESSAGE_LENGTH = 4000;
 
 // POST /api/feedback — same-origin proxy to the GC backend's POST /feedback
 // (see GetChartered_app's backend/feedbackLambda). Shared with the app —
 // both feed one table, tagged by `source` below.
 //
-// Requires a session (requireOnboardedSession below). Opened as a modal
-// from anywhere on the site (components/FeedbackForm.tsx, via
-// Navigation.tsx), tied to the submitting user's account.
+// requireSession (not requireOnboardedSession) — the Feedback link in
+// Navigation.tsx shows for any logged-in user, including mid-onboarding, so
+// this only needs a session to match, not a completed profile.
 export async function POST(request: Request) {
-  await requireOnboardedSession("/my-account");
+  await requireSession("/my-account");
 
   const body = await request.json().catch(() => null);
   if (!body || typeof body !== "object") {
     return NextResponse.json({ error: "Invalid feedback payload" }, { status: 400 });
   }
 
-  const { category, message } = body as { category?: unknown; message?: unknown };
-  if (typeof category !== "string" || typeof message !== "string" || !message.trim()) {
+  const { category, message, area } = body as { category?: unknown; message?: unknown; area?: unknown };
+
+  if (typeof category !== "string" || !ALLOWED_CATEGORIES.includes(category)) {
+    return NextResponse.json({ error: "Invalid category" }, { status: 400 });
+  }
+
+  if (typeof message !== "string" || !message.trim()) {
     return NextResponse.json({ error: "category and message are required" }, { status: 400 });
+  }
+
+  if (message.length > MAX_MESSAGE_LENGTH) {
+    return NextResponse.json({ error: `message must be ${MAX_MESSAGE_LENGTH} characters or fewer` }, { status: 400 });
+  }
+
+  if (area !== undefined && (typeof area !== "string" || !ALLOWED_AREAS.includes(area))) {
+    return NextResponse.json({ error: "Invalid area" }, { status: 400 });
   }
 
   let response: Response;
@@ -30,7 +49,7 @@ export async function POST(request: Request) {
         category,
         message,
         source: "website",
-        area: typeof (body as { area?: unknown }).area === "string" ? (body as { area: string }).area : undefined,
+        area,
       }),
     });
   } catch (error) {

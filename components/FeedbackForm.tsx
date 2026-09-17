@@ -98,6 +98,7 @@ export function FeedbackForm({ onDone }: { onDone: () => void }) {
               key={value}
               type="button"
               onClick={() => setCategory(value)}
+              aria-pressed={selected}
               className="flex items-center gap-1.5"
               style={{
                 padding: "8px 14px",
@@ -128,6 +129,7 @@ export function FeedbackForm({ onDone }: { onDone: () => void }) {
                 key={value}
                 type="button"
                 onClick={() => setArea(value)}
+                aria-pressed={selected}
                 style={{
                   padding: "6px 12px",
                   borderRadius: 16,
@@ -148,6 +150,7 @@ export function FeedbackForm({ onDone }: { onDone: () => void }) {
       <div>
         <textarea
           name="message"
+          aria-label="Your feedback"
           required
           autoFocus
           value={message}
