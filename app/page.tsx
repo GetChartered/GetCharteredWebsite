@@ -12,7 +12,6 @@ import { Button } from "@/components/ui";
 import { Navigation } from "@/components/Navigation";
 import { Footer } from "@/components/Footer";
 import { PricingSection } from "@/components/PricingSection";
-import { FeedbackForm } from "@/components/FeedbackForm";
 // dynamic()/ssr:false calls for these three live in HomeDecor.tsx (a Client
 // Component) since Next.js 16 disallows them directly in this async Server
 // Component page.
@@ -288,31 +287,8 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* Feedback — Netlify Forms, no backend of our own; see
-          components/FeedbackForm.tsx and public/__forms.html. */}
-      <section className="home-feedback-section bg-muted" style={{ position: "relative", zIndex: 1 }}>
-        <div className="container">
-          <ScrollReveal>
-            <div style={{ maxWidth: 620, margin: "0 auto" }}>
-              <div style={{ textAlign: "center", marginBottom: 32 }}>
-                <span className="text-eyebrow mb-3" style={{ display: "block" }}>
-                  Tell Us What You Think
-                </span>
-                <h2 className="text-display mb-4" style={{ color: "var(--color-text)" }}>
-                  Help shape GetChartered
-                </h2>
-                <p style={{ color: "var(--color-text-secondary)" }}>
-                  We&apos;re building this with candidates, not just for them.
-                  Good, bad or somewhere in between — we want to hear it.
-                </p>
-              </div>
-              <div className="card" style={{ padding: 32 }}>
-                <FeedbackForm />
-              </div>
-            </div>
-          </ScrollReveal>
-        </div>
-      </section>
+      {/* Feedback is a modal (components/FeedbackForm.tsx), opened via the
+          "Feedback" link in Navigation.tsx — not a section on this page. */}
 
       {/* Disclosure — deliberately understated small print, not a full
           visual section: a bordered strip rather than a card or callout. */}

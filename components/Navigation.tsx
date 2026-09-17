@@ -10,6 +10,8 @@ import Link from "next/link";
 import { SUBSCRIPTIONS_ENABLED } from "@/lib/features";
 import { isFeatureUnlocked } from "@/lib/featureAccess";
 import { OnboardingBanner } from "@/components/OnboardingBanner";
+import { PracticeToolModal } from "@/components/practice/PracticeToolModal";
+import { FeedbackForm } from "@/components/FeedbackForm";
 
 export function Navigation() {
   const { theme, setTheme } = useTheme();
@@ -18,6 +20,9 @@ export function Navigation() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  // Feedback opens as a modal from here — Navigation renders on every page,
+  // so this local state is enough to pop it up from anywhere.
+  const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
 
   const isOnMyAccount = pathname === "/my-account";
   // useUser()'s client-side `user` already carries the ID token's claims,
@@ -177,6 +182,12 @@ export function Navigation() {
                 Contact
               </Button>
             </Link>
+            {/* Logged-in users only — feedback is tied to the account. */}
+            {user && (
+              <Button variant="ghost" size="sm" onClick={() => setIsFeedbackOpen(true)}>
+                Feedback
+              </Button>
+            )}
             {user ? (
               <Link href={isOnMyAccount ? "/" : "/my-account"} style={{ textDecoration: "none" }}>
                 <Button variant="ghost" size="sm">
@@ -317,6 +328,19 @@ export function Navigation() {
                   Contact
                 </Button>
               </Link>
+              {user && (
+                <Button
+                  variant="ghost"
+                  size="md"
+                  fullWidth
+                  onClick={() => {
+                    setIsMobileMenuOpen(false);
+                    setIsFeedbackOpen(true);
+                  }}
+                >
+                  Feedback
+                </Button>
+              )}
               {user ? (
                 <Link
                   href={isOnMyAccount ? "/" : "/my-account"}
@@ -374,6 +398,12 @@ export function Navigation() {
       </div>
     </nav>
     <OnboardingBanner />
+
+    {isFeedbackOpen && (
+      <PracticeToolModal title="Send Feedback" onClose={() => setIsFeedbackOpen(false)} maxWidth={480}>
+        <FeedbackForm onDone={() => setIsFeedbackOpen(false)} />
+      </PracticeToolModal>
+    )}
     </>
   );
 }
