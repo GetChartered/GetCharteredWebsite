@@ -112,11 +112,23 @@ export const STUDY_TYPE_OPTIONS: StudyTypeOption[] = [
 
 export function optionForSession(session?: { activityKind?: string; source?: string; activityType?: string } | null) {
   if (!session) return STUDY_TYPE_OPTIONS[0];
+
+  // Quick/Module/Timed/Daily Challenge all share the same source +
+  // activityType, so matching on "activityKind === X || (source/type
+  // match)" per-option (the old version of this function) let Quick
+  // Practice -- first in STUDY_TYPE_OPTIONS -- win .find() for EVERY
+  // session sharing that source+activityType, regardless of its real
+  // activityKind. Fixed 2026-09-13 (Pierce: Module Practice sessions were
+  // always displaying as Quick Practice) -- activityKind must be checked
+  // first and exclusively when the session actually has one; source+type
+  // is only a fallback for old sessions saved before activityKind existed.
+  if (session.activityKind) {
+    const byKind = STUDY_TYPE_OPTIONS.find((option) => option.activityKind === session.activityKind);
+    if (byKind) return byKind;
+  }
   return (
     STUDY_TYPE_OPTIONS.find(
-      (option) =>
-        option.activityKind === session.activityKind ||
-        (option.source === session.source && option.activityType === session.activityType)
+      (option) => option.source === session.source && option.activityType === session.activityType
     ) ?? STUDY_TYPE_OPTIONS[0]
   );
 }

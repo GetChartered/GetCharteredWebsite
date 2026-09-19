@@ -254,6 +254,31 @@ export function Footer() {
             color: "var(--color-text-secondary)",
           }}
         >
+          {/* ICAEW-mandated trademark/licence disclaimer (Schedule 3 of the
+              Partner in Learning Ts&Cs) -- required on all Partner in
+              Learning supplementary training/tuition materials, which is
+              GetChartered's core product. Placed here (site-wide footer) so
+              it reaches every practice/exam-content page, not just
+              marketing pages. Entity name + permission basis confirmed with
+              Pierce 2026-09-13 -- see claude/icaew-branding-audit.md. */}
+          <p
+            className="text-xs"
+            style={{ color: "var(--color-text-secondary)", maxWidth: 720, margin: "0 auto 8px" }}
+          >
+            ICAEW takes no responsibility for the content of any supplemental
+            training materials supplied by the Partner in Learning. The ICAEW
+            Partner in Learning logo, ACA and ICAEW CFAB are all registered
+            trademarks of ICAEW and are used under licence by Pass
+            Professional Qualifications Limited.
+          </p>
+          <p
+            className="text-xs"
+            style={{ color: "var(--color-text-secondary)", maxWidth: 720, margin: "0 auto 16px" }}
+          >
+            ICAEW learning materials © ICAEW 2017. All rights reserved.
+            Reproduced by Pass Professional Qualifications Limited with the
+            permission of ICAEW.
+          </p>
           <p className="text-sm">
             © {new Date().getFullYear()} GetChartered. All rights reserved.
           </p>

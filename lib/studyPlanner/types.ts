@@ -79,6 +79,12 @@ export type StudySession = {
   correctAnswers?: number;
   accuracyPercent?: number;
   recurrenceRule?: RecurrenceRule;
+  /** Shared across every occurrence created by one "Daily/Weekly for the
+   *  next N weeks" save (2026-09-13, Pierce) -- lets the planner offer
+   *  "cancel this whole series" instead of deleting up to 56 occurrences
+   *  one at a time. Undefined for a single "Just this once" session and for
+   *  any session created before this field existed. */
+  recurrenceGroupId?: string;
   plannedSessionId?: string;
   completedAt?: string;
   createdAt: string;
@@ -105,6 +111,7 @@ export type StudySessionDraft = {
   correctAnswers?: number;
   accuracyPercent?: number;
   recurrenceRule?: RecurrenceRule;
+  recurrenceGroupId?: string;
   plannedSessionId?: string;
   completedAt?: string;
   notes?: string;

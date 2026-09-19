@@ -273,6 +273,17 @@ export default function AboutPage() {
                     CFAB, reflecting our commitment to quality and accuracy in
                     everything we build.
                   </p>
+                  {/* Same ICAEW-mandated descriptor sentence as the homepage
+                      lockup -- see claude/icaew-branding-audit.md. Only needs
+                      to appear once sitewide at first appearance, but kept
+                      consistent here too since this page also shows the logo. */}
+                  <p
+                    className="text-sm"
+                    style={{ color: "var(--color-text-secondary)", marginTop: 8 }}
+                  >
+                    Recognised as an ICAEW Partner in Learning, working with
+                    ICAEW in the professional development of students.
+                  </p>
                 </div>
               </div>
             </div>

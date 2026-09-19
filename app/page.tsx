@@ -180,6 +180,19 @@ export default async function Home() {
                     behind GetChartered, is a recognised ICAEW Partner in
                     Learning for CFAB.
                   </p>
+                  {/* ICAEW's mandated descriptor sentence -- must appear
+                      verbatim at least once, at the logo's first appearance
+                      on the site (this homepage lockup). See
+                      claude/icaew-branding-audit.md, confirmed with Pierce
+                      2026-09-13: use the wording exactly as ICAEW require it,
+                      no CFAB-specific edits. */}
+                  <p
+                    className="text-sm"
+                    style={{ color: "var(--color-text-secondary)", marginTop: 8 }}
+                  >
+                    Recognised as an ICAEW Partner in Learning, working with
+                    ICAEW in the professional development of students.
+                  </p>
                 </div>
               </div>
             </div>

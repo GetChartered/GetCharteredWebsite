@@ -42,6 +42,10 @@ function createLocalId() {
   return `study_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
 }
 
+function createSeriesId() {
+  return `series_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+}
+
 function formatHeading(dateKey: LocalDateString, today: LocalDateString) {
   if (dateKey === today) return "Today";
   const d = parseLocalDate(dateKey);
@@ -61,11 +65,15 @@ export function PlannerClient({
   courseId,
   examOptions,
   moduleOptions,
+  modulesByExam,
+  examByModule,
   examDateByCode,
 }: {
   courseId: string;
   examOptions: { code: string; name: string }[];
   moduleOptions: { code: string; name: string }[];
+  modulesByExam?: Record<string, { code: string; name: string }[]>;
+  examByModule?: Record<string, string>;
   examDateByCode: Record<string, string>;
 }) {
   const router = useRouter();
@@ -79,7 +87,7 @@ export function PlannerClient({
     null,
   );
 
-  const { sessions, loading, createSession, editSession, deleteSession } =
+  const { sessions, loading, createSession, editSession, deleteSession, deleteSessionsByIds, refresh } =
     useStudySessions();
 
   const visibleSessions = useMemo(
@@ -138,6 +146,14 @@ export function PlannerClient({
     if (option.route) router.push(option.route);
   };
 
+  // A recurring plan can create up to 56 sessions (8 weeks daily) in one
+  // save. Creating them one at a time with a full list refetch after each
+  // (createSession's default behaviour) made the UI visibly glitch/flicker
+  // past a handful of entries (2026-09-13, Pierce). Fire them in small
+  // concurrent batches instead -- mirrors the backend's own recordAttempt
+  // concurrency cap -- and refresh the session list once at the end.
+  const RECURRING_SAVE_CONCURRENCY = 8;
+
   const save = async (
     draft: StudySessionDraft,
     recurrence: "once" | "daily" | "weekly",
@@ -150,13 +166,35 @@ export function PlannerClient({
       recurrence === "once"
         ? [draft.localDate]
         : expandDates(draft.localDate, recurrence);
-    for (const date of dates) {
-      await createSession(
-        { ...draft, id: undefined, localDate: date },
-        { createId: createLocalId },
+    // Tag every occurrence from one recurring save with the same series id
+    // so they can all be cancelled together later (see deleteSeries below) --
+    // undefined for a single "Just this once" session.
+    const recurrenceGroupId = recurrence === "once" ? undefined : createSeriesId();
+    for (let i = 0; i < dates.length; i += RECURRING_SAVE_CONCURRENCY) {
+      const batch = dates.slice(i, i + RECURRING_SAVE_CONCURRENCY);
+      await Promise.all(
+        batch.map((date) =>
+          createSession(
+            { ...draft, id: undefined, localDate: date, recurrenceGroupId },
+            { createId: createLocalId },
+            { skipRefresh: true },
+          ),
+        ),
       );
     }
+    await refresh();
     selectDate(draft.localDate);
+  };
+
+  // Cancels every occurrence sharing one recurring plan's series id in one
+  // action, instead of deleting up to 56 sessions one at a time (2026-09-13,
+  // Pierce).
+  const deleteSeries = async (recurrenceGroupId: string) => {
+    const ids = sessions
+      .filter((s) => s.recurrenceGroupId === recurrenceGroupId)
+      .map((s) => s.id);
+    if (ids.length === 0) return;
+    await deleteSessionsByIds(ids);
   };
 
   const isPast = compareLocalDates(selectedDate, today) < 0;
@@ -347,11 +385,14 @@ export function PlannerClient({
         courseId={courseId}
         examOptions={examOptions}
         moduleOptions={moduleOptions}
+        modulesByExam={modulesByExam}
+        examByModule={examByModule}
         selectedExamId={examFilter === "all" ? undefined : examFilter}
         editingSession={editingSession}
         onClose={() => setModalOpen(false)}
         onSave={save}
         onDelete={(session) => deleteSession(session.id)}
+        onDeleteSeries={deleteSeries}
       />
     </div>
   );
