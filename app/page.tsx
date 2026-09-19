@@ -160,7 +160,7 @@ export default async function Home() {
                   }}
                 >
                   <img
-                    src="/icaew-partner-in-learning-logo.webp"
+                    src="/ICAEW_Partner_in_Learning_logo.png"
                     alt="ICAEW Partner in Learning"
                     className="icaew-logo"
                     style={{ height: "64px", width: "auto", objectFit: "contain" }}
