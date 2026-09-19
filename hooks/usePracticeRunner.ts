@@ -8,6 +8,7 @@ import type {
   PracticeQuestion,
   StartSessionResponse,
 } from "@/lib/practice/types";
+import { toQuarterHourBucket } from "@/lib/studyPlanner/calendarUtils";
 
 export type RunnerStep = "idle" | "loading-questions" | "in-progress" | "summary";
 export type SaveStatus = "saving" | "saved" | "error";
@@ -185,10 +186,21 @@ export function usePracticeRunner(config: PracticeRunnerConfig) {
       });
 
       try {
+        // Local date + 15-min-bucketed local time, so a completion that
+        // wasn't started from a planned session still lands on the
+        // planner calendar (2026-09-13, Pierce) -- computed client-side
+        // since the server doesn't know the caller's timezone.
+        const bucket = toQuarterHourBucket();
         const res = await fetch("/api/practice/finish", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ sessionId, mode, attempts }),
+          body: JSON.stringify({
+            sessionId,
+            mode,
+            attempts,
+            localDate: bucket.localDate,
+            localTime: bucket.startTime,
+          }),
         });
         setSaveStatus(res.ok ? "saved" : "error");
         if (!res.ok) {

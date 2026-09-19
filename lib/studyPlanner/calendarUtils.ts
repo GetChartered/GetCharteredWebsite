@@ -58,3 +58,22 @@ export function startOfWeekMonday(dateKey: LocalDateString): LocalDateString {
 export function monthKeyOf(dateKey: LocalDateString): string {
   return dateKey.slice(0, 7);
 }
+
+// Floors "now" to the start of its 15-minute wall-clock window (2026-09-13,
+// Pierce) -- used to bucket retrospective practice-completion calendar
+// entries (see lib/studyPlanner/retrospectiveLogging.ts) so several practice
+// "sittings" inside the same window collapse into one calendar entry,
+// matching the planner's own hour + 15-minute-increment time picker
+// granularity.
+export function toQuarterHourBucket(date: Date = new Date()): {
+  localDate: LocalDateString;
+  startTime: `${number}:${number}`;
+} {
+  const hh = String(date.getHours()).padStart(2, "0");
+  const flooredMinute = Math.floor(date.getMinutes() / 15) * 15;
+  const mm = String(flooredMinute).padStart(2, "0");
+  return {
+    localDate: toLocalDateString(date),
+    startTime: `${hh}:${mm}` as `${number}:${number}`,
+  };
+}

@@ -53,23 +53,53 @@ function parsePositiveInteger(value: string, fallback: number) {
   return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
 }
 
+// Time picker is hour + 15-minute-increment only, not minute-by-minute
+// (2026-09-13, Pierce) -- "I don't think we need every single minute."
+const HOUR_OPTIONS = Array.from({ length: 24 }, (_, h) => String(h).padStart(2, "0"));
+const MINUTE_STEPS = ["00", "15", "30", "45"] as const;
+
+function roundToQuarterHour(value: string): string {
+  const match = /^(\d{2}):(\d{2})$/.exec(value);
+  if (!match) return "09:00";
+  const hour = Number.parseInt(match[1], 10);
+  const minute = Number.parseInt(match[2], 10);
+  const roundedMinute = Math.round(minute / 15) * 15;
+  const overflow = roundedMinute === 60;
+  const finalHour = overflow ? (hour + 1) % 24 : hour;
+  const finalMinute = overflow ? 0 : roundedMinute;
+  return `${String(finalHour).padStart(2, "0")}:${String(finalMinute).padStart(2, "0")}`;
+}
+
 export function AddStudySessionModal({
   open,
   selectedDate,
   courseId,
   examOptions,
   moduleOptions,
+  modulesByExam,
+  examByModule,
   selectedExamId,
   editingSession,
   onClose,
   onSave,
   onDelete,
+  onDeleteSeries,
 }: {
   open: boolean;
   selectedDate: LocalDateString;
   courseId: string;
   examOptions: { code: string; name: string }[];
   moduleOptions: { code: string; name: string }[];
+  /** Per-exam module list -- when the user has an exam selected, the Module
+      dropdown scopes to just that exam's modules instead of the flat
+      moduleOptions list (2026-09-13, Pierce). Optional so callers that don't
+      pass it just keep the old unscoped behaviour. */
+  modulesByExam?: Record<string, { code: string; name: string }[]>;
+  /** Reverse lookup: module code -> the (user's own) exam it belongs to.
+      Lets picking a Module first auto-fill the matching Exam, since a user
+      may know which module they want to study before which exam it's part
+      of (2026-09-13, Pierce). */
+  examByModule?: Record<string, string>;
   selectedExamId?: string;
   editingSession?: StudySession | null;
   onClose: () => void;
@@ -78,6 +108,12 @@ export function AddStudySessionModal({
     recurrence: RecurrenceOption,
   ) => Promise<void>;
   onDelete?: (session: StudySession) => Promise<void>;
+  /** Deletes every session created by the same recurring save as
+      editingSession (2026-09-13, Pierce) -- lets someone cancel a whole
+      "Daily for the next 8 weeks" plan in one action instead of deleting
+      each occurrence individually. Only rendered when editingSession has a
+      recurrenceGroupId. */
+  onDeleteSeries?: (recurrenceGroupId: string) => Promise<void>;
 }) {
   const initialOption = optionForSession(editingSession);
   const [typeKey, setTypeKey] = useState(initialOption.key);
@@ -89,7 +125,9 @@ export function AddStudySessionModal({
   const [date, setDate] = useState<LocalDateString>(
     editingSession?.localDate ?? selectedDate,
   );
-  const [time, setTime] = useState<string>(editingSession?.startTime ?? "09:00");
+  const [time, setTime] = useState<string>(
+    roundToQuarterHour(editingSession?.startTime ?? "09:00"),
+  );
   const [duration, setDuration] = useState(
     String(editingSession?.durationMinutes ?? initialOption.defaultDuration),
   );
@@ -104,6 +142,28 @@ export function AddStudySessionModal({
     editingSession?.examId ?? selectedExamId ?? "",
   );
   const [moduleId, setModuleId] = useState(editingSession?.moduleId ?? "");
+
+  // Scope the module list to the selected exam's own modules when we have
+  // that mapping; fall back to the full flat list when no exam is picked
+  // (or the caller didn't pass modulesByExam at all).
+  const availableModuleOptions = useMemo(() => {
+    if (examId && modulesByExam?.[examId]) return modulesByExam[examId];
+    return moduleOptions;
+  }, [examId, modulesByExam, moduleOptions]);
+
+  // If the exam changes (or is cleared) and the currently selected module
+  // no longer belongs to the scoped list, clear it rather than silently
+  // keeping an invalid module/exam combination selected.
+  useEffect(() => {
+    if (!moduleId) return;
+    if (!availableModuleOptions.some((m) => m.code === moduleId)) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional: clearing a module selection that fell outside the newly-scoped list
+      setModuleId("");
+    }
+    // Only re-run when the scoped list itself changes (i.e. examId changed)
+    // -- not on every moduleId edit, which would fight the user's own picks.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [availableModuleOptions]);
   const [recurrence, setRecurrence] = useState<RecurrenceOption>("once");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -115,7 +175,7 @@ export function AddStudySessionModal({
     setTypeKey(option.key);
     setTitle(editingSession?.title ?? option.label);
     setDate(editingSession?.localDate ?? selectedDate);
-    setTime(editingSession?.startTime ?? "09:00");
+    setTime(roundToQuarterHour(editingSession?.startTime ?? "09:00"));
     setDuration(
       String(editingSession?.durationMinutes ?? option.defaultDuration),
     );
@@ -143,6 +203,7 @@ export function AddStudySessionModal({
   const showModule = selectedOption.showModule === true;
   const showTarget = selectedOption.showTarget === true;
   const showDuration = selectedOption.showDuration === true;
+  const [timeHour, timeMinute] = time.split(":");
 
   const pickType = (key: string) => {
     const option =
@@ -226,6 +287,17 @@ export function AddStudySessionModal({
     setSaving(true);
     try {
       await onDelete(editingSession);
+      onClose();
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const deleteEntireSeries = async () => {
+    if (!editingSession?.recurrenceGroupId || !onDeleteSeries) return;
+    setSaving(true);
+    try {
+      await onDeleteSeries(editingSession.recurrenceGroupId);
       onClose();
     } finally {
       setSaving(false);
@@ -327,12 +399,32 @@ export function AddStudySessionModal({
             </label>
             <label className="planner-field">
               <span className="planner-field-label">Time</span>
-              <input
-                type="time"
-                className="planner-input"
-                value={time}
-                onChange={(e) => setTime(e.target.value)}
-              />
+              <div style={{ display: "flex", gap: 8 }}>
+                <select
+                  className="planner-input"
+                  aria-label="Hour"
+                  value={timeHour}
+                  onChange={(e) => setTime(`${e.target.value}:${timeMinute}`)}
+                >
+                  {HOUR_OPTIONS.map((h) => (
+                    <option key={h} value={h}>
+                      {h}:00
+                    </option>
+                  ))}
+                </select>
+                <select
+                  className="planner-input"
+                  aria-label="Minute"
+                  value={timeMinute}
+                  onChange={(e) => setTime(`${timeHour}:${e.target.value}`)}
+                >
+                  {MINUTE_STEPS.map((m) => (
+                    <option key={m} value={m}>
+                      :{m}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </label>
           </div>
 
@@ -356,16 +448,28 @@ export function AddStudySessionModal({
               </label>
             )}
 
-          {showModule && moduleOptions.length > 0 && (
+          {showModule && availableModuleOptions.length > 0 && (
             <label className="planner-field">
               <span className="planner-field-label">Module</span>
               <select
                 className="planner-input"
                 value={moduleId}
-                onChange={(e) => setModuleId(e.target.value)}
+                onChange={(e) => {
+                  const nextModuleId = e.target.value;
+                  setModuleId(nextModuleId);
+                  // Picked a module without an exam set yet (or one that
+                  // belongs to a different exam) -- auto-fill the exam it
+                  // actually belongs to, rather than leaving an
+                  // exam/module mismatch or forcing the user to also set
+                  // Exam manually.
+                  const matchingExam = nextModuleId ? examByModule?.[nextModuleId] : undefined;
+                  if (matchingExam && matchingExam !== examId) {
+                    setExamId(matchingExam);
+                  }
+                }}
               >
                 <option value="">No specific module</option>
-                {moduleOptions.map((mod) => (
+                {availableModuleOptions.map((mod) => (
                   <option key={mod.code} value={mod.code}>
                     {mod.name}
                   </option>
@@ -432,15 +536,29 @@ export function AddStudySessionModal({
 
         <div className="planner-modal-footer">
           {editingSession && onDelete ? (
-            <button
-              type="button"
-              className="planner-delete-btn"
-              onClick={deleteCurrent}
-              disabled={saving}
-            >
-              <Trash2 size={16} />
-              Delete
-            </button>
+            <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+              <button
+                type="button"
+                className="planner-delete-btn"
+                onClick={deleteCurrent}
+                disabled={saving}
+              >
+                <Trash2 size={16} />
+                Delete
+              </button>
+              {editingSession.recurrenceGroupId && onDeleteSeries && (
+                <button
+                  type="button"
+                  className="planner-delete-btn"
+                  onClick={deleteEntireSeries}
+                  disabled={saving}
+                  style={{ fontSize: 12, opacity: 0.8 }}
+                >
+                  <Trash2 size={13} />
+                  Cancel entire series
+                </button>
+              )}
+            </div>
           ) : (
             <span />
           )}

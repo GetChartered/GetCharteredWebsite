@@ -67,12 +67,12 @@ function formatPeriod(interval: string, intervalCount: number): string {
 }
 
 // Pre-launch pricing, shown while Stripe/checkout isn't wired up yet
-// (SUBSCRIPTIONS_ENABLED off). Confirmed with Pierce: Free / £100 per year /
-// £25 per exam. Monthly was dropped as a plan (Pierce, 2026-09-09) — Annual
-// + Per Exam only now, both one-time payments, no recurring subscription at
-// all. Feature bullets below are draft copy only — Hugo/Pierce to refine
-// wording before this ships; the prices and billing periods are the
-// confirmed part.
+// (SUBSCRIPTIONS_ENABLED off). Confirmed with Pierce: Free / £119 per year /
+// £29 per exam (updated 2026-09-13, was £100/£25). Monthly was dropped as a
+// plan (Pierce, 2026-09-09) — Annual + Per Exam only now, both one-time
+// payments, no recurring subscription at all. Feature bullets below are
+// draft copy only — Hugo/Pierce to refine wording before this ships; the
+// prices and billing periods are the confirmed part.
 // No per-card CTAs — every card is header + description + features only,
 // so all three line up symmetrically. One shared CTA sits below the whole
 // grid instead (real action right now is account signup; it's the same
@@ -96,8 +96,10 @@ const PRELAUNCH_TIERS = [
   {
     title: "Annual",
     description: "Full access to everything, for a full study year.",
-    price: "£100",
+    price: "£119",
     period: "/year",
+    // £119 / 13 ~= £9.15 -- Pierce's confirmed subtext figure (£9.16/mo).
+    priceSubtext: "Just £9.16 / month",
     features: [
       "Unlimited practice across all your modules",
       "Full progress analytics & coverage tracking",
@@ -120,7 +122,7 @@ const PRELAUNCH_TIERS = [
   {
     title: "Per Exam",
     description: "Full access scoped to a single upcoming exam sitting.",
-    price: "£25",
+    price: "£29",
     period: "/exam",
     features: [
       "Unlimited practice for one exam",
@@ -181,6 +183,7 @@ function PrelaunchPricing() {
                 description={tier.description}
                 price={tier.price}
                 period={tier.period}
+                priceSubtext={tier.priceSubtext}
                 features={tier.features}
                 highlighted={tier.highlighted}
                 badge={tier.badge}

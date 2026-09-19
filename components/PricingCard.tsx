@@ -12,6 +12,9 @@ interface PricingCardProps {
   ctaHref?: string;
   highlighted?: boolean;
   badge?: string;
+  /** Optional subtle per-period-equivalent line under the price (e.g. an
+      annual plan showing its monthly-equivalent cost). */
+  priceSubtext?: string;
 }
 
 export function PricingCard({
@@ -24,6 +27,7 @@ export function PricingCard({
   ctaHref,
   highlighted = false,
   badge,
+  priceSubtext,
 }: PricingCardProps) {
   // Whole card is the click target when a destination is given (Pierce's
   // call — a small button at the bottom was easy to miss/skip past; the
@@ -89,6 +93,20 @@ export function PricingCard({
             </span>
           </div>
         </div>
+        {priceSubtext && (
+          <p
+            className="pricing-card-price-subtext"
+            style={{
+              color: "var(--color-text-muted)",
+              fontSize: 13,
+              marginTop: -4,
+              marginBottom: 4,
+              textAlign: "right",
+            }}
+          >
+            {priceSubtext}
+          </p>
+        )}
         <p
           className="pricing-card-description"
           style={{

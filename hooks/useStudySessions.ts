@@ -48,9 +48,18 @@ export function useStudySessions(filters: StudySessionFilters = DEFAULT_FILTERS)
   }, [refresh]);
 
   const createSession = useCallback(
-    async (draft: StudySessionDraft, deps: CreateStudySessionDependencies) => {
+    async (
+      draft: StudySessionDraft,
+      deps: CreateStudySessionDependencies,
+      options?: { skipRefresh?: boolean }
+    ) => {
       const session = await saveStudySession(repository, draft, deps);
-      await refresh();
+      // A recurring plan creates many sessions in one go (see
+      // PlannerClient.save) -- refetching the full list after every single
+      // one made the UI visibly glitch past a handful of entries
+      // (2026-09-13, Pierce). Callers doing a batch pass skipRefresh and
+      // refresh once at the end instead.
+      if (!options?.skipRefresh) await refresh();
       return session;
     },
     [refresh, repository]
@@ -82,6 +91,22 @@ export function useStudySessions(filters: StudySessionFilters = DEFAULT_FILTERS)
     [refresh, repository]
   );
 
+  // Deletes every session sharing one recurrenceGroupId in one go (2026-09-13,
+  // Pierce: a recurring plan can spawn up to 56 occurrences, and deleting
+  // them one at a time is exactly the tedium this exists to avoid). Same
+  // batched-then-refresh-once shape as the recurring create path.
+  const DELETE_CONCURRENCY = 8;
+  const deleteSessionsByIds = useCallback(
+    async (ids: string[]) => {
+      for (let i = 0; i < ids.length; i += DELETE_CONCURRENCY) {
+        const batch = ids.slice(i, i + DELETE_CONCURRENCY);
+        await Promise.all(batch.map((id) => repository.deleteSession(id)));
+      }
+      await refresh();
+    },
+    [refresh, repository]
+  );
+
   return {
     sessions,
     loading,
@@ -91,6 +116,7 @@ export function useStudySessions(filters: StudySessionFilters = DEFAULT_FILTERS)
     completeSession,
     editSession,
     deleteSession,
+    deleteSessionsByIds,
     repository,
   };
 }
