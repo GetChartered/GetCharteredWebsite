@@ -99,7 +99,8 @@ const PRELAUNCH_TIERS = [
     price: "£119",
     period: "/year",
     // £119 / 13 ~= £9.15 -- Pierce's confirmed subtext figure (£9.16/mo).
-    priceSubtext: "Just £9.16 / month",
+    // £119 / 12 ~= £9.916 -- Barney's confirmed subtext figure (£9.92/mo). Price Marking Order 2004 requires it rounded up
+    priceSubtext: "Just £9.92 / month",
     features: [
       "Unlimited practice across all your modules",
       "Full progress analytics & coverage tracking",
