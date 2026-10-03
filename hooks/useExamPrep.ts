@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { selectPrimaryExamPrep } from "@/lib/practice/examPrep";
 import type { ExamLevel, ExamPrepEntry } from "@/lib/practice/types";
 
@@ -17,6 +17,8 @@ export interface SaveExamPrepParams {
   examLevel?: ExamLevel;
 }
 
+type ExamResultFields = Pick<ExamPrepEntry, "sat" | "gradePercent" | "examLevel">;
+
 export interface DeleteExamPrepParams {
   course: string;
   examCode: string;
@@ -29,6 +31,13 @@ export function useExamPrep() {
   const [examPrep, setExamPrep] = useState<ExamPrepEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  /** Results saved this session, keyed by `${course}#${examCode}`. The real
+   *  backend doesn't persist sat/gradePercent/examLevel yet (see
+   *  backend-reference/updateExamResult.md), so its response drops them —
+   *  overlaid onto any entry the backend returns without `sat`, so a
+   *  recorded result shows straight away. Lost on reload until the backend
+   *  change is deployed; a no-op once it is. */
+  const [localResults, setLocalResults] = useState<Map<string, ExamResultFields>>(new Map());
 
   const refresh = useCallback(async () => {
     setLoading(true);
@@ -65,6 +74,12 @@ export function useExamPrep() {
       const data = await res.json().catch(() => null);
       if (!res.ok || !data?.ok) return false;
       if (Array.isArray(data.examPrep)) setExamPrep(data.examPrep as ExamPrepEntry[]);
+      if (params.sat !== undefined) {
+        const { sat, gradePercent, examLevel } = params;
+        setLocalResults((prev) =>
+          new Map(prev).set(`${params.course}#${params.examCode}`, { sat, gradePercent, examLevel })
+        );
+      }
       return true;
     } catch {
       return false;
@@ -83,13 +98,27 @@ export function useExamPrep() {
       const data = await res.json().catch(() => null);
       if (!res.ok || !data?.ok) return false;
       if (Array.isArray(data.examPrep)) setExamPrep(data.examPrep as ExamPrepEntry[]);
+      setLocalResults((prev) => {
+        const next = new Map(prev);
+        next.delete(`${params.course}#${params.examCode}`);
+        return next;
+      });
       return true;
     } catch {
       return false;
     }
   }, []);
 
-  const primaryExam = selectPrimaryExamPrep(examPrep);
+  const mergedExamPrep = useMemo(
+    () =>
+      examPrep.map((e) => {
+        const local = localResults.get(`${e.course}#${e.examCode}`);
+        return local && e.sat === undefined ? { ...e, ...local } : e;
+      }),
+    [examPrep, localResults]
+  );
 
-  return { examPrep, loading, error, refresh, saveExamPrep, deleteExamPrep, primaryExam };
+  const primaryExam = selectPrimaryExamPrep(mergedExamPrep);
+
+  return { examPrep: mergedExamPrep, loading, error, refresh, saveExamPrep, deleteExamPrep, primaryExam };
 }
