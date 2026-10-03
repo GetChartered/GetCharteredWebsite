@@ -55,30 +55,24 @@ function isPastDate(dateStr: string): boolean {
  * the app uses for scheduling, extended with `sat`/`gradePercent`/
  * `examLevel` for results — see lib/practice/types.ts's ExamPrepEntry.
  *
- * Explicit Save for scheduling, not auto-save-on-every-change: `rows` is the
- * editable draft (add/remove/edit freely, nothing hits the backend),
- * `savedRows` is a snapshot of the last backend-confirmed state (seeded
- * once from GET /exam-prep — deliberately excluding already-sat entries,
- * which belong to the Previous tab instead, not the scheduling draft — and
- * replaced with the new confirmed state after every successful Save). Save
- * diffs the two: rows in `savedRows` no longer present in `rows` — or
- * present but with a changed examCode — get DELETEd (a changed examCode is
- * a different backend entry, not an in-place edit, since the backend
- * upserts by (course, examCode)); every currently-named row gets POSTed (an
- * upsert, so this naturally covers new rows, unchanged rows re-confirming
- * their isPrimary flag, and the "new" half of a changed examCode). `isDirty`
- * (rows vs savedRows) drives both the Save button's disabled state and the
- * "unsaved changes" indicator.
+ * Per-card Save/Cancel for scheduling, not auto-save-on-every-change:
+ * `rows` is the editable draft, `savedRows` is a snapshot of the
+ * backend-confirmed state (seeded once from GET /exam-prep — deliberately
+ * excluding already-sat entries, which belong to the Previous tab instead —
+ * and updated after every successful per-card Save or Remove). Saving a card
+ * DELETEs its old entry if its examCode changed (a changed examCode is a
+ * different backend entry, not an in-place edit, since the backend upserts
+ * by (course, examCode)), then POSTs it — plus any other saved exam whose
+ * isPrimary flag flips as a result.
  *
- * Recording a result (ExamResultModal) is a separate, immediately-saved
- * action from the scheduling Save button above — it POSTs sat:true plus the
- * entered grade/level for one exam right away (with its own toast), rather
- * than being folded into the batched scheduling diff. Only offered in the
- * Previous tab, which lists backend-confirmed exams whose date has passed,
- * so the result is always recorded against a real, already-confirmed date.
+ * Recording a result (ExamResultModal) is likewise immediately saved — it
+ * POSTs sat:true plus the entered grade/level for one exam right away (with
+ * its own toast). Only offered in the Previous tab, which lists
+ * backend-confirmed exams whose date has passed, so the result is always
+ * recorded against a real, already-confirmed date.
  *
  * Saved Upcoming rows are read-only until their Edit (pencil) button is
- * clicked; a successful Save re-locks every row.
+ * clicked; that card's Save or Cancel re-locks it.
  */
 export function MyExamsSection() {
   const { exams, loading: examsLoading, error: examsError } = useExamModules();
@@ -89,8 +83,8 @@ export function MyExamsSection() {
   const [rows, setRows] = useState<ExamRow[]>([]);
   const [savedRows, setSavedRows] = useState<ExamRow[]>([]);
   const [seeded, setSeeded] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [saveError, setSaveError] = useState<string | null>(null);
+  /** Key of the Upcoming row whose Save is in flight. */
+  const [savingKey, setSavingKey] = useState<string | null>(null);
   const [resultModalExamCode, setResultModalExamCode] = useState<string | null>(null);
   /** Keys of saved rows the user has unlocked via their Edit button. */
   const [editingKeys, setEditingKeys] = useState<Set<string>>(new Set());
@@ -100,9 +94,9 @@ export function MyExamsSection() {
     examCode: string;
     examDate: string;
   } | null>(null);
-  /** Previous-tab exam awaiting a second click to confirm removal. */
+  /** Saved exam (either tab) awaiting a second click to confirm removal. */
   const [confirmRemoveCode, setConfirmRemoveCode] = useState<string | null>(null);
-  const [previousBusy, setPreviousBusy] = useState(false);
+  const [busy, setBusy] = useState(false);
 
   // Seed local rows from the backend's real *unsat* entries exactly once,
   // the first time it finishes loading — never again, so a later refresh
@@ -146,63 +140,56 @@ export function MyExamsSection() {
     return !(isRowSaved && isPastDate(row.examDate));
   });
 
-  const isDirty = useMemo(() => {
-    const savedByKey = new Map(savedRows.map((r) => [r.key, r]));
-    const currentKeys = new Set(rows.map((r) => r.key));
-    if (savedRows.some((r) => !currentKeys.has(r.key))) return true; // a saved row was removed
-    return rows.some((r) => {
-      const saved = savedByKey.get(r.key);
-      return !saved || saved.examCode !== r.examCode || saved.examDate !== r.examDate;
-    });
-  }, [rows, savedRows]);
+  const handleSaveRow = async (key: string) => {
+    const row = rows.find((r) => r.key === key);
+    if (!row || !row.examCode) return;
+    const saved = savedRows.find((r) => r.key === key);
 
-  const handleSave = async () => {
-    setSaving(true);
-    setSaveError(null);
-
-    // Saved rows no longer present, or present under a different examCode
-    // (delete the OLD code specifically — the new one is a separate
-    // upsert below, not an update to the same backend entry).
-    const toDelete = savedRows.filter((saved) => {
-      const current = rows.find((r) => r.key === saved.key);
-      return !current || current.examCode !== saved.examCode;
-    });
-
-    const named = rows.filter((r) => r.examCode);
-    const primaryCode = computePrimaryExamCode(
-      named.map((r) => ({ examCode: r.examCode, examDate: r.examDate || undefined }))
-    );
-
-    const [deleteResults, saveResults] = await Promise.all([
-      Promise.all(toDelete.map((r) => deleteExamPrep({ course: COURSE, examCode: r.examCode }))),
-      Promise.all(
-        named.map((r) =>
-          saveExamPrep({
-            course: COURSE,
-            examCode: r.examCode,
-            examDate: r.examDate || undefined,
-            isPrimary: r.examCode === primaryCode,
-          })
-        )
-      ),
-    ]);
-
-    setSaving(false);
-
-    if (deleteResults.some((ok) => !ok) || saveResults.some((ok) => !ok)) {
-      const message = "Some changes couldn't be saved — try again.";
-      setSaveError(message);
-      showToast(message, "error");
+    if (saved && saved.examCode === row.examCode && saved.examDate === row.examDate) {
+      stopEditing(key);
       return;
     }
 
-    // Everything succeeded — the new confirmed snapshot is exactly the
-    // rows that were just named/saved (unnamed rows never persist, and
-    // anything deleted is already gone from `rows` or superseded above).
-    setSavedRows(named.map((r) => ({ key: r.key, examCode: r.examCode, examDate: r.examDate })));
-    setRows(named);
-    setEditingKeys(new Set());
-    showToast("Your exams have been saved", "success");
+    const nextSaved = saved ? savedRows.map((r) => (r.key === key ? { ...row } : r)) : [...savedRows, { ...row }];
+    const toPrimaryInput = (list: ExamRow[]) =>
+      list.map((r) => ({ examCode: r.examCode, examDate: r.examDate || undefined }));
+    const oldPrimary = computePrimaryExamCode(toPrimaryInput(savedRows));
+    const newPrimary = computePrimaryExamCode(toPrimaryInput(nextSaved));
+
+    // This row, plus any other saved exam whose isPrimary flag flips.
+    const toPost = nextSaved.filter(
+      (r) => r.key === key || (oldPrimary !== newPrimary && (r.examCode === oldPrimary || r.examCode === newPrimary))
+    );
+
+    setSavingKey(key);
+
+    // A changed examCode is a different backend entry (upsert by code), so
+    // the old one has to be deleted first.
+    const deleted =
+      !saved || saved.examCode === row.examCode || (await deleteExamPrep({ course: COURSE, examCode: saved.examCode }));
+    const results = deleted
+      ? await Promise.all(
+          toPost.map((r) =>
+            saveExamPrep({
+              course: COURSE,
+              examCode: r.examCode,
+              examDate: r.examDate || undefined,
+              isPrimary: r.examCode === newPrimary,
+            })
+          )
+        )
+      : [false];
+
+    setSavingKey(null);
+
+    if (results.some((ok) => !ok)) {
+      showToast("Couldn't save your exam — try again.", "error");
+      return;
+    }
+
+    setSavedRows(nextSaved);
+    stopEditing(key);
+    showToast("Your exam has been saved", "success");
   };
 
   const updateRow = (key: string, patch: Partial<ExamRow>) => {
@@ -218,13 +205,11 @@ export function MyExamsSection() {
   };
 
   const startEditing = (key: string) => {
+    setConfirmRemoveCode(null);
     setEditingKeys((prev) => new Set(prev).add(key));
   };
 
-  /** Re-lock a saved row, discarding its unsaved local changes. */
-  const cancelEditing = (key: string) => {
-    const saved = savedRows.find((r) => r.key === key);
-    if (saved) updateRow(key, { examCode: saved.examCode, examDate: saved.examDate });
+  const stopEditing = (key: string) => {
     setEditingKeys((prev) => {
       const next = new Set(prev);
       next.delete(key);
@@ -232,8 +217,16 @@ export function MyExamsSection() {
     });
   };
 
+  /** Re-lock a saved row discarding its local changes, or drop a never-saved one. */
+  const cancelEditing = (key: string) => {
+    const saved = savedRows.find((r) => r.key === key);
+    if (saved) updateRow(key, { examCode: saved.examCode, examDate: saved.examDate });
+    else removeRow(key);
+    stopEditing(key);
+  };
+
   const primaryCode = computePrimaryExamCode(
-    rows.filter((r) => r.examCode).map((r) => ({ examCode: r.examCode, examDate: r.examDate || undefined }))
+    savedRows.map((r) => ({ examCode: r.examCode, examDate: r.examDate || undefined }))
   );
 
   // The exam currently open in ExamResultModal, if any — sourced from
@@ -272,11 +265,10 @@ export function MyExamsSection() {
     return ok;
   };
 
-  // Editing/removing a past, not-yet-resulted exam in the Previous tab is
-  // saved immediately (like recording a result) — the scheduling Save
-  // button lives on the Upcoming tab, where these exams are no longer shown.
-  // The matching hidden scheduling row is kept in sync so a later Upcoming
-  // Save doesn't resurrect or revert the change.
+  // Editing a past, not-yet-resulted exam in the Previous tab is saved
+  // immediately, like an Upcoming card's Save. The matching hidden
+  // scheduling row is kept in sync so a later primary recalculation doesn't
+  // resurrect or revert the change.
   const startEditingPrevious = (entry: ExamPrepEntry) => {
     setConfirmRemoveCode(null);
     setPreviousDraft({ originalCode: entry.examCode, examCode: entry.examCode, examDate: entry.examDate ?? "" });
@@ -285,7 +277,7 @@ export function MyExamsSection() {
   const handleSavePrevious = async () => {
     if (!previousDraft || !previousDraft.examCode) return;
     const { originalCode, examCode, examDate } = previousDraft;
-    setPreviousBusy(true);
+    setBusy(true);
 
     const updatedRows = rows.map((r) => (r.examCode === originalCode ? { ...r, examCode, examDate } : r));
     const newPrimary = computePrimaryExamCode(
@@ -304,7 +296,7 @@ export function MyExamsSection() {
         isPrimary: examCode === newPrimary,
       }));
 
-    setPreviousBusy(false);
+    setBusy(false);
 
     if (!ok) {
       showToast("Couldn't save your changes — try again.", "error");
@@ -318,10 +310,10 @@ export function MyExamsSection() {
     showToast("Your exam has been updated", "success");
   };
 
-  const handleRemovePrevious = async (examCode: string) => {
-    setPreviousBusy(true);
+  const handleRemoveExam = async (examCode: string) => {
+    setBusy(true);
     const ok = await deleteExamPrep({ course: COURSE, examCode });
-    setPreviousBusy(false);
+    setBusy(false);
     setConfirmRemoveCode(null);
 
     if (!ok) {
@@ -401,45 +393,18 @@ export function MyExamsSection() {
             {upcomingRows.map((row) => {
               const isPrimary = !!row.examCode && row.examCode === primaryCode;
               const otherCodes = new Set(rows.filter((r) => r.key !== row.key && r.examCode).map((r) => r.examCode));
+              const name = examNameByCode.get(row.examCode) ?? row.examCode;
 
               // Saved rows render read-only until their Edit button is
               // clicked; brand-new (never-saved) rows are always editable.
               const savedMatch = savedRows.find((r) => r.key === row.key);
               const isEditable = !savedMatch || editingKeys.has(row.key);
+              const cardStyle = { borderLeft: isPrimary ? "3px solid var(--color-tint)" : undefined };
 
-              return (
-                <div
-                  key={row.key}
-                  className="exam-card"
-                  style={{
-                    borderLeft: isPrimary ? "3px solid var(--color-tint)" : undefined,
-                  }}
-                >
-                  {isEditable ? (
-                    <button
-                      type="button"
-                      onClick={() => removeRow(row.key)}
-                      aria-label="Remove exam"
-                      className="exam-card-remove"
-                      style={cardCornerButtonStyle}
-                    >
-                      <X size={14} />
-                    </button>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={() => startEditing(row.key)}
-                      aria-label={`Edit ${examNameByCode.get(row.examCode) ?? row.examCode}`}
-                      className="exam-card-remove"
-                      style={cardCornerButtonStyle}
-                    >
-                      <Pencil size={13} />
-                    </button>
-                  )}
-
-                  <div style={{ paddingRight: 28 }}>
-                    {isEditable ? (
-                      <>
+              if (isEditable) {
+                const isSaving = savingKey === row.key;
+                return (
+                  <div key={row.key} className="exam-card" style={cardStyle}>
                     <select
                       value={row.examCode}
                       onChange={(e) => updateRow(row.key, { examCode: e.target.value })}
@@ -455,7 +420,6 @@ export function MyExamsSection() {
                           </option>
                         ))}
                     </select>
-
                     <input
                       type="date"
                       value={row.examDate}
@@ -463,36 +427,74 @@ export function MyExamsSection() {
                       aria-label="Exam date"
                       style={examDateFieldStyle}
                     />
-
-                    {savedMatch && (
-                      <button
-                        type="button"
-                        onClick={() => cancelEditing(row.key)}
-                        style={{
-                          marginTop: 8,
-                          padding: 0,
-                          border: "none",
-                          background: "none",
-                          color: "var(--color-text-muted)",
-                          fontSize: 12,
-                          cursor: "pointer",
-                          textDecoration: "underline",
-                        }}
+                    <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
+                      <Button
+                        variant="primary"
+                        size="sm"
+                        loading={isSaving}
+                        disabled={!row.examCode}
+                        onClick={() => void handleSaveRow(row.key)}
                       >
-                        Cancel edit
-                      </button>
-                    )}
-                      </>
-                    ) : (
-                      <>
-                        <p style={{ fontSize: 15, fontWeight: 700, color: "var(--color-text)" }}>
-                          {examNameByCode.get(row.examCode) ?? row.examCode}
-                        </p>
-                        <p style={{ fontSize: 13, color: "var(--color-text-secondary)", marginTop: 4 }}>
-                          {row.examDate ? formatDisplayDate(row.examDate) : "No date set"}
-                        </p>
-                      </>
-                    )}
+                        Save
+                      </Button>
+                      <Button variant="outline" size="sm" disabled={isSaving} onClick={() => cancelEditing(row.key)}>
+                        Cancel
+                      </Button>
+                    </div>
+                  </div>
+                );
+              }
+
+              if (confirmRemoveCode === row.examCode) {
+                return (
+                  <div key={row.key} className="exam-card" style={cardStyle}>
+                    <p style={{ fontSize: 15, fontWeight: 700, color: "var(--color-text)" }}>{name}</p>
+                    <p style={{ fontSize: 13, color: "var(--color-text-secondary)", marginTop: 4 }}>
+                      Remove this exam?
+                    </p>
+                    <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
+                      <Button
+                        variant="danger"
+                        size="sm"
+                        loading={busy}
+                        onClick={() => void handleRemoveExam(row.examCode)}
+                      >
+                        Remove
+                      </Button>
+                      <Button variant="outline" size="sm" disabled={busy} onClick={() => setConfirmRemoveCode(null)}>
+                        Cancel
+                      </Button>
+                    </div>
+                  </div>
+                );
+              }
+
+              return (
+                <div key={row.key} className="exam-card" style={cardStyle}>
+                  <button
+                    type="button"
+                    onClick={() => startEditing(row.key)}
+                    aria-label={`Edit ${name}`}
+                    className="exam-card-remove"
+                    style={{ ...cardCornerButtonStyle, right: 42 }}
+                  >
+                    <Pencil size={13} />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setConfirmRemoveCode(row.examCode)}
+                    aria-label={`Remove ${name}`}
+                    className="exam-card-remove"
+                    style={cardCornerButtonStyle}
+                  >
+                    <X size={14} />
+                  </button>
+
+                  <div style={{ paddingRight: 60 }}>
+                    <p style={{ fontSize: 15, fontWeight: 700, color: "var(--color-text)" }}>{name}</p>
+                    <p style={{ fontSize: 13, color: "var(--color-text-secondary)", marginTop: 4 }}>
+                      {row.examDate ? formatDisplayDate(row.examDate) : "No date set"}
+                    </p>
 
                     {isPrimary && (
                       <div style={{ display: "flex", alignItems: "center", gap: 6, color: "var(--accent-gold)", marginTop: 10 }}>
@@ -500,7 +502,7 @@ export function MyExamsSection() {
                         <span style={{ fontSize: 12, fontWeight: 600 }}>Primary exam</span>
                       </div>
                     )}
-                    {!isPrimary && row.examCode && !row.examDate && (
+                    {!isPrimary && !row.examDate && (
                       <p style={{ fontSize: 12, color: "var(--color-text-muted)", marginTop: 10 }}>
                         Add a date to power your countdown.
                       </p>
@@ -517,25 +519,10 @@ export function MyExamsSection() {
             </p>
           )}
 
-          {/* Actions and save-status feedback on their own lines — previously
-              shared one wrapping row, where the status text read as if it were
-              just trailing off the buttons rather than a distinct piece of
-              feedback. */}
-          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
-              <Button variant="outline" size="sm" leftIcon={Plus} onClick={addRow}>
-                Add exam
-              </Button>
-              <Button variant="primary" size="sm" onClick={() => void handleSave()} disabled={!isDirty} loading={saving}>
-                Save
-              </Button>
-            </div>
-            {!saving && isDirty && !saveError && (
-              <span style={{ fontSize: 12, color: "var(--color-text-muted)" }}>You have unsaved changes</span>
-            )}
-            {!saving && saveError && (
-              <span style={{ fontSize: 12, color: "var(--color-danger)" }}>{saveError}</span>
-            )}
+          <div>
+            <Button variant="outline" size="sm" leftIcon={Plus} onClick={addRow}>
+              Add exam
+            </Button>
           </div>
         </div>
       ) : (
@@ -587,7 +574,7 @@ export function MyExamsSection() {
                         <Button
                           variant="primary"
                           size="sm"
-                          loading={previousBusy}
+                          loading={busy}
                           onClick={() => void handleSavePrevious()}
                         >
                           Save
@@ -595,7 +582,7 @@ export function MyExamsSection() {
                         <Button
                           variant="outline"
                           size="sm"
-                          disabled={previousBusy}
+                          disabled={busy}
                           onClick={() => setPreviousDraft(null)}
                         >
                           Cancel
@@ -616,15 +603,15 @@ export function MyExamsSection() {
                         <Button
                           variant="danger"
                           size="sm"
-                          loading={previousBusy}
-                          onClick={() => void handleRemovePrevious(entry.examCode)}
+                          loading={busy}
+                          onClick={() => void handleRemoveExam(entry.examCode)}
                         >
                           Remove
                         </Button>
                         <Button
                           variant="outline"
                           size="sm"
-                          disabled={previousBusy}
+                          disabled={busy}
                           onClick={() => setConfirmRemoveCode(null)}
                         >
                           Cancel
