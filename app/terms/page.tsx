@@ -24,7 +24,7 @@ export default function TermsPage() {
             border: "1px solid var(--color-border-subtle)",
           }}
         >
-          <LegalContent source="/terms-legal.html" />
+          <LegalContent source="/terms_and_conditions_V4.html" />
         </div>
       </main>
       <Footer />

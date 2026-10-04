@@ -24,3 +24,8 @@ export const HeroGraphic = dynamic(
   () => import("@/components/HeroGraphic").then((m) => m.HeroGraphic),
   { ssr: false }
 );
+
+export const HeroPhone = dynamic(
+  () => import("@/components/HeroPhone").then((m) => m.HeroPhone),
+  { ssr: false }
+);

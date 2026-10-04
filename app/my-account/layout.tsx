@@ -93,7 +93,7 @@ export default async function AccountLayout({
       <div className="account-page-header">
         <h1 className="text-display mb-2">My Account</h1>
         <p className="text-body" style={{ color: "var(--color-text-secondary)" }}>
-          Manage your profile, subscription, and preferences
+          Manage your profile, plan, and preferences
         </p>
       </div>
 

@@ -16,7 +16,7 @@ import { useToast } from "@/components/ui/Toast";
 // sense from an exam-specific context (e.g. a locked exam's own page), not
 // this general account-page subscribe card.
 const PLANS = [
-  { key: "annual" as const, label: "Annual — £100/yr" },
+  { key: "annual" as const, label: "Annual — £119/yr" },
 ];
 
 interface SubscribeButtonsProps {
@@ -31,7 +31,10 @@ interface SubscribeButtonsProps {
 
 export function SubscribeButtons({ autoSubscribePlan }: SubscribeButtonsProps = {}) {
   const { showToast } = useToast();
-  const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
+  // Starts "loading" when arriving with ?subscribe=annual so the server-rendered
+  // page shows the redirect screen straight away instead of flashing the
+  // account page before the automatic checkout call fires.
+  const [loadingPlan, setLoadingPlan] = useState<string | null>(autoSubscribePlan ?? null);
   const autoFired = useRef(false);
 
   const subscribe = async (plan: "annual") => {
@@ -64,6 +67,25 @@ export function SubscribeButtons({ autoSubscribePlan }: SubscribeButtonsProps = 
   }, [autoSubscribePlan]);
 
   return (
+    <>
+    {autoSubscribePlan && loadingPlan !== null && (
+      <div
+        role="status"
+        style={{
+          position: "fixed",
+          inset: 0,
+          zIndex: 1000,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          background: "var(--color-background)",
+          color: "var(--color-text)",
+          fontSize: 16,
+        }}
+      >
+        Taking you to secure checkout…
+      </div>
+    )}
     <div style={{ display: "flex", flexDirection: "column", gap: 10, alignItems: "center" }}>
       {PLANS.map((p) => (
         <button
@@ -78,5 +100,6 @@ export function SubscribeButtons({ autoSubscribePlan }: SubscribeButtonsProps = 
         </button>
       ))}
     </div>
+    </>
   );
 }

@@ -3,12 +3,12 @@ import { Footer } from "@/components/Footer";
 import { LegalContent } from "@/components/LegalContent";
 
 export const metadata = {
-  title: "Privacy Policy",
-  description: "GetChartered privacy policy.",
+  title: "Cookie Policy",
+  description: "How GetChartered uses cookies.",
 };
 
 
-export default function PrivacyPolicyPage() {
+export default function CookiesPage() {
   return (
     <>
       <Navigation />
@@ -24,7 +24,7 @@ export default function PrivacyPolicyPage() {
             border: "1px solid var(--color-border-subtle)",
           }}
         >
-          <LegalContent source="/privacy_policy_V3.html" />
+          <LegalContent source="/cookie_policy_V2.html" />
         </div>
       </main>
       <Footer />
