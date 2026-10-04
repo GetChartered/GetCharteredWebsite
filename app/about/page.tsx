@@ -149,7 +149,7 @@ export default function AboutPage() {
             of one more centred column stacked under the last one. */}
         <section className="about-story-section" style={{ position: "relative", zIndex: 1 }}>
           <div className="container">
-            <div className="about-story-grid" style={{ alignItems: "start" }}>
+            <div className="about-story-grid" style={{ alignItems: "center" }}>
               <ScrollReveal>
                 <div>
                   <span className="text-eyebrow" style={{ display: "block", marginBottom: 12 }}>

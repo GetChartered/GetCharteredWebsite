@@ -5,7 +5,7 @@ import { useToast } from "@/components/ui/Toast";
 import type { PracticeExamGroup } from "@/lib/practice/types";
 
 // Lets a user pick exactly one ACA exam and buy access to just that exam
-// (£25 one-off — see PRELAUNCH_TIERS in PricingSection.tsx). Split out from
+// (£29 one-off — see PRELAUNCH_TIERS in PricingSection.tsx). Split out from
 // SubscribeButtons.tsx because, unlike Annual, this plan needs an examId
 // before checkout can even be attempted — there's no sensible "auto-fire on
 // arrival" flow the way Annual has.
@@ -80,7 +80,7 @@ export function PerExamPicker({ exams }: PerExamPickerProps) {
         onClick={buyExam}
         style={{ minWidth: 220 }}
       >
-        {loading ? "Redirecting to Stripe…" : "Buy this exam — £25"}
+        {loading ? "Redirecting to Stripe…" : "Buy this exam — £29"}
       </button>
     </div>
   );

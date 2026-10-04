@@ -876,13 +876,13 @@ function DetailsStep({
           isOpen={legalModal === "terms"}
           onClose={() => setLegalModal(null)}
           title="Terms of Service"
-          source="/terms-legal.html"
+          source="/terms_and_conditions_V4.html"
         />
         <LegalModal
           isOpen={legalModal === "privacy"}
           onClose={() => setLegalModal(null)}
           title="Privacy Policy"
-          source="/privacypolicy.html"
+          source="/privacy_policy_V3.html"
         />
 
         {error && (

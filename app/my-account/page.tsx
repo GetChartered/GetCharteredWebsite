@@ -19,7 +19,7 @@ import type { ProgressData } from "@/lib/practice/types";
 
 export const metadata = {
   title: "My Account",
-  description: "Manage your GetChartered account and subscription.",
+  description: "Manage your GetChartered account and plan.",
 };
 
 
@@ -124,10 +124,10 @@ export default async function MyAccountPage({
           <div className="my-account-settings">
             {/* Subscription */}
             <div id="subscription">
-              <SectionHeading title="Subscription" />
+              <SectionHeading title="Your plan" />
               <p style={{ fontSize: 13, color: "var(--color-text-secondary)", marginBottom: 14 }}>
                 {SUBSCRIPTIONS_ENABLED
-                  ? "Manage your plan and see what you've purchased"
+                  ? "See what you have purchased"
                   : "Plans open when GetChartered launches in late summer 2026"}
               </p>
 
@@ -244,7 +244,7 @@ function PlanStatus({
         {remainingExamOptions.length > 0 && (
           <div className="card" style={{ padding: "24px" }}>
             <p className="text-sm" style={{ color: "var(--color-text-secondary)", marginBottom: 10 }}>
-              Buy access to another exam — £25
+              Buy access to another exam — £29
             </p>
             <PerExamPicker exams={remainingExamOptions} />
             <div style={{ marginTop: 16, paddingTop: 16, borderTop: "1px solid var(--color-border-subtle)" }}>
@@ -279,7 +279,7 @@ function PlanStatus({
                 className="text-sm"
                 style={{ color: "var(--color-text-secondary)", marginBottom: 10, textAlign: "center" }}
               >
-                Or buy access to a single exam — £25
+                Or buy access to a single exam — £29
               </p>
               <PerExamPicker exams={examOptions} />
             </div>

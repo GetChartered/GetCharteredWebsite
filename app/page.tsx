@@ -15,8 +15,7 @@ import { PricingSection } from "@/components/PricingSection";
 // dynamic()/ssr:false calls for these three live in HomeDecor.tsx (a Client
 // Component) since Next.js 16 disallows them directly in this async Server
 // Component page.
-import { ScrollReveal, AmbientBlob, HeroGraphic } from "@/components/HomeDecor";
-import { SUBSCRIPTIONS_ENABLED } from "@/lib/features";
+import { ScrollReveal, AmbientBlob, HeroPhone } from "@/components/HomeDecor";
 import { getOptionalSession } from "@/lib/auth0";
 
 // Enterprise pitch highlights — mirrors /about's HIGHLIGHTS pattern: short
@@ -82,8 +81,12 @@ export default async function Home() {
 
                 {/* AWAITING HUGO'S FINAL STRAPLINE */}
                 <h1 className="text-hero mb-6" style={{ color: "var(--color-text)" }}>
-                  Smart revision for professional qualifications. Built
-                  around your life.
+                  <span style={{ display: "block" }}>
+                    Smart revision for professional qualifications.
+                  </span>
+                  <span style={{ display: "block", marginTop: "0.6em" }}>
+                    Built around your life.
+                  </span>
                 </h1>
 
                 {/* AWAITING HUGO'S FINAL STRAPLINE */}
@@ -93,19 +96,7 @@ export default async function Home() {
                   stand.
                 </p>
 
-                {SUBSCRIPTIONS_ENABLED ? (
-                  <div className="flex flex-col sm:flex-row gap-4">
-                    <Button variant="primary" size="lg" leftIcon={Play}>
-                      Start Free Trial
-                    </Button>
-                    <Link href="/contact" style={{ textDecoration: "none" }}>
-                      <Button variant="outline" size="lg" leftIcon={Mail}>
-                        Contact Us
-                      </Button>
-                    </Link>
-                  </div>
-                ) : (
-                  <div className="flex flex-col sm:flex-row gap-4">
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 16 }}>
                     {isLoggedIn ? (
                       <Link href="/practice" style={{ textDecoration: "none" }}>
                         <Button variant="primary" size="lg" leftIcon={Play}>
@@ -118,7 +109,7 @@ export default async function Home() {
                         style={{ textDecoration: "none" }}
                       >
                         <Button variant="primary" size="lg" leftIcon={UserPlus}>
-                          Join the Waitlist
+                          Get Started Free
                         </Button>
                       </Link>
                     )}
@@ -128,10 +119,9 @@ export default async function Home() {
                       </Button>
                     </Link>
                   </div>
-                )}
               </div>
             </ScrollReveal>
-            <HeroGraphic />
+            <HeroPhone />
           </div>
         </section>
       </div>

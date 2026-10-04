@@ -10,7 +10,7 @@ interface SidebarSection {
 const ALL_SECTIONS: SidebarSection[] = [
   { id: "practice", label: "Practice" },
   { id: "my-exams", label: "My Exams" },
-  { id: "subscription", label: "Subscription" },
+  { id: "subscription", label: "Plan" },
   { id: "security", label: "Security" },
 ];
 

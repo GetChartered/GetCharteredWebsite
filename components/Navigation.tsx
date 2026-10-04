@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Moon, Sun, User, Menu, X, Home } from "lucide-react";
 import { Button } from "@/components/ui";
 import { useTheme } from "@/components/ThemeProvider";
@@ -23,6 +23,9 @@ export function Navigation() {
   // Feedback opens as a modal from here — Navigation renders on every page,
   // so this local state is enough to pop it up from anywhere.
   const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
+  // Desktop hamburger menu (FAQ / Contact / Feedback).
+  const [isMoreOpen, setIsMoreOpen] = useState(false);
+  const moreRef = useRef<HTMLDivElement>(null);
 
   const isOnMyAccount = pathname === "/my-account";
   // useUser()'s client-side `user` already carries the ID token's claims,
@@ -55,6 +58,25 @@ export function Navigation() {
       document.body.style.overflow = 'unset';
     }
   }, [isMobileMenuOpen]);
+
+  // Close the desktop hamburger menu on outside click or Escape.
+  useEffect(() => {
+    if (!isMoreOpen) return;
+    const onPointerDown = (e: MouseEvent) => {
+      if (moreRef.current && !moreRef.current.contains(e.target as Node)) {
+        setIsMoreOpen(false);
+      }
+    };
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setIsMoreOpen(false);
+    };
+    document.addEventListener("mousedown", onPointerDown);
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", onPointerDown);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [isMoreOpen]);
 
   // Close menu on Escape key press
   useEffect(() => {
@@ -131,11 +153,6 @@ export function Navigation() {
 
           {/* Desktop Navigation Buttons */}
           <div className="nav-desktop items-center gap-3">
-            <Link href="/" style={{ textDecoration: "none" }}>
-              <Button variant="ghost" size="sm">
-                Home
-              </Button>
-            </Link>
             {SUBSCRIPTIONS_ENABLED && (
               <Link href="/purchase" style={{ textDecoration: "none" }}>
                 <Button variant="ghost" size="sm">
@@ -160,11 +177,6 @@ export function Navigation() {
                     Planner
                   </Button>
                 </Link>
-                <Link href="/leaderboard" style={{ textDecoration: "none" }}>
-                  <Button variant="ghost" size="sm">
-                    Leaderboard
-                  </Button>
-                </Link>
               </>
             )}
             <Link href="/about" style={{ textDecoration: "none" }}>
@@ -172,22 +184,6 @@ export function Navigation() {
                 About
               </Button>
             </Link>
-            <Link href="/faq" style={{ textDecoration: "none" }}>
-              <Button variant="ghost" size="sm">
-                FAQ
-              </Button>
-            </Link>
-            <Link href="/contact" style={{ textDecoration: "none" }}>
-              <Button variant="ghost" size="sm">
-                Contact
-              </Button>
-            </Link>
-            {/* Logged-in users only — feedback is tied to the account. */}
-            {user && (
-              <Button variant="ghost" size="sm" onClick={() => setIsFeedbackOpen(true)}>
-                Feedback
-              </Button>
-            )}
             {user ? (
               <Link href={isOnMyAccount ? "/" : "/my-account"} style={{ textDecoration: "none" }}>
                 <Button variant="ghost" size="sm">
@@ -208,6 +204,65 @@ export function Navigation() {
                 </Link>
               </>
             )}
+            {/* Secondary pages (FAQ, Contact, Feedback) live in this hamburger
+                menu so the top bar stays uncluttered. */}
+            <div ref={moreRef} style={{ position: "relative" }}>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setIsMoreOpen((open) => !open)}
+                aria-label="More"
+                aria-haspopup="menu"
+                aria-expanded={isMoreOpen}
+              >
+                {isMoreOpen ? <X size={20} /> : <Menu size={20} />}
+              </Button>
+              {isMoreOpen && (
+                <div
+                  role="menu"
+                  style={{
+                    position: "absolute",
+                    right: 0,
+                    top: "calc(100% + 8px)",
+                    minWidth: 180,
+                    padding: 8,
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 4,
+                    backgroundColor: "var(--color-card)",
+                    border: "1px solid var(--color-border-subtle)",
+                    borderRadius: 12,
+                    boxShadow: "var(--shadow-card)",
+                    zIndex: 60,
+                  }}
+                >
+                  <Link href="/faq" style={{ textDecoration: "none" }} onClick={() => setIsMoreOpen(false)}>
+                    <Button variant="ghost" size="sm" fullWidth>
+                      FAQ
+                    </Button>
+                  </Link>
+                  <Link href="/contact" style={{ textDecoration: "none" }} onClick={() => setIsMoreOpen(false)}>
+                    <Button variant="ghost" size="sm" fullWidth>
+                      Contact
+                    </Button>
+                  </Link>
+                  {/* Logged-in users only — feedback is tied to the account. */}
+                  {user && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      fullWidth
+                      onClick={() => {
+                        setIsMoreOpen(false);
+                        setIsFeedbackOpen(true);
+                      }}
+                    >
+                      Feedback
+                    </Button>
+                  )}
+                </div>
+              )}
+            </div>
             <Button
               variant="ghost"
               size="sm"
@@ -288,15 +343,6 @@ export function Navigation() {
                   >
                     <Button variant="ghost" size="md" fullWidth>
                       Planner
-                    </Button>
-                  </Link>
-                  <Link
-                    href="/leaderboard"
-                    style={{ textDecoration: "none" }}
-                    onClick={() => setIsMobileMenuOpen(false)}
-                  >
-                    <Button variant="ghost" size="md" fullWidth>
-                      Leaderboard
                     </Button>
                   </Link>
                 </>

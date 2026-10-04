@@ -24,7 +24,7 @@ export interface ProfileResponse {
   name: string;
   createdAt: string;
   premium: boolean;
-  /** Exam codes bought individually via the Per Exam plan (£25, one-off,
+  /** Exam codes bought individually via the Per Exam plan (£29, one-off,
    *  no full premium) — see lib/examAccess.ts for how this combines with
    *  `premium` to decide access to a given exam's content. */
   purchasedExams: string[];

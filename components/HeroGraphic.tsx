@@ -29,10 +29,12 @@ export function HeroGraphic() {
       style={{
         position: "absolute",
         top: "50%",
-        right: 0,
+        right: -40,
         transform: "translateY(-50%)",
-        width: 400,
-        height: 400,
+        // Scales with the viewport so it never crowds the headline at
+        // narrower desktop widths (it is hidden entirely below 900px).
+        width: "min(560px, 46vw)",
+        height: "min(560px, 46vw)",
         pointerEvents: "none",
       }}
     >

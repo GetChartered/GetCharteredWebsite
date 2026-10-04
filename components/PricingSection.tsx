@@ -1,7 +1,6 @@
 import { PricingCard } from "@/components/PricingCard";
 import { ScrollReveal } from "@/components/ScrollReveal";
 import { AmbientBlob } from "@/components/AmbientBlob";
-import { SUBSCRIPTIONS_ENABLED } from "@/lib/features";
 
 interface PricingData {
   id: string;
@@ -110,7 +109,7 @@ const PRELAUNCH_TIERS = [
     ],
     highlighted: true,
     badge: "Best Value",
-    ctaLabel: "Subscribe Annual",
+    ctaLabel: "Get Annual",
     // /my-account?subscribe=annual: signed-in users land on the account page
     // and checkout fires automatically (SubscribeButtons' autoSubscribePlan);
     // a not-yet-signed-in visitor is bounced through login/signup first and
@@ -199,98 +198,17 @@ function PrelaunchPricing() {
           style={{ textAlign: "center", marginTop: 8, color: "var(--color-text-muted)" }}
         >
           Every paid tier links straight to secure Stripe checkout — no
-          waitlist, sign up and subscribe in one flow.
+          waitlist, sign up and buy in one flow.
         </p>
       </div>
     </section>
   );
 }
 
+// Pricing is now the fixed Free / Annual / Per Exam tiers (PRELAUNCH_TIERS
+// above) whether or not SUBSCRIPTIONS_ENABLED is on; the old Stripe-driven
+// single "Premium £14.99/month" card that used to render here when the flag
+// was on is retired (subscriptions were dropped 2026-09-09).
 export async function PricingSection() {
-  if (!SUBSCRIPTIONS_ENABLED) {
-    return <PrelaunchPricing />;
-  }
-
-  const pricingData = await getPricing();
-
-  // Filter to only show paid plans (exclude free plans)
-  const paidPlans = pricingData.filter(plan => plan.amount > 0);
-
-  // Fallback to hardcoded pricing if API fails or no paid plans
-  if (paidPlans.length === 0) {
-    return (
-      <section id="pricing" className="py-24">
-        <div className="container">
-          <div className="text-center mb-12">
-            <h2 className="text-display mb-4">Simple, Transparent Pricing</h2>
-            <p
-              className="max-w-2xl mx-auto"
-              style={{ color: "var(--color-text-secondary)" }}
-            >
-              Get access to all features with our premium plan
-            </p>
-          </div>
-
-          <div className="max-w-md mx-auto">
-            <PricingCard
-              title="Premium"
-              description="Everything you need to pass your exams"
-              price="£14.99"
-              period="/month"
-              features={[
-                "Unlimited practice questions",
-                "All modules included",
-                "Advanced analytics",
-                "Mock exams & timed practice",
-                "Offline access",
-                "Priority support",
-              ]}
-              ctaLabel="Start Free Trial"
-              ctaHref="/purchase"
-              highlighted={true}
-            />
-          </div>
-        </div>
-      </section>
-    );
-  }
-
-  // Get the first paid plan (in case there are multiple like test products)
-  const plan = paidPlans[0];
-
-  return (
-    <section id="pricing" className="py-24">
-      <div className="container">
-        <div className="text-center mb-12">
-          <h2 className="text-display mb-4">Simple, Transparent Pricing</h2>
-          <p
-            className="max-w-2xl mx-auto"
-            style={{ color: "var(--color-text-secondary)" }}
-          >
-            Get access to all features with our premium plan
-          </p>
-        </div>
-
-        <div className="max-w-md mx-auto">
-          <PricingCard
-            title={plan.productName}
-            description={plan.description || "Everything you need to pass your exams"}
-            price={formatPrice(plan.amount, plan.currency)}
-            period={formatPeriod(plan.interval, plan.intervalCount)}
-            features={plan.features.length > 0 ? plan.features : [
-              "Unlimited practice questions",
-              "All modules included",
-              "Advanced analytics",
-              "Mock exams & timed practice",
-              "Offline access",
-              "Priority support",
-            ]}
-            ctaLabel={plan.metadata.ctaLabel || "Start Free Trial"}
-            ctaHref="/purchase"
-            highlighted={true}
-          />
-        </div>
-      </div>
-    </section>
-  );
+  return <PrelaunchPricing />;
 }
