@@ -502,7 +502,7 @@ export function MyExamsSection() {
           examDate={resultModalEntry.examDate ?? ""}
           initialGradePercent={resultModalEntry.gradePercent}
           initialExamLevel={resultModalEntry.examLevel ?? null}
-          initialOutcome={resultModalEntry.outcome ?? null}
+initialOutcome={resultModalEntry.outcome}
           onClose={() => setResultModalExamCode(null)}
           onSave={handleSaveResult}
         />
