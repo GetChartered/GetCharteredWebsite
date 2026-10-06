@@ -37,6 +37,7 @@ export function resultPassed(
 ): boolean | null {
   if (entry.outcome === "pass") return true;
   if (entry.outcome === "fail") return false;
+  if (entry.outcome === null) return null;
   return computeExamPassed(entry.gradePercent, entry.examLevel);
 }
 
