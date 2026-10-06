@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
 import { requireOnboardedSession } from "@/lib/auth0";
 import { deleteExamPrepEntry, fetchExamPrepData, postExamPrepEntry } from "@/lib/practice/examPrepServer";
-import type { ExamLevel } from "@/lib/practice/types";
+import type { ExamLevel, ExamOutcome } from "@/lib/practice/types";
 
 const VALID_EXAM_LEVELS: ExamLevel[] = ["certificate", "professional", "advanced"];
+const VALID_OUTCOMES: ExamOutcome[] = ["pass", "fail"];
 
 // GET /api/exam-prep — same-origin proxy to the GC backend's GET /exam-prep.
 // Returns { examPrep: ExamPrepEntry[] }, the user's full exam-prep list
@@ -41,12 +42,8 @@ export async function POST(request: Request) {
   const year = typeof body?.year === "number" ? body.year : undefined;
   const session = typeof body?.session === "string" ? body.session : undefined;
 
-  // Result fields — see lib/practice/types.ts's ExamPrepEntry and
-  // backend-reference/updateExamResult.md. The real backend doesn't persist
-  // these yet (that Lambda change isn't deployed), but there's no reason for
-  // this proxy route to withhold them once it exists — same "pass whatever
-  // the client validated straight through" approach POST already takes for
-  // isPrimary/year/session.
+  // Result fields — see lib/practice/types.ts's ExamPrepEntry. Omitted ones
+  // are left as stored by the backend; null clears one.
   const sat = typeof body?.sat === "boolean" ? body.sat : undefined;
   const gradePercent =
     typeof body?.gradePercent === "number"
@@ -57,7 +54,15 @@ export async function POST(request: Request) {
   const examLevel =
     typeof body?.examLevel === "string" && (VALID_EXAM_LEVELS as string[]).includes(body.examLevel)
       ? (body.examLevel as ExamLevel)
-      : undefined;
+      : body?.examLevel === null
+        ? null
+        : undefined;
+  const outcome =
+    typeof body?.outcome === "string" && (VALID_OUTCOMES as string[]).includes(body.outcome)
+      ? (body.outcome as ExamOutcome)
+      : body?.outcome === null
+        ? null
+        : undefined;
 
   const result = await postExamPrepEntry({
     course,
@@ -69,6 +74,7 @@ export async function POST(request: Request) {
     sat,
     gradePercent,
     examLevel,
+    outcome,
   });
   if (!result.ok) {
     return NextResponse.json({ error: "Failed to register exam" }, { status: 502 });

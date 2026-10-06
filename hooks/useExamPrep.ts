@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { selectPrimaryExamPrep } from "@/lib/practice/examPrep";
-import type { ExamLevel, ExamPrepEntry } from "@/lib/practice/types";
+import type { ExamLevel, ExamOutcome, ExamPrepEntry } from "@/lib/practice/types";
 
 export interface SaveExamPrepParams {
   course: string;
@@ -14,7 +14,8 @@ export interface SaveExamPrepParams {
    *  form is the only caller that sets these. */
   sat?: boolean;
   gradePercent?: number | null;
-  examLevel?: ExamLevel;
+  examLevel?: ExamLevel | null;
+  outcome?: ExamOutcome | null;
 }
 
 type ExamResultFields = Pick<ExamPrepEntry, "sat" | "gradePercent" | "examLevel">;

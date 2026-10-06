@@ -1,4 +1,4 @@
-import type { ExamLevel } from "@/lib/practice/types";
+import type { ExamLevel, ExamOutcome, ExamPrepEntry } from "@/lib/practice/types";
 
 // Pure pass/fail logic for recorded exam results — kept as one small
 // function rather than hardcoding 55/50 at every call site, since ICAEW
@@ -16,15 +16,31 @@ export function getPassMark(examLevel: ExamLevel): number {
   }
 }
 
-/** Derived, never stored — a graded exam's pass/fail is always recomputed
- *  from gradePercent + examLevel rather than persisted as its own field, so
- *  a future pass-mark change retroactively reflects on every past result.
- *  Null when there's nothing to compute from yet (not sat, or sat without a
- *  recorded grade/level). */
+/** Pass/fail for a grade under the CURRENT pass mark. Only for pre-selecting
+ *  the result form, and for rows saved before `outcome` existed: a recorded
+ *  result's pass/fail is its stored `outcome`, fixed on the day, so a later
+ *  pass-mark change never turns a pass into a fail. Null when there's no
+ *  grade or level. */
 export function computeExamPassed(
   gradePercent: number | null | undefined,
   examLevel: ExamLevel | null | undefined
 ): boolean | null {
   if (gradePercent == null || !examLevel) return null;
   return gradePercent >= getPassMark(examLevel);
+}
+
+/** Pass/fail for a recorded result: the stored `outcome` (as it stood on
+ *  the day). Rows saved before `outcome` existed fall back to the pass mark.
+ *  Null when neither is available. */
+export function resultPassed(
+  entry: Pick<ExamPrepEntry, "gradePercent" | "examLevel" | "outcome">
+): boolean | null {
+  if (entry.outcome === "pass") return true;
+  if (entry.outcome === "fail") return false;
+  if (entry.outcome === null) return null;
+  return computeExamPassed(entry.gradePercent, entry.examLevel);
+}
+
+export function toOutcome(passed: boolean | null): ExamOutcome | null {
+  return passed === null ? null : passed ? "pass" : "fail";
 }

@@ -1,5 +1,11 @@
 # Exam result fields on `/exam-prep` — backend change needed
 
+> **Superseded (2026-10-06).** Done in the app repo's
+> `backend/setExamPrepLambda`, which is deployed. That version keeps stored
+> results when a save doesn't send them (the real Lambda replaced the whole
+> row on every save) and adds `outcome` ("pass"/"fail") for results recorded
+> without a grade. Kept for history only.
+
 **Not deployed. Reference only — Pierce to review and deploy manually.**
 
 This is a *different* situation from `updateUserPhoto.js` in this same

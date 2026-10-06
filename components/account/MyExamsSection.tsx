@@ -9,9 +9,9 @@ import { ExamResultModal } from "@/components/account/ExamResultModal";
 import { useExamModules } from "@/hooks/useExamModules";
 import { useExamPrep } from "@/hooks/useExamPrep";
 import { computePrimaryExamCode } from "@/lib/practice/examPrep";
-import { computeExamPassed } from "@/lib/practice/examResults";
+import { resultPassed } from "@/lib/practice/examResults";
 import { EXAM_LEVEL_LABELS } from "@/lib/practice/examLevels";
-import type { ExamLevel, ExamPrepEntry } from "@/lib/practice/types";
+import type { ExamLevel, ExamOutcome, ExamPrepEntry } from "@/lib/practice/types";
 
 const COURSE = "ACA";
 
@@ -237,7 +237,11 @@ export function MyExamsSection() {
     ? examPrep.find((e) => e.examCode === resultModalExamCode)
     : undefined;
 
-  const handleSaveResult = async (result: { gradePercent: number; examLevel: ExamLevel }): Promise<boolean> => {
+  const handleSaveResult = async (result: {
+    gradePercent: number | null;
+    examLevel: ExamLevel | null;
+    outcome: ExamOutcome | null;
+  }): Promise<boolean> => {
     if (!resultModalEntry) return false;
 
     const ok = await saveExamPrep({
@@ -248,6 +252,7 @@ export function MyExamsSection() {
       sat: true,
       gradePercent: result.gradePercent,
       examLevel: result.examLevel,
+      outcome: result.outcome,
     });
 
     if (ok) {
@@ -535,7 +540,7 @@ export function MyExamsSection() {
           ) : (
             <div className="my-exams-grid">
               {previousEntries.map((entry) => {
-                const passed = computeExamPassed(entry.gradePercent, entry.examLevel ?? null);
+                const passed = resultPassed(entry);
                 const name = examNameByCode.get(entry.examCode) ?? entry.examCode;
 
                 if (!entry.sat && previousDraft?.originalCode === entry.examCode) {
@@ -717,6 +722,7 @@ export function MyExamsSection() {
           examDate={resultModalEntry.examDate ?? ""}
           initialGradePercent={resultModalEntry.gradePercent}
           initialExamLevel={resultModalEntry.examLevel ?? null}
+initialOutcome={resultModalEntry.outcome}
           onClose={() => setResultModalExamCode(null)}
           onSave={handleSaveResult}
         />

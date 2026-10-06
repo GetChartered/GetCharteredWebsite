@@ -1,6 +1,6 @@
 import { callGcApi } from "@/lib/gcApi";
 import { parseExamPrepData } from "@/lib/practice/examPrep";
-import type { ExamLevel, ExamPrepEntry } from "@/lib/practice/types";
+import type { ExamLevel, ExamOutcome, ExamPrepEntry } from "@/lib/practice/types";
 
 /**
  * Fetches + parses GET /exam-prep, confirmed against GetChartered_app's
@@ -29,13 +29,12 @@ export interface PostExamPrepParams {
   session?: string;
   examDate?: string;
   isPrimary?: boolean;
-  /** Result fields — see lib/practice/types.ts's ExamPrepEntry for the
-   *  contract, and backend-reference/updateExamResult.md for the (not yet
-   *  deployed) backend change these need. Sent as-is; the real backend
-   *  currently ignores them entirely rather than rejecting the request. */
+  /** Result fields — see lib/practice/types.ts's ExamPrepEntry. Omitted
+   *  ones are left as stored; null clears one. */
   sat?: boolean;
   gradePercent?: number | null;
-  examLevel?: ExamLevel;
+  examLevel?: ExamLevel | null;
+  outcome?: ExamOutcome | null;
 }
 
 export type PostExamPrepResult =
