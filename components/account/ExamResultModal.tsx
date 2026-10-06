@@ -63,7 +63,7 @@ export function ExamResultModal({
   );
   // Rows saved before `outcome` existed fall back to the pass mark.
   const [outcome, setOutcome] = useState<ExamOutcome | null>(
-    initialOutcome ?? toOutcome(computeExamPassed(initialGradePercent, initialExamLevel))
+initialOutcome === undefined ? toOutcome(computeExamPassed(initialGradePercent, initialExamLevel)) : initialOutcome
   );
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
