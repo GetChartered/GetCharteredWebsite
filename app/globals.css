@@ -1505,7 +1505,8 @@ body {
   margin-bottom: 16px;
 }
 
-.exam-result-field label {
+.exam-result-field label,
+.exam-result-field-label {
   font-size: 13px;
   font-weight: 600;
   color: var(--color-text);

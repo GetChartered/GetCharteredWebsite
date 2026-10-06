@@ -188,6 +188,9 @@ export interface LeaderboardEntry {
  *  code/name-based lookup on top of the existing catalogue instead. */
 export type ExamLevel = "certificate" | "professional" | "advanced";
 
+/** The user's own pass/fail, for a result recorded without a grade. */
+export type ExamOutcome = "pass" | "fail";
+
 // Shapes for POST/GET /exam-prep, confirmed against GetChartered_app's
 // components/useBackendData.tsx (ExamPrepEntry / SetExamPrepParams) — a real
 // per-user exam registration (specific exam code + specific date + a
@@ -197,14 +200,11 @@ export type ExamLevel = "certificate" | "professional" | "advanced";
 // `entries.find(e => e.isPrimary) ?? entries[0]` — the pattern this website
 // now mirrors wherever a "the user's real exam" default is needed.
 //
-// `sat`/`gradePercent`/`examLevel` are a website-side addition on top of
-// that confirmed app contract — the app has no result-recording feature at
-// all (see backend-reference/updateExamResult.md), so there was nothing to
-// mirror here. No backend currently persists or returns these three fields;
-// until backend-reference/updateExamResult.md is deployed, POSTing them is a
-// no-op as far as the real backend is concerned (the fields are simply
-// dropped), and every website session will see `sat`/`gradePercent`/
-// `examLevel` as undefined on every GET /exam-prep response.
+// `sat`/`gradePercent`/`examLevel`/`outcome` are the result fields. The
+// setExamPrep Lambda (GetChartered app repo, backend/setExamPrepLambda)
+// stores them and keeps them when a save doesn't send them. Pass/fail is the
+// stored `outcome`, fixed on the day; the grade is optional detail (see
+// lib/practice/examResults.ts's resultPassed).
 export interface ExamPrepEntry {
   course: string;
   examCode: string;
@@ -219,17 +219,16 @@ export interface ExamPrepEntry {
    *  My Exams Upcoming/Previous split. Undefined is treated the same as
    *  false (not sat) everywhere this is read. */
   sat?: boolean;
-  /** The raw mark out of 100 the user entered, once sat. `null` is a real,
-   *  distinct value here — reserved for "sat is true but no grade was
-   *  entered" (not currently reachable through the UI, which requires a
-   *  grade to mark an exam sat, but kept nullable to match the task's
-   *  `number | null` spec and to leave room for a future "I sat it but
-   *  don't know the mark yet" flow without a shape change). */
+  /** The mark out of 100 the user entered, once sat. Optional: `null`
+   *  means they recorded pass/fail without a grade. */
   gradePercent?: number | null;
   /** Needed to resolve the correct pass mark (getPassMark) — see
    *  lib/practice/examLevels.ts for how this is suggested for a given
    *  exam, and why that suggestion isn't fully trustworthy yet. */
-  examLevel?: ExamLevel;
+  examLevel?: ExamLevel | null;
+  /** Pass or fail, as it stood on the day. Saved with every result, so a
+   *  later pass-mark change can't alter it. */
+  outcome?: ExamOutcome | null;
 }
 
 export type LeaderboardData =

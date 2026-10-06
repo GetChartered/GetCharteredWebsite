@@ -4,9 +4,9 @@ import { useState } from "react";
 import { CheckCircle2, XCircle } from "lucide-react";
 import { Button } from "@/components/ui";
 import { PracticeToolModal } from "@/components/practice/PracticeToolModal";
-import { computeExamPassed, getPassMark } from "@/lib/practice/examResults";
+import { computeExamPassed, getPassMark, toOutcome } from "@/lib/practice/examResults";
 import { EXAM_LEVEL_OPTIONS, resolveExamLevel } from "@/lib/practice/examLevels";
-import type { ExamLevel } from "@/lib/practice/types";
+import type { ExamLevel, ExamOutcome } from "@/lib/practice/types";
 
 interface ExamResultModalProps {
   examName: string;
@@ -17,10 +17,15 @@ interface ExamResultModalProps {
   examDate: string;
   initialGradePercent?: number | null;
   initialExamLevel?: ExamLevel | null;
+  initialOutcome?: ExamOutcome | null;
   onClose: () => void;
   /** Returns whether the save succeeded — the modal shows its own error
    *  state and stays open on failure, same pattern as DeleteAccountForm. */
-  onSave: (result: { gradePercent: number; examLevel: ExamLevel }) => Promise<boolean>;
+  onSave: (result: {
+    gradePercent: number | null;
+    examLevel: ExamLevel | null;
+    outcome: ExamOutcome | null;
+  }) => Promise<boolean>;
 }
 
 function formatDate(dateStr: string): string {
@@ -32,7 +37,10 @@ function formatDate(dateStr: string): string {
 /**
  * Add/edit an exam result — opened from MyExamsSection for either a
  * past-dated Upcoming exam ("Add result") or an already-recorded Previous
- * one ("Edit"). Exam level is always an editable dropdown, pre-filled from
+ * one ("Edit"). Pass/fail is always stored (`outcome`), as it stood on the
+ * day: a later pass-mark change must never turn a pass into a fail. The
+ * grade is optional; entering one with a level pre-selects Pass or Fail from
+ * the current pass mark, which the user can still change. Exam level is an editable dropdown, pre-filled from
  * lib/practice/examLevels.ts's best-effort guess rather than trusted
  * outright — see that file's header comment for why it isn't fully
  * reliable yet.
@@ -43,6 +51,7 @@ export function ExamResultModal({
   examDate,
   initialGradePercent,
   initialExamLevel,
+  initialOutcome,
   onClose,
   onSave,
 }: ExamResultModalProps) {
@@ -52,23 +61,41 @@ export function ExamResultModal({
   const [examLevel, setExamLevel] = useState<ExamLevel | "">(
     initialExamLevel ?? resolveExamLevel(examCode, examName) ?? ""
   );
+  // Rows saved before `outcome` existed fall back to the pass mark.
+  const [outcome, setOutcome] = useState<ExamOutcome | null>(
+    initialOutcome ?? toOutcome(computeExamPassed(initialGradePercent, initialExamLevel))
+  );
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const parsedGrade = gradeInput.trim() === "" ? null : Number(gradeInput);
   const gradeValid =
     parsedGrade !== null && Number.isFinite(parsedGrade) && parsedGrade >= 0 && parsedGrade <= 100;
-  const canSubmit = gradeValid && examLevel !== "";
+  const gradeInvalid = parsedGrade !== null && !gradeValid;
 
-  const previewPassed =
+  const fromPassMark =
     gradeValid && examLevel !== "" ? computeExamPassed(parsedGrade, examLevel) : null;
+  const canSubmit = !gradeInvalid && outcome !== null;
+
+  // A grade + level pre-selects Pass/Fail from the pass mark; the user can
+  // still change it afterwards.
+  const preselect = (nextGrade: string, nextLevel: ExamLevel | "") => {
+    const g = nextGrade.trim() === "" ? null : Number(nextGrade);
+    if (g === null || !Number.isFinite(g) || g < 0 || g > 100 || nextLevel === "") return;
+    const passed = computeExamPassed(g, nextLevel);
+    if (passed !== null) setOutcome(toOutcome(passed));
+  };
 
   const handleSubmit = async () => {
     if (!canSubmit || submitting) return;
     setSubmitting(true);
     setError(null);
 
-    const ok = await onSave({ gradePercent: parsedGrade as number, examLevel: examLevel as ExamLevel });
+    const ok = await onSave({
+      gradePercent: gradeValid ? parsedGrade : null,
+      examLevel: examLevel === "" ? null : examLevel,
+      outcome,
+    });
 
     setSubmitting(false);
     if (ok) {
@@ -92,7 +119,11 @@ export function ExamResultModal({
         <select
           id="exam-result-level"
           value={examLevel}
-          onChange={(e) => setExamLevel(e.target.value as ExamLevel | "")}
+          onChange={(e) => {
+            const next = e.target.value as ExamLevel | "";
+            setExamLevel(next);
+            preselect(gradeInput, next);
+          }}
           style={{
             height: 44,
             padding: "0 14px",
@@ -113,7 +144,7 @@ export function ExamResultModal({
       </div>
 
       <div className="exam-result-field">
-        <label htmlFor="exam-result-grade">Grade (%)</label>
+        <label htmlFor="exam-result-grade">Grade (%) — optional</label>
         <input
           id="exam-result-grade"
           type="number"
@@ -122,7 +153,10 @@ export function ExamResultModal({
           max={100}
           step={1}
           value={gradeInput}
-          onChange={(e) => setGradeInput(e.target.value)}
+          onChange={(e) => {
+            setGradeInput(e.target.value);
+            preselect(e.target.value, examLevel);
+          }}
           placeholder="0–100"
           style={{
             height: 44,
@@ -136,41 +170,55 @@ export function ExamResultModal({
             fontSize: 14,
           }}
         />
-        {gradeInput.trim() !== "" && !gradeValid && (
+        {gradeInvalid && (
           <span style={{ fontSize: 12, color: "var(--color-danger)" }}>Enter a number between 0 and 100.</span>
         )}
       </div>
 
-      {previewPassed !== null && (
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 8,
-            padding: "10px 14px",
-            borderRadius: "var(--radius-md)",
-            marginBottom: 20,
-            backgroundColor: previewPassed
-              ? "color-mix(in srgb, var(--accent-green) 10%, transparent)"
-              : "color-mix(in srgb, var(--color-danger) 10%, transparent)",
-          }}
-        >
-          {previewPassed ? (
-            <CheckCircle2 size={16} style={{ color: "var(--accent-green)" }} />
-          ) : (
-            <XCircle size={16} style={{ color: "var(--color-danger)" }} />
-          )}
-          <span
-            style={{
-              fontSize: 13,
-              fontWeight: 600,
-              color: previewPassed ? "var(--accent-green)" : "var(--color-danger)",
-            }}
-          >
-            {previewPassed ? "Pass" : "Fail"} — pass mark is {getPassMark(examLevel as ExamLevel)}%
-          </span>
+      <div className="exam-result-field">
+        <span id="exam-result-outcome-label" className="exam-result-field-label">Did you pass?</span>
+        <div role="radiogroup" aria-labelledby="exam-result-outcome-label" style={{ display: "flex", gap: 12 }}>
+          {(["pass", "fail"] as const).map((value) => {
+            const selected = outcome === value;
+            const color = value === "pass" ? "var(--accent-green)" : "var(--color-danger)";
+            return (
+              <button
+                key={value}
+                type="button"
+                role="radio"
+                aria-checked={selected}
+                onClick={() => setOutcome(value)}
+                style={{
+                  flex: 1,
+                  height: 44,
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 6,
+                  borderRadius: "var(--radius-md)",
+                  border: `1px solid ${selected ? color : "var(--color-border-subtle)"}`,
+                  backgroundColor: selected
+                    ? `color-mix(in srgb, ${color} 10%, transparent)`
+                    : "var(--color-card)",
+                  color: selected ? color : "var(--color-text)",
+                  fontSize: 14,
+                  fontWeight: 600,
+                  cursor: "pointer",
+                }}
+              >
+                {value === "pass" ? <CheckCircle2 size={16} /> : <XCircle size={16} />}
+                {value === "pass" ? "Pass" : "Fail"}
+              </button>
+            );
+          })}
         </div>
-      )}
+        {fromPassMark !== null && (
+          <span style={{ fontSize: 12, color: "var(--color-text-muted)" }}>
+            {fromPassMark ? "Pass" : "Fail"} at the current pass mark ({getPassMark(examLevel as ExamLevel)}%).
+            Change it if your result said otherwise.
+          </span>
+        )}
+      </div>
 
       {error && (
         <div
