@@ -1,7 +1,7 @@
 "use server";
 
 import { auth0 } from "@/lib/auth0";
-import { deleteUser } from "@/lib/auth0-management";
+import { callGcApi } from "@/lib/gcApi";
 
 export type DeleteAccountResult =
   | { success: true }
@@ -27,24 +27,32 @@ export default async function DeleteAccount(
     return { success: false, error: "You're not signed in." };
   }
 
-  // Nothing to cancel here anymore — Annual and Per Exam are both one-time
-  // Stripe payments (Pierce's call, 2026-09-09), never a recurring
-  // subscription object. This used to call CancelSubscription() first, which
-  // always threw "No active subscription found" once that change shipped
-  // (Stripe never has a subscription to find) — silently failing every
-  // account deletion the moment this code path was reachable. Removed
-  // rather than fixed in place, since there's no subscription concept left
-  // to cancel at all.
+  // Nothing to cancel here — Annual and Per Exam are one-time Stripe payments,
+  // never a recurring subscription object.
+  //
+  // Deletion is done by the backend's deleteAccount Lambda (DELETE /account),
+  // the same route the mobile app uses. It removes the user's DynamoDB rows,
+  // profile photos and analytics token, and deletes the Auth0 identity LAST so
+  // a failed attempt can be retried while the user can still sign in. The user
+  // id comes from the verified access token server-side, never from here.
+  // Stripe payment records are deliberately retained by the backend for
+  // tax/accounting retention, and the privacy policy says so.
   try {
-    await deleteUser(session.user.sub);
+    const response = await callGcApi("/account", { method: "DELETE" });
+    if (!response.ok) {
+      console.error("DELETE /account failed:", response.status);
+      return {
+        success: false,
+        error:
+          "We couldn't delete your account just now. Nothing has been lost, so please try again or contact support@getchartered.app.",
+      };
+    }
   } catch (error) {
-    console.error("Auth0 deleteUser failed:", error);
+    console.error("DELETE /account threw:", error);
     return {
       success: false,
       error:
-        error instanceof Error
-          ? error.message
-          : "Failed to delete your account. Please try again or contact support.",
+        "We couldn't reach our servers. Please try again in a moment or contact support@getchartered.app.",
     };
   }
 

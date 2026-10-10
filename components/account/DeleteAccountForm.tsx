@@ -29,6 +29,9 @@ export function DeleteAccountForm({ email, onCancel }: DeleteAccountFormProps) {
   const [confirmEmail, setConfirmEmail] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Two steps: "form" (reason + type-to-confirm) then "confirm" (final
+  // are-you-sure screen). Nothing is deleted until the second step.
+  const [step, setStep] = useState<"form" | "confirm">("form");
 
   // If the user's Auth0 record has no email (rare — some social providers can
   // omit it), fall back to typing the literal word DELETE so the safety check
@@ -80,6 +83,122 @@ export function DeleteAccountForm({ email, onCancel }: DeleteAccountFormProps) {
 
   const embedded = !!onCancel;
 
+  // ---- Step 2: final "are you sure" screen ----
+  if (step === "confirm") {
+    return (
+      <div
+        className={embedded ? undefined : "card"}
+        style={embedded ? undefined : { padding: "32px", maxWidth: 520, width: "100%" }}
+      >
+        <div style={{ textAlign: "center", marginBottom: 24 }}>
+          <div
+            style={{
+              width: 64,
+              height: 64,
+              borderRadius: 999,
+              backgroundColor: "rgba(239, 68, 68, 0.1)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              margin: "0 auto 16px",
+            }}
+          >
+            <AlertTriangle size={28} style={{ color: "#ef4444" }} />
+          </div>
+          <h2
+            className="text-title"
+            style={{ fontWeight: 700, color: "var(--color-text)", marginBottom: 8 }}
+          >
+            Are you absolutely sure?
+          </h2>
+          <p style={{ fontSize: 14, color: "var(--color-text-secondary)", lineHeight: 1.5 }}>
+            This is your last chance to change your mind. Once you confirm,
+            this can&apos;t be undone.
+          </p>
+        </div>
+
+        <div
+          style={{
+            padding: "14px 16px",
+            marginBottom: 16,
+            borderRadius: "var(--radius-md)",
+            border: "1px solid rgba(239, 68, 68, 0.3)",
+            backgroundColor: "rgba(239, 68, 68, 0.05)",
+            fontSize: 14,
+            lineHeight: 1.6,
+            color: "var(--color-text)",
+          }}
+        >
+          <p style={{ fontWeight: 600, marginBottom: 6 }}>
+            Deleted straight away
+          </p>
+          <ul style={{ paddingLeft: 18, margin: 0, color: "var(--color-text-secondary)" }}>
+            <li>Your profile and sign-in</li>
+            <li>Your study progress, practice history and exam settings</li>
+            <li>Your profile photo and leaderboard entry</li>
+            <li>Any feedback you&apos;ve sent us</li>
+          </ul>
+        </div>
+
+        <p
+          style={{
+            fontSize: 13,
+            color: "var(--color-text-secondary)",
+            lineHeight: 1.5,
+            marginBottom: 24,
+          }}
+        >
+          If you&apos;ve made a purchase, we keep the payment record the law
+          requires us to hold for tax and accounting purposes. Deleting your
+          account doesn&apos;t cancel or refund a purchase.
+        </p>
+
+        {error && (
+          <div
+            style={{
+              padding: "12px 16px",
+              marginBottom: 16,
+              borderRadius: "var(--radius-md)",
+              backgroundColor: "rgba(239, 68, 68, 0.1)",
+              border: "1px solid rgba(239, 68, 68, 0.3)",
+              color: "#ef4444",
+              fontSize: 14,
+              lineHeight: 1.5,
+            }}
+          >
+            {error}
+          </div>
+        )}
+
+        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          <Button
+            variant="danger"
+            size="lg"
+            fullWidth
+            loading={submitting}
+            disabled={submitting}
+            onClick={handleSubmit}
+          >
+            Yes, permanently delete my account
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="lg"
+            fullWidth
+            disabled={submitting}
+            onClick={() => {
+              setError(null);
+              setStep("form");
+            }}
+          >
+            No, go back
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div
       className={embedded ? undefined : "card"}
@@ -113,8 +232,8 @@ export function DeleteAccountForm({ email, onCancel }: DeleteAccountFormProps) {
             className="text-body"
             style={{ color: "var(--color-text-secondary)", lineHeight: 1.5 }}
           >
-            This action is permanent. All your data, purchases, and progress
-            will be removed and can&apos;t be recovered.
+            This action is permanent. Your profile, progress and settings will be
+            removed and can&apos;t be recovered.
           </p>
         </div>
       )}
@@ -128,8 +247,8 @@ export function DeleteAccountForm({ email, onCancel }: DeleteAccountFormProps) {
             marginBottom: 24,
           }}
         >
-          This action is permanent. All your data, purchases, and progress
-          will be removed and can&apos;t be recovered.
+          This action is permanent. Your profile, progress and settings will be
+          removed and can&apos;t be recovered.
         </p>
       )}
 
@@ -285,11 +404,13 @@ export function DeleteAccountForm({ email, onCancel }: DeleteAccountFormProps) {
           variant="danger"
           size="lg"
           fullWidth
-          loading={submitting}
-          disabled={!emailMatches || submitting}
-          onClick={handleSubmit}
+          disabled={!emailMatches}
+          onClick={() => {
+            setError(null);
+            setStep("confirm");
+          }}
         >
-          Permanently delete account
+          Continue
         </Button>
         {embedded ? (
           <Button
