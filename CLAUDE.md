@@ -56,6 +56,23 @@ There are no automated tests. For UI changes, run `npm run dev` and check the pa
 - Never log tokens or personal data. Env files (`.env*`) are never committed.
 - Keep scripts cross-platform: at least one contributor develops on Windows.
 
+## Tools and integrations
+
+Connectors (MCP servers) are shared in `.mcp.json`. Each person signs in to their own account with `/mcp`.
+Writes in every tool ask first (`.claude/settings.json`).
+
+- **Notion (tickets):** `/ticket <link>` works a ticket end to end. When you find a problem outside the
+  current task, offer `/ticket new …` instead of fixing it inline.
+- **GitHub (`gh`):** read PRs, CI results and Copilot's review comments directly
+  (`gh api repos/GetChartered/GetCharteredWebsite/pulls/<n>/comments` for inline comments). PRs are merged
+  by a person, never by Claude (`gh pr merge` is blocked).
+- **Netlify:** check deploy previews and read failed build logs. Production deploys, env var changes and
+  anything touching DNS ask first. DNS also serves `auth.getchartered.app` (Auth0), so a wrong record
+  breaks sign-in for the app as well as the site.
+- **Stripe:** use test mode / a sandbox only. Live customer data stays out of sessions unless the person
+  you're working with asks.
+- **Auth0:** if connected, it is read-only (tenant changes are made by a person in the dashboard).
+
 ## Git and PRs
 
 - Branch from `main` and never commit to it directly. Keep unrelated files out of commits.
