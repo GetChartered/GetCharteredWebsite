@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx tsc *)",
+      "Bash(npm run lint *)",
+      "Bash(npm run build *)",
+      "Bash(npx eslint *)"
+    ],
+    "ask": [
+      "Bash(git push *)"
+    ]
+  }
+}
