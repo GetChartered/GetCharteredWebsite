@@ -1,0 +1,16 @@
+{
+  "mcpServers": {
+    "notion": {
+      "type": "http",
+      "url": "https://mcp.notion.com/mcp"
+    },
+    "stripe": {
+      "type": "http",
+      "url": "https://mcp.stripe.com"
+    },
+    "netlify": {
+      "command": "npx",
+      "args": ["-y", "@netlify/mcp"]
+    }
+  }
+}

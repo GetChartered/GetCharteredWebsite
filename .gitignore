@@ -42,3 +42,5 @@ next-env.d.ts
 
 /.idea
 nul
+# Personal Claude Code settings (the shared .claude/settings.json is committed)
+.claude/settings.local.json
