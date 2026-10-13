@@ -6,6 +6,7 @@
 export const ALLOWED_USER_IDS = [
   "auth0|6a19d2f8c88714c316665638", // Pierce's test account
   "auth0|68b6dee5aa15fc500775374d", // devs account
+  "google-oauth2|116532479631517240865", // Barney's account
 ];
 
 export function isFeatureUnlocked(userId: string | undefined | null): boolean {
