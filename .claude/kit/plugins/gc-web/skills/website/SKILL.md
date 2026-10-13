@@ -1,16 +1,16 @@
 ---
-name: gc-website
-description: Entry point for work on the GetChartered website (getchartered.app), the ICAEW ACA exam-revision product's web client. Next.js 16 App Router, React 19, Tailwind 4, Auth0 v4, Stripe checkout, hosted on Netlify, calling the shared AWS API from the server only. Gives the site map, the non-negotiable rules, which gc-* skill does each job, the order of work and the definition of done. Use when starting any website task or ticket, adding a page or route handler, or touching Netlify, auth, pricing or ported app logic. Not for the mobile app or Lambdas (gc-getchartered in ../GetChartered) or the mechanics of one route (gc-web-feature).
+name: website
+description: Entry point for work on the GetChartered website (getchartered.app), the ICAEW ACA exam-revision product's web client. Next.js 16 App Router, React 19, Tailwind 4, Auth0 v4, Stripe checkout, hosted on Netlify, calling the shared AWS API from the server only. Gives the site map, the non-negotiable rules, which gc-* skill does each job, the order of work and the definition of done. Use when starting any website task or ticket, adding a page or route handler, or touching Netlify, auth, pricing or ported app logic. Not for the mobile app or Lambdas (gc:getchartered in ../GetChartered) or the mechanics of one route (gc-web:feature).
 ---
 
-# gc-website
+# gc-web:website
 
 **Adapted 2026-10-13** from this repo's `CLAUDE.md`, `.github/workflows/ci.yml` and the app repo's
 `docs/architecture.md`. Not yet used to drive a piece of work.
 
 The website covers marketing pages, account management, Stripe checkout, and web versions of practice,
 progress, the study planner and the leaderboard. It shares the AWS backend with the mobile app. The system map
-and the backend live in the app repo at `../GetChartered`. Read `../GetChartered/.claude/skills/gc-getchartered/SKILL.md`
+and the backend live in the app repo at `../GetChartered`. Read `../GetChartered/.claude/kit/plugins/gc/skills/getchartered/SKILL.md`
 for anything beyond this site.
 
 ## Read first
@@ -19,11 +19,11 @@ for anything beyond this site.
 |---|---|
 | The system, every API route and its Lambda | `../GetChartered/docs/architecture.md` |
 | Decisions shared by the app and website (exam results, billing, and so on) | `../GetChartered/docs/decisions.md` |
-| The work itself | GC Work Board in Notion (`/gc-ticket`) |
+| The work itself | GC Work Board in Notion (`/gc-web:ticket`) |
 | Question-data rules (the website has its own normaliser port) | `../GetChartered/docs/question-bank-validation.md` |
-| Integrations, accounts and what Claude may do with each | `../GetChartered/.claude/skills/gc-getchartered/references/integrations.md` |
-| Review severity and evidence | `../GetChartered/.claude/skills/gc-getchartered/references/review-protocol.md` |
-| UK GDPR, store and ICAEW obligations (cookies, legal pages, wording) | `../GetChartered/.claude/skills/gc-getchartered/references/compliance.md` |
+| Integrations, accounts and what Claude may do with each | `../GetChartered/.claude/kit/plugins/gc/skills/getchartered/references/integrations.md` |
+| Review severity and evidence | `../GetChartered/.claude/kit/plugins/gc/skills/getchartered/references/review-protocol.md` |
+| UK GDPR, store and ICAEW obligations (cookies, legal pages, wording) | `../GetChartered/.claude/kit/plugins/gc/skills/getchartered/references/compliance.md` |
 
 ## Non-negotiables
 
@@ -51,17 +51,18 @@ The same rules as the app's (only number 7 names the website's file). Change the
 
 | Concern | Choice | Skill |
 |---|---|---|
-| Work tracking | Notion GC Work Board | `gc-ticket` |
-| Pages, route handlers, gating, API calls | Next.js 16 App Router; `callGcApi` from server code; `requireSession` / `requireOnboardedSession` | `gc-web-feature` |
-| Accessibility | WCAG 2.2 AA; component checks plus Playwright + axe in a real browser | `gc-web-accessibility` |
-| Design tokens | The `@theme` block in `app/globals.css`, generated from the shared token source | `gc-design-tokens` (app repo) |
-| Test fixtures | Generated from the shared seed generator | `gc-seed-data` (app repo) |
+| Work tracking | Notion GC Work Board | `gc-web:ticket` |
+| Pages, route handlers, gating, API calls | Next.js 16 App Router; `callGcApi` from server code; `requireSession` / `requireOnboardedSession` | `gc-web:feature` |
+| Accessibility | WCAG 2.2 AA; component checks plus Playwright + axe in a real browser | `gc-web:accessibility` |
+| Design tokens | The `@theme` block in `app/globals.css`, generated from the shared token source | `gc:design-tokens` (app repo) |
+| Test fixtures | Generated from the shared seed generator | `gc:seed-data` (app repo) |
 | Hosting | Netlify site `getchartered`; deploy previews per PR; `netlify.toml` | This skill, "Netlify" below |
-| Backend changes the site needs | Node Lambdas in `../GetChartered/backend` | `gc-backend-lambda` (app repo) |
-| Review | Read-only reviewer agents in `.claude/agents/` (copied from the app repo) | `gc-getchartered` → "Review" |
+| Backend changes the site needs | Node Lambdas in `../GetChartered/backend` | `gc:backend-lambda` (app repo) |
+| Review | Read-only reviewer agents in `.claude/kit/plugins/gc-web/agents/` (copied from the app repo) | `gc:getchartered` → "Review" |
 
-App-repo skills load once a file there has been read. From this repo, read
-`../GetChartered/.claude/skills/<name>/SKILL.md` directly.
+This kit is the optional `gc-web` plugin in `.claude/kit/`; each person turns it on for themselves (see the app
+repo's `gc:getchartered`, "The kit is optional"). App-repo skills are the `gc` plugin there. From this repo, read
+`../GetChartered/.claude/kit/plugins/gc/skills/<name>/SKILL.md` directly.
 
 ## Layout
 
@@ -81,14 +82,14 @@ netlify.toml            the netlify.app → getchartered.app redirect
 
 ## Order of work
 
-1. **Start from a ticket** (`/gc-ticket <link>`), or file one for a problem outside the task.
+1. **Start from a ticket** (`/gc-web:ticket <link>`), or file one for a problem outside the task.
 2. **Read** the ticket and any decision in `../GetChartered/docs/decisions.md` that touches it.
 3. **Place the change:**
-   - Does it need a backend change? If so, it goes in the app repo first (`gc-backend-lambda`) and is deployed
+   - Does it need a backend change? If so, it goes in the app repo first (`gc:backend-lambda`) and is deployed
      before or with this PR.
    - Does it touch a ported file? If so, the app copy changes too.
 4. **Branch** from `main`.
-5. **Build** with `gc-web-feature`, then work through `gc-web-accessibility`.
+5. **Build** with `gc-web:feature`, then work through `gc-web:accessibility`.
 6. **Verify:** run the commands below, then `npm run dev` and look at the page in light and dark mode and at
    mobile width. After pushing, check the Netlify deploy preview.
 7. **Review** with the agents that apply (security for anything touching auth, the server/client boundary or
@@ -101,7 +102,7 @@ netlify.toml            the netlify.app → getchartered.app redirect
 - [ ] `npx tsc --noEmit`, `npm run lint` and `npm run build` pass. CI runs them on every PR; without real
   env vars, use the placeholder values in `.github/workflows/ci.yml`.
 - [ ] The page has been seen running: light and dark, 375 px and desktop, keyboard only.
-- [ ] `gc-web-accessibility` checklist done.
+- [ ] `gc-web:accessibility` checklist done.
 - [ ] **Backend calls** go through `callGcApi` from server code, after `requireSession` or
   `requireOnboardedSession`. No access token reaches the browser.
 - [ ] **Failure handling:** a failed or missing backend call shows an inline error with a retry, never an

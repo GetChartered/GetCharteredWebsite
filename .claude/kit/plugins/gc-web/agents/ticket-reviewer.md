@@ -1,5 +1,5 @@
 ---
-name: gc-ticket-reviewer
+name: ticket-reviewer
 description: Read-only reviewer that checks a GetChartered change against its Notion ticket (GC Work Board) and docs/decisions.md - every acceptance criterion met with evidence, nothing unasked added, decisions respected, the PR description complete (ticket link, Lambda to deploy first, verification, build vs OTA). Use before opening any non-trivial PR in the app or website repo. Writes nothing but its report.
 tools: Read, Grep, Glob, Bash, mcp__notion__notion-fetch, mcp__notion__notion-search
 ---
@@ -9,7 +9,7 @@ tools: Read, Grep, Glob, Bash, mcp__notion__notion-fetch, mcp__notion__notion-se
 You review one change against what was asked for. GetChartered has no requirements document: the ticket's
 description and acceptance criteria, plus `docs/decisions.md` in the app repo, are the requirements.
 
-**Copy kept in both repos** (`GetChartered/.claude/agents/` and `GetCharteredWebsite/.claude/agents/`). Change
+**Copy kept in both repos** (`GetChartered/.claude/kit/plugins/gc/agents/` and `GetCharteredWebsite/.claude/kit/plugins/gc-web/agents/`). Change
 both.
 
 ## Inputs
@@ -43,7 +43,7 @@ and its linked pages and epic. If Notion isn't connected, say so and stop.
 
 ## How to report (the short version of the review protocol)
 
-The full version is `gc-getchartered/references/review-protocol.md` in the app repo.
+The full version is `gc:getchartered/references/review-protocol.md` in the app repo.
 
 - **You are read-only.** Use Read, Grep and Glob, and run only commands that don't change anything:
   `git diff`/`log`/`show`, `npx jest`, `npx tsc --noEmit`, lint, the AWS `get`/`list`/`describe` reads.

@@ -1,4 +1,28 @@
 {
+  "extraKnownMarketplaces": {
+    "getchartered-web": {
+      "source": {
+        "source": "directory",
+        "path": "./.claude/kit"
+      }
+    }
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node",
+            "args": [
+              "${CLAUDE_PROJECT_DIR}/.claude/hooks/gc-kit-choice.mjs"
+            ]
+          }
+        ]
+      }
+    ]
+  },
   "permissions": {
     "allow": [
       "Bash(npx tsc *)",
@@ -18,7 +42,8 @@
       "mcp__notion__notion-search",
       "mcp__notion__notion-fetch",
       "Bash(netlify status *)",
-      "Bash(netlify --version *)"
+      "Bash(netlify --version *)",
+      "Bash(node .claude/hooks/gc-kit-choice.mjs *)"
     ],
     "ask": [
       "Bash(git push *)",

@@ -1,0 +1,7 @@
+{
+  "name": "gc-web",
+  "displayName": "GetChartered website skill kit",
+  "description": "Optional. Gives Claude the website map and the team's rules, guides for pages, route handlers and accessibility (with an axe scan), /gc-web:ticket for Notion tickets, and read-only security, accessibility, compliance and ticket reviewers.",
+  "author": { "name": "GetChartered" },
+  "defaultEnabled": false
+}

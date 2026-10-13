@@ -1,9 +1,9 @@
 ---
-name: gc-web-accessibility
-description: Build the GetChartered website (Next.js 16, React 19, Tailwind 4) to WCAG 2.2 AA and prove it in two layers - component-level checks (semantics, names, keyboard) and a real-browser Playwright + axe scan of every route in light and dark mode, with a bundled scan script. Covers landmarks and headings, names, keyboard and focus (dialogs, modals, route changes), visible focus, colour and contrast from tokens, motion (Framer Motion, ScrollReveal, the 3D hero), charts (Recharts), forms and errors, live updates, and target size. Use when building or reviewing any website page or component, when axe or a contrast check fails, or before a release. Not for the mobile app (gc-app-accessibility in ../GetChartered) or token values (gc-design-tokens).
+name: accessibility
+description: Build the GetChartered website (Next.js 16, React 19, Tailwind 4) to WCAG 2.2 AA and prove it in two layers - component-level checks (semantics, names, keyboard) and a real-browser Playwright + axe scan of every route in light and dark mode, with a bundled scan script. Covers landmarks and headings, names, keyboard and focus (dialogs, modals, route changes), visible focus, colour and contrast from tokens, motion (Framer Motion, ScrollReveal, the 3D hero), charts (Recharts), forms and errors, live updates, and target size. Use when building or reviewing any website page or component, when axe or a contrast check fails, or before a release. Not for the mobile app (gc:app-accessibility in ../GetChartered) or token values (gc:design-tokens).
 ---
 
-# gc-web-accessibility
+# gc-web:accessibility
 
 **Verified 2026-10-13:** `templates/a11y-scan.mjs` ran (Playwright with Chromium headless shell 156,
 `@axe-core/playwright`, installed in a scratch directory) against `npm run build && npm run start`. It covered
@@ -61,7 +61,7 @@ run it from a scratch directory where they're installed (the script's header giv
 | Keyboard | Everything is reachable and operable with the keyboard, in a logical order. Custom toggles use `button` with `aria-pressed`. Accordions (`FaqAccordion`) use `button` with `aria-expanded` and `aria-controls` |
 | Focus visible | Never remove the outline without a replacement. Use `:focus-visible` styles that reach 3:1 against both the control and the page, in both themes. Recheck the two `outline: none` rules in `globals.css` |
 | Focus management | Modals (`LegalModal`, the practice calculator and tax-table modals, the exam result modal) trap focus, close on Escape and return focus to their trigger. After a client-side route change, focus moves to the `h1` |
-| Colour | Never the only signal (correct or incorrect answers, strong or weak modules, chart series). Text uses token pairs that pass the contrast check in `gc-design-tokens` |
+| Colour | Never the only signal (correct or incorrect answers, strong or weak modules, chart series). Text uses token pairs that pass the contrast check in `gc:design-tokens` |
 | Contrast caveat | axe reports contrast as "incomplete" over gradients and images (the hero, ambient blobs). Keep text on solid token backgrounds there, and say in the PR what axe couldn't check, rather than hiding it |
 | Motion | `prefers-reduced-motion` gives the same content without movement: Framer Motion variants, `ScrollReveal`, and a still poster instead of the rotating 3D phone |
 | Charts | Each Recharts chart has a text summary or a data table alternative, and the series differ by more than colour |
@@ -80,7 +80,7 @@ run it from a scratch directory where they're installed (the script's header giv
 - [ ] `a11y-scan.mjs` shows 0 serious or critical issues on the changed public routes in both themes.
   Signed-in routes are checked with the keyboard.
 - [ ] Anything axe marked "incomplete" is named in the PR.
-- [ ] `gc-accessibility-reviewer` has been run for anything larger than a copy change.
+- [ ] `gc-web:accessibility-reviewer` has been run for anything larger than a copy change.
 
 ## What went wrong
 
@@ -89,7 +89,7 @@ Found by the first scan (2026-10-13). None is fixed yet; each needs a ticket.
 | Symptom | Cause | Fix |
 |---|---|---|
 | `button-name` (critical) on every page, both themes, both widths | The theme toggle (`components/Navigation.tsx:266`) is an icon-only `Button` with no `aria-label` | Add `aria-label` ("Switch to dark mode" or "Switch to light mode") and `aria-pressed` |
-| `color-contrast` on every page: teal `ghost` buttons on white (2.74:1) and white on teal primary buttons (2.74:1) | Brand teal `#00ADB5` used for text and button backgrounds | The same failure the token contrast gate reports. A darker text-safe teal (`gc-design-tokens`) |
+| `color-contrast` on every page: teal `ghost` buttons on white (2.74:1) and white on teal primary buttons (2.74:1) | Brand teal `#00ADB5` used for text and button backgrounds | The same failure the token contrast gate reports. A darker text-safe teal (`gc:design-tokens`) |
 | `target-size` on every page: nav, footer and table-of-contents links 17 px tall | Text links with no padding | Pad links to at least 24 px tall, or space them (WCAG 2.2 2.5.8) |
 | `aria-hidden-focus` on `/` in dark mode, desktop | `.hero-graphic` is `aria-hidden` but contains a focusable element | Make the content inside it unfocusable (`tabIndex={-1}` / `inert`) or don't hide it |
 

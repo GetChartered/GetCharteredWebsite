@@ -1,9 +1,9 @@
 ---
-name: gc-web-feature
-description: Build or change a page, route handler or feature on the GetChartered website (Next.js 16 App Router with Turbopack, React 19, Tailwind 4, @auth0/nextjs-auth0 v4, Netlify). Covers server-only backend calls through callGcApi after requireSession / requireOnboardedSession, same-origin app/api proxies, input checking, inline error and retry states, re-throwing Next control-flow errors, premium and feature-flag gating, ported app logic, tokens, and verification with tsc, lint, build and a Netlify deploy preview. Use when adding or changing a website route, page, component or API proxy, or when the build, typecheck or a deploy preview fails. Not for accessibility method (gc-web-accessibility), Lambdas (gc-backend-lambda in ../GetChartered) or the app (gc-app-feature).
+name: feature
+description: Build or change a page, route handler or feature on the GetChartered website (Next.js 16 App Router with Turbopack, React 19, Tailwind 4, @auth0/nextjs-auth0 v4, Netlify). Covers server-only backend calls through callGcApi after requireSession / requireOnboardedSession, same-origin app/api proxies, input checking, inline error and retry states, re-throwing Next control-flow errors, premium and feature-flag gating, ported app logic, tokens, and verification with tsc, lint, build and a Netlify deploy preview. Use when adding or changing a website route, page, component or API proxy, or when the build, typecheck or a deploy preview fails. Not for accessibility method (gc-web:accessibility), Lambdas (gc:backend-lambda in ../GetChartered) or the app (gc:app-feature).
 ---
 
-# gc-web-feature
+# gc-web:feature
 
 **Verified 2026-10-13 on `main` + this kit's branch:**
 - After `npm ci`, `npx tsc --noEmit`, `npm run lint` and `npm run build` (Next.js 16.3.4, Turbopack) all pass.
@@ -29,7 +29,7 @@ followed end to end through this skill.
 ## Order of work
 
 1. **Read the backend route** in `../GetChartered/docs/architecture.md`. If the API needs a change, it's done
-   first in the app repo (`gc-backend-lambda`) and deployed before or with this PR.
+   first in the app repo (`gc:backend-lambda`) and deployed before or with this PR.
 2. **The page or route handler gates first.**
    - Use `requireOnboardedSession(returnTo)` (or `requireSession` for onboarding itself).
    - Premium features also call `requireGatedAccess`.
@@ -53,7 +53,7 @@ followed end to end through this skill.
 7. **Style from tokens.**
    - Use the `--color-*` variables and Tailwind classes built on them, not hex values.
    - Check light and dark mode, and widths of 375 px and desktop.
-   - Then work through `gc-web-accessibility`.
+   - Then work through `gc-web:accessibility`.
 8. **Verify:**
    - Run `npx tsc --noEmit`, `npm run lint` and `npm run build`.
    - Then `npm run dev` and use the feature: signed out, signed in without premium, signed in with premium,
@@ -78,7 +78,7 @@ There are no automated tests on the website yet. Until there are:
 - **Logic:** put new logic in `lib/` as pure functions, so it can be tested once a runner is added. Port the
   app's Jest tests along with the logic when that happens.
 - **Ported logic:** check it against the app's tests for the same file, with real inputs.
-- **Accessibility:** the checks are in `gc-web-accessibility`.
+- **Accessibility:** the checks are in `gc-web:accessibility`.
 
 ## Definition of done
 
@@ -90,7 +90,7 @@ There are no automated tests on the website yet. Until there are:
 - [ ] Nothing on the never-log list is logged.
 - [ ] Ported files and their app twins are in step, or the PR says why not.
 - [ ] Seen in the browser: light and dark, 375 px and desktop, signed out, free and premium.
-- [ ] `gc-web-accessibility` checklist done.
+- [ ] `gc-web:accessibility` checklist done.
 - [ ] The Netlify deploy preview is checked.
 
 ## What went wrong

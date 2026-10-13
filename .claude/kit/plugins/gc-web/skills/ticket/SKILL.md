@@ -1,12 +1,12 @@
 ---
-name: gc-ticket
-description: Work a GetChartered ticket from the GC Work Board in Notion end to end - read it, branch, implement, verify, write the PR description linking the ticket, and comment the PR on the ticket. Use when given a Notion ticket link or asked to pick up a ticket, and to file a new ticket for a problem found outside the current task. Not for deciding how to build the change (gc-getchartered or gc-website, then the build skill they point to).
+name: ticket
+description: Work a GetChartered ticket from the GC Work Board in Notion end to end - read it, branch, implement, verify, write the PR description linking the ticket, and comment the PR on the ticket. Use when given a Notion ticket link or asked to pick up a ticket, and to file a new ticket for a problem found outside the current task. Not for deciding how to build the change (gc:getchartered or gc-web:website, then the build skill they point to).
 argument-hint: <Notion ticket link or title> | new <short description>
 ---
 
 # Work from a Notion ticket
 
-**Written 2026-10-11 against the board's live properties and statuses, renamed 2026-10-13; the full pick-up flow hasn't been run end to end yet.** This is a copy of the app repo's `gc-ticket`; change both.
+**Written 2026-10-11 against the board's live properties and statuses, renamed 2026-10-13; the full pick-up flow hasn't been run end to end yet.** This is a copy of the app repo's `gc-web:ticket`; change both.
 
 Needs the Notion connector (`/mcp` → notion). If it isn't connected, say so and stop.
 
@@ -19,7 +19,7 @@ Needs the Notion connector (`/mcp` → notion). If it isn't connected, say so an
 
 There is no ticket ID property.
 
-## Picking up a ticket (`/gc-ticket <link or title>`)
+## Picking up a ticket (`/gc-web:ticket <link or title>`)
 
 1. **Read it.** Fetch the ticket (search by title if given words, not a link) and any linked pages or epic.
    Note the description, acceptance criteria, status and owner. If what "done" means is missing or
@@ -29,14 +29,14 @@ There is no ticket ID property.
    plan one branch per repo.
 3. **Branch** from the default branch: `<type>/<short-slug>`, e.g. `fix/exam-date-west-of-utc`.
 4. **Set Status to "In progress"**, and Owner to the person you're working with if it's empty.
-5. **Do the work**, following `CLAUDE.md` and the entry-point skill (`gc-getchartered` or `gc-website`) and the build skill it points to. Verify as its definition of done says.
+5. **Do the work**, following `CLAUDE.md` and the entry-point skill (`gc:getchartered` or `gc-web:website`) and the build skill it points to. Verify as its definition of done says.
 6. **Write the PR description** with the ticket link at the top, what changed and why, how it was
    verified, and any Lambda that must be deployed before merge. Push and open the PR only after
    confirming with the user.
 7. **Comment on the ticket** with the PR link and a one-line summary. Leave Status as "In progress":
    people move tickets to Testing and Done.
 
-## Filing a ticket (`/gc-ticket new <description>`)
+## Filing a ticket (`/gc-web:ticket new <description>`)
 
 For problems found while working on something else. Don't fix them inline.
 

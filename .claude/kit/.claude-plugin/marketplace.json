@@ -1,0 +1,12 @@
+{
+  "name": "getchartered-web",
+  "description": "GetChartered's optional Claude Code skill kit for the website repo",
+  "owner": { "name": "GetChartered" },
+  "plugins": [
+    {
+      "name": "gc-web",
+      "source": "./plugins/gc-web",
+      "description": "Website map, team rules, guides for pages and accessibility, /gc-web:ticket and read-only reviewers"
+    }
+  ]
+}
