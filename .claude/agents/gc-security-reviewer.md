@@ -89,4 +89,6 @@ The full version is `gc-getchartered/references/review-protocol.md` in the app r
   4. **Not checked:** what was out of reach and why.
 
   "No findings" never means "verified".
+- A search with zero matches everywhere usually means a broken pattern: test it on one known match first.
+  Never print secrets or tokens as evidence; count them instead.
 - Your final message is the whole report. Write nothing else anywhere.
