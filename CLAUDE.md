@@ -1,80 +1,73 @@
-# GetChartered website — notes for Claude
+# GetChartered website
 
-The GetChartered website (`getchartered.app`): marketing pages, account management, Stripe checkout, and web
-versions of practice, progress, the study planner and the leaderboard. Next.js 16 (App Router), React 19,
-Tailwind 4, Auth0 (`@auth0/nextjs-auth0` v4), hosted on Netlify.
+The GetChartered website (`getchartered.app`) covers marketing pages, account management, Stripe checkout, and
+web versions of practice, progress, the study planner and the leaderboard. It is built on Next.js 16 (App
+Router), React 19, Tailwind 4 and Auth0 (`@auth0/nextjs-auth0` v4), and hosted on Netlify. It shares the AWS
+backend with the mobile app, whose repo is usually checked out next to this one at `../GetChartered`.
+**There is only a production environment.**
 
-It shares the AWS backend with the mobile app (the `GetChartered` repo, usually checked out next to this
-one at `../GetChartered`). Read these there before backend or cross-product work:
-- `../GetChartered/docs/architecture.md`: the system, every API route and its Lambda, and which Lambdas
-  are in git.
-- `../GetChartered/docs/decisions.md`: product decisions shared by the app and website (exam results
-  model, billing, and so on).
+For the system and the backend, read `../GetChartered/docs/architecture.md` and
+`../GetChartered/docs/decisions.md`.
 
-## Repo map
+**Optional skill kit.** The GetChartered website skill kit (plugin `gc-web`, in `.claude/kit/`) adds
+step-by-step guides, an accessibility scan, `/gc-web:ticket` and read-only reviewers. Everyone is asked once
+whether they want it. To change your choice: `node .claude/hooks/gc-kit-choice.mjs on` or `off`. If it's on,
+start with the `gc-web:website` skill. Everything in this file applies whether it's on or not.
 
-- `app/`: routes. `app/api/*` are same-origin route handlers that proxy the backend API.
-- `lib/gcApi.ts`: `callGcApi()`, the only way to call the backend API (see Rules).
-- `lib/auth0.ts`, `lib/auth0Client.ts`: session helpers (`requireSession`, `requireOnboardedSession`).
-- `lib/requireGatedAccess.ts`, `lib/featureAccess.ts`, `lib/examAccess.ts`: gating for premium features.
-- `lib/features.ts`: feature flags from env vars (`NEXT_PUBLIC_SUBSCRIPTIONS_ENABLED`,
-  `NEXT_PUBLIC_ONBOARDING_REQUIRED`).
-- `lib/practice/`, `lib/studyPlanner/`, `lib/tour/`: logic, much of it ported from the app.
-- `components/`: UI. `components/account/` holds the My Account sections.
-- `proxy.ts`: Next 16's middleware. It runs the Auth0 middleware on every route.
-- `backend-reference/`: Lambda code written here for someone to deploy. It is not deployed from here, and
-  Lambda source should move to the app repo's `backend/` (or a future backend repo).
-- `public/`: static files, including the versioned legal documents (`privacy_policy_V3.html`,
-  `terms_and_conditions_V4.html` and so on). Add a new version rather than editing a published one.
+## Non-negotiables
 
-## Verifying changes
+The same in the app's `CLAUDE.md` and both entry-point skills; change them everywhere at once.
 
-CI (`.github/workflows/ci.yml`) runs these on every PR, and they must pass:
-- `npx tsc --noEmit`
-- `npm run lint`
-- `npm run build`. Without real env vars, use the placeholder values from `ci.yml`.
+1. **Production is the only environment.** Every write to AWS, EAS, Netlify or Stripe asks first. Deploy from
+   git, never edit in a console.
+2. **Identity comes from the token only.** The backend is called through `callGcApi()` from server components
+   and route handlers only, after `requireSession` / `requireOnboardedSession`. Never call the API Gateway URL
+   from client code or send the access token to the browser.
+3. **No personal data or tokens** in logs, analytics, tickets, commits, fixtures or screenshots. `.env*` is
+   never committed.
+4. **A Lambda change is deployed before or with the PR that needs it**, and the PR says so in its first line.
+5. **Ported logic stays in step.** Files that mirror app code say so in a comment. Change both copies, or say
+   in the PR why not.
+6. **Exam-body facts come from the exam body.** Never invent dates, deadlines or pass marks. Never parse a
+   `YYYY-MM-DD` date as UTC.
+7. **Question data has one choke point**: `lib/practice/normaliseQuestion.ts`, following the app's
+   `docs/question-bank-validation.md`.
+8. **Colour is never the only signal**, and text meets WCAG 2.2 AA contrast.
+9. **Every new third party sits behind a port with a local stand-in.**
 
-There are no automated tests. For UI changes, run `npm run dev` and check the page in a browser.
+## Commands
 
-## Rules
+CI (`.github/workflows/ci.yml`) runs the first three on every PR, and they must pass.
 
-- **The backend is called from the server only.** Use `callGcApi()` from server components and route
-  handlers, after `requireSession` / `requireOnboardedSession`. Never call the API Gateway URL from client
-  code and never send the access token to the browser.
-- **Ported logic must stay in step with the app.** Files that mirror app code say so in a comment (for
-  example `lib/practice/normaliseQuestion.ts`, `examPrep.ts`, `calcEngine.ts`, `examVisuals.ts`,
-  `leaderboardName.ts`). When you change one, check whether the app's version needs the same change, and
-  say so in the PR.
-- **Question data** follows the app's contract-first rules (`../GetChartered/docs/question-bank-validation.md`):
-  format variance is handled only in `lib/practice/normaliseQuestion.ts`.
-- **Backend changes:** if a website change needs a Lambda change, the Lambda must be deployed before or at
-  merge. Say so prominently at the top of the PR description. There is only a production environment.
-- **Don't break on a missing backend.** Routes handle a failed or missing backend call with an inline error
-  and retry, never an uncaught exception (see `requireOnboardedSession` and `app/api/user/photo`).
-- `lib/featureAccess.ts` is a temporary allowlist that limits practice, progress and the leaderboard to test
-  accounts. Don't extend it into a permanent mechanism.
-- Never log tokens or personal data. Env files (`.env*`) are never committed.
+| What | Command |
+|---|---|
+| Typecheck | `npx tsc --noEmit` |
+| Lint | `npm run lint` |
+| Build | `npm run build` (without real env vars, use the placeholders in `ci.yml`) |
+| Run locally | `npm run dev` |
+
+If `tsc` or the build can't find a module listed in `package.json`, run `npm ci`: local `node_modules` is stale.
+
+## Rules and gotchas
+
+- **Don't break on a missing backend.** A failed backend call shows an inline error with a retry, never an
+  uncaught exception, and one failing section doesn't blank the page.
+- In a `try/catch` around session or profile code, re-throw `isNextControlFlowError(error)` first, or you swallow
+  redirects and Next's dynamic-rendering signal.
+- `lib/featureAccess.ts` is a temporary test-account allowlist. Don't extend it into a permanent mechanism.
+- Legal documents in `public/` are versioned: add a new file rather than editing a published one.
 - Keep scripts cross-platform: at least one contributor develops on Windows.
 
-## Tools and integrations
+## Tools
 
-Connectors (MCP servers) are shared in `.mcp.json`. Each person signs in to their own account with `/mcp`.
-Writes in every tool ask first (`.claude/settings.json`).
+- **Notion:** the GC Work Board holds the tickets. Offer a new ticket for problems outside the current task
+  instead of fixing them inline.
+- **GitHub (`gh`):** read PRs, CI and Copilot's comments. PRs are merged by a person, never by Claude.
+- **Netlify:** read deploy previews and build logs freely. Production deploys, env var changes and DNS ask first.
+  DNS also serves `auth.getchartered.app` (Auth0), so a wrong record breaks sign-in for the app too.
+- **Stripe:** test mode only.
 
-- **Notion (tickets):** `/ticket <link>` works a ticket end to end. When you find a problem outside the
-  current task, offer `/ticket new …` instead of fixing it inline.
-- **GitHub (`gh`):** read PRs, CI results and Copilot's review comments directly
-  (`gh api repos/GetChartered/GetCharteredWebsite/pulls/<n>/comments` for inline comments). PRs are merged
-  by a person, never by Claude (`gh pr merge` is blocked).
-- **Netlify:** check deploy previews and read failed build logs. Production deploys, env var changes and
-  anything touching DNS ask first. DNS also serves `auth.getchartered.app` (Auth0), so a wrong record
-  breaks sign-in for the app as well as the site.
-- **Stripe:** use test mode / a sandbox only. Live customer data stays out of sessions unless the person
-  you're working with asks.
-- **Auth0:** if connected, it is read-only (tenant changes are made by a person in the dashboard).
-
-## Git and PRs
+## Git
 
 - Branch from `main` and never commit to it directly. Keep unrelated files out of commits.
-- Confirm with the person you're working with before pushing.
-- GitHub Copilot reviews PRs. Judge each of its comments on its merits rather than applying it as is.
+- Confirm before pushing. Judge each GitHub Copilot review comment on its merits rather than applying it as is.
