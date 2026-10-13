@@ -104,7 +104,7 @@ export function StreakCard({
 
       <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", gap: 18, marginTop: 20 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: CIRCLE_GAP, flex: 1 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(7, minmax(0, 1fr))", gap: CIRCLE_GAP, flex: 1 }}>
             {STREAK_WEEKDAY_LABELS.map((label) => (
               <span
                 key={label}
@@ -129,7 +129,7 @@ export function StreakCard({
           const weekDone = week.filter((d) => d.done).length;
           return (
             <div key={weekIndex} style={{ display: "flex", alignItems: "center", gap: 16 }}>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: CIRCLE_GAP, flex: 1 }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(7, minmax(0, 1fr))", gap: CIRCLE_GAP, flex: 1 }}>
                 {week.map((day) => (
                   <div key={day.dateISO} style={{ display: "flex", justifyContent: "center" }}>
                     <div
