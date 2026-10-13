@@ -783,7 +783,7 @@ body {
 }
 
 /* Wider variant of .container, opt-in only — for chart/data-dense
-   dashboard pages (currently just /progress) that need real desktop width
+   dashboard pages (/progress, /planner, /leaderboard) that need real desktop width
    to lay out a multi-column chart grid without wasted gutter. Deliberately
    a separate class rather than widening .container itself: .container is
    shared by narrow form/list pages (onboarding, welcome, leaderboard) that
@@ -795,12 +795,18 @@ body {
    ~160px of dead grey per side. Padding alone gives a genuinely minimal,
    constant gutter at any normal desktop width; max-width here is purely a
    sanity ceiling for ultra-wide (2560px+) monitors, not the thing doing the
-   gutter work. */
+   gutter work. Below 900px the gutter drops to .container's 16px: 56px a
+   side left phone cards too narrow for their content. */
 .container-dashboard {
   width: 100%;
   max-width: 1800px;
   margin: 0 auto;
-  padding: 0 56px;
+  padding: 0 16px;
+}
+@media (min-width: 900px) {
+  .container-dashboard {
+    padding: 0 56px;
+  }
 }
 
 /* Asymmetric list + sidebar split (leaderboard: ranked list + "your
@@ -1625,7 +1631,7 @@ body {
 
 .planner-week-grid {
   display: grid;
-  grid-template-columns: repeat(7, 1fr);
+  grid-template-columns: repeat(7, minmax(0, 1fr));
   gap: 6px;
 }
 
@@ -1722,7 +1728,7 @@ body {
 
 .planner-month-weekdays {
   display: grid;
-  grid-template-columns: repeat(7, 1fr);
+  grid-template-columns: repeat(7, minmax(0, 1fr));
   gap: 2px;
   margin-bottom: 2px;
 }
@@ -1739,7 +1745,7 @@ body {
 
 .planner-month-grid {
   display: grid;
-  grid-template-columns: repeat(7, 1fr);
+  grid-template-columns: repeat(7, minmax(0, 1fr));
   gap: 2px;
 }
 
@@ -2203,5 +2209,25 @@ body {
   }
   .planner-type-grid {
     grid-template-columns: 1fr;
+  }
+}
+
+/* Small phones: the session card's fixed-width parts (accent, icon, action
+   buttons, gaps) otherwise leave the text column only ~130px. Buttons stay
+   34px so they remain easy to tap. */
+@media (max-width: 480px) {
+  .planner-session-card {
+    gap: 10px;
+    padding: 12px;
+  }
+  .planner-session-icon {
+    width: 36px;
+    height: 36px;
+  }
+  .planner-day-cell {
+    padding: 8px 2px 6px;
+  }
+  .planner-day-name {
+    letter-spacing: 0;
   }
 }
