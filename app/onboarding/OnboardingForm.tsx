@@ -10,6 +10,7 @@ import { Navigation } from "@/components/Navigation";
 import { LegalModal } from "@/components/LegalModal";
 import { BrandedLoader } from "@/components/BrandedLoader";
 import { ONBOARDING_REQUIRED } from "@/lib/features";
+import { LIVE_COURSES } from "@/lib/constants";
 
 type Qualification = "ACA" | "ACCA" | "CISI" | "CII" | "CIMA" | "CFA";
 
@@ -120,6 +121,8 @@ export function OnboardingForm() {
   const [loadingExisting, setLoadingExisting] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Set after a successful save when the chosen course has no question bank yet.
+  const [waitlistFor, setWaitlistFor] = useState<Qualification | null>(null);
 
   const signedUpWithLinkedIn = useMemo(
     () => Boolean(user?.sub?.startsWith("linkedin")),
@@ -255,7 +258,11 @@ export function OnboardingForm() {
         throw new Error(data.error || "Failed to save");
       }
 
-      router.push("/welcome");
+      if (qualification && !LIVE_COURSES.includes(qualification)) {
+        setWaitlistFor(qualification);
+      } else {
+        router.push("/welcome");
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
     } finally {
@@ -277,6 +284,33 @@ export function OnboardingForm() {
         >
           <BrandedLoader />
         </div>
+      </div>
+    );
+  }
+
+  if (waitlistFor) {
+    return (
+      <div className="min-h-screen">
+        <Navigation />
+        <section className="py-16">
+          <div className="container">
+            <div style={{ maxWidth: 560, margin: "0 auto", textAlign: "center" }}>
+              <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 12 }}>
+                You&apos;re on the waitlist
+              </h1>
+              <p style={{ marginBottom: 12, color: "var(--color-text-secondary)" }}>
+                We only have ACA question banks at the moment. We&apos;ve added you to the
+                waitlist for {waitlistFor} and we&apos;ll let you know when it&apos;s ready.
+              </p>
+              <p style={{ marginBottom: 28, color: "var(--color-text-secondary)" }}>
+                In the meantime you can look around, and try ACA practice for free if you like.
+              </p>
+              <Button variant="primary" size="lg" onClick={() => router.push("/welcome")}>
+                Continue
+              </Button>
+            </div>
+          </div>
+        </section>
       </div>
     );
   }
