@@ -92,6 +92,7 @@ export function CalculatorModal({ onClose }: { onClose: () => void }) {
                 <button
                   key={btn}
                   type="button"
+                  className="calc-text-trim"
                   onClick={() => press(btn)}
                   style={{
                     flex: 1,
