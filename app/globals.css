@@ -774,6 +774,15 @@ body {
   line-height: 30px;
 }
 
+/* Calculator keys (CalculatorModal.tsx). Poppins has a tall ascender,
+   so digits and operators sit low in a flex-centred box. Trimming the line
+   box to cap height + baseline makes the centring optical. Browsers without
+   text-box support just get line-height: 1. */
+.calc-text-trim {
+  line-height: 1;
+  text-box: trim-both cap alphabetic;
+}
+
 /* Container */
 .container {
   width: 100%;
