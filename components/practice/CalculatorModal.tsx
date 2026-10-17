@@ -36,36 +36,48 @@ export function CalculatorModal({ onClose }: { onClose: () => void }) {
       draggable
       positionStorageKey={POSITION_STORAGE_KEY}
     >
+      {/* The small row only renders once it has text (after "="), and the
+          box is centred at a fixed min height (padding 28 + 18 + 4 + 40), so
+          a lone expression sits in the middle instead of under an empty row,
+          and the box doesn't resize on "=". */}
       <div
         style={{
           borderRadius: 14,
           backgroundColor: "var(--color-card-alt)",
           padding: "14px 16px",
           marginBottom: 16,
+          minHeight: 90,
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "center",
+          gap: 4,
         }}
       >
-        <p
-          style={{
-            color: "var(--color-text-secondary)",
-            fontSize: 14,
-            fontWeight: 500,
-            textAlign: "right",
-            minHeight: 18,
-            margin: 0,
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            whiteSpace: "nowrap",
-          }}
-        >
-          {displayCalc || " "}
-        </p>
+        {displayCalc && (
+          <p
+            style={{
+              color: "var(--color-text-secondary)",
+              fontSize: 14,
+              fontWeight: 500,
+              lineHeight: "18px",
+              textAlign: "right",
+              margin: 0,
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+            }}
+          >
+            {displayCalc}
+          </p>
+        )}
         <p
           style={{
             color: "var(--color-text)",
             fontSize: 32,
             fontWeight: 700,
+            lineHeight: "40px",
             textAlign: "right",
-            margin: "4px 0 0",
+            margin: 0,
             overflow: "hidden",
             textOverflow: "ellipsis",
             whiteSpace: "nowrap",
