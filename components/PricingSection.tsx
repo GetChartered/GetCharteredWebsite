@@ -76,7 +76,7 @@ function formatPeriod(interval: string, intervalCount: number): string {
 // so all three line up symmetrically. One shared CTA sits below the whole
 // grid instead (real action right now is account signup; it's the same
 // flow whichever tier someone actually wants).
-const PRELAUNCH_TIERS = [
+export const PRELAUNCH_TIERS = [
   {
     title: "Free",
     description: "Get a feel for GetChartered before you commit.",

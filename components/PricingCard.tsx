@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { Check } from "lucide-react";
 
 interface PricingCardProps {
@@ -15,6 +16,12 @@ interface PricingCardProps {
   /** Optional subtle per-period-equivalent line under the price (e.g. an
       annual plan showing its monthly-equivalent cost). */
   priceSubtext?: string;
+  /** Interactive content (a buy button, a picker) rendered in the CTA slot
+      instead of the link pill. Use without ctaHref — the card is then a plain
+      div, since interactive elements can't nest inside the card's <a>. */
+  action?: ReactNode;
+  /** Smaller type and padding, for use inside the account page. */
+  compact?: boolean;
 }
 
 export function PricingCard({
@@ -28,6 +35,8 @@ export function PricingCard({
   highlighted = false,
   badge,
   priceSubtext,
+  action,
+  compact = false,
 }: PricingCardProps) {
   // Whole card is the click target when a destination is given (Pierce's
   // call — a small button at the bottom was easy to miss/skip past; the
@@ -42,7 +51,7 @@ export function PricingCard({
   return (
     <Wrapper
       {...(ctaHref ? { href: ctaHref } : {})}
-      className="card relative pricing-card"
+      className={`card relative pricing-card${compact ? " pricing-card--compact" : ""}`}
       style={{
         borderColor: highlighted
           ? "var(--color-tint)"
@@ -75,16 +84,16 @@ export function PricingCard({
         </div>
       )}
 
-      <div className="p-8 pricing-card-content">
+      <div className={`${compact ? "p-5" : "p-8"} pricing-card-content`}>
         {/* Header — title and price share a row (so the price is always a
             quick glance to the top-right); the description runs full-width
             underneath rather than being squeezed into a narrow left column
             next to the price, which was reading as cramped on the shorter
             tiers. */}
         <div className="pricing-card-header">
-          <h3 className="text-kpi-title" style={{ fontSize: 22 }}>{title}</h3>
+          <h3 className="text-kpi-title" style={{ fontSize: compact ? 18 : 22 }}>{title}</h3>
           <div className="pricing-card-price">
-            <span className="text-kpi-value" style={{ fontSize: 32 }}>{price}</span>
+            <span className="text-kpi-value" style={{ fontSize: compact ? 24 : 32 }}>{price}</span>
             <span
               className="text-lg"
               style={{ color: "var(--color-text-secondary)" }}
@@ -111,7 +120,7 @@ export function PricingCard({
           className="pricing-card-description"
           style={{
             color: "var(--color-text-secondary)",
-            fontSize: 15,
+            fontSize: compact ? 14 : 15,
             lineHeight: 1.55,
             fontStyle: "italic",
           }}
@@ -124,7 +133,9 @@ export function PricingCard({
             <a> is invalid HTML (interactive-in-interactive); this keeps the
             same look Button. variant=highlighted?"primary":"outline" gave
             without nesting a second interactive element inside the link. */}
-        {ctaLabel && (
+        {action ? (
+          <div className="pricing-card-button">{action}</div>
+        ) : ctaLabel && (
           <div className="pricing-card-button">
             <span
               className={`btn btn-${highlighted ? "primary" : "outline"} btn-md btn-full`}
@@ -136,15 +147,15 @@ export function PricingCard({
         )}
 
         {/* Features List */}
-        <ul className="pricing-card-features space-y-4">
+        <ul className={`pricing-card-features ${compact ? "space-y-2" : "space-y-4"}`}>
           {features.map((feature, index) => (
             <li key={index} className="flex items-start gap-3">
               <Check
-                size={20}
+                size={compact ? 16 : 20}
                 className="flex-shrink-0 mt-0.5"
                 style={{ color: "var(--color-tint)" }}
               />
-              <span style={{ color: "var(--color-text-secondary)", fontSize: 15.5 }}>
+              <span style={{ color: "var(--color-text-secondary)", fontSize: compact ? 14 : 15.5 }}>
                 {feature}
               </span>
             </li>

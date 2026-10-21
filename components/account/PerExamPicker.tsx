@@ -16,9 +16,15 @@ import type { PracticeExamGroup } from "@/lib/practice/types";
 // whatever exams the backend actually serves.
 interface PerExamPickerProps {
   exams: PracticeExamGroup[];
+  /** Button text. Defaults to the first-purchase wording; the account page
+   *  passes "Purchase another exam" when the user already owns one. */
+  buttonLabel?: string;
+  /** Stretch to the width of the parent (used inside the account page's
+   *  option tiles) instead of the narrow centred layout. */
+  fill?: boolean;
 }
 
-export function PerExamPicker({ exams }: PerExamPickerProps) {
+export function PerExamPicker({ exams, buttonLabel = "Buy this exam — £29", fill = false }: PerExamPickerProps) {
   const { showToast } = useToast();
   const [selectedExamCode, setSelectedExamCode] = useState(exams[0]?.code ?? "");
   const [loading, setLoading] = useState(false);
@@ -58,7 +64,13 @@ export function PerExamPicker({ exams }: PerExamPickerProps) {
   };
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 10, alignItems: "center", width: "100%", maxWidth: 320, margin: "0 auto" }}>
+    <div
+      style={
+        fill
+          ? { display: "flex", flexDirection: "column", gap: 10, width: "100%" }
+          : { display: "flex", flexDirection: "column", gap: 10, alignItems: "center", width: "100%", maxWidth: 320, margin: "0 auto" }
+      }
+    >
       <select
         value={selectedExamCode}
         onChange={(e) => setSelectedExamCode(e.target.value)}
@@ -75,12 +87,12 @@ export function PerExamPicker({ exams }: PerExamPickerProps) {
       </select>
       <button
         type="button"
-        className="btn btn-primary btn-sm"
+        className={fill ? "btn btn-primary btn-md btn-full" : "btn btn-primary btn-sm"}
         disabled={loading || !selectedExamCode}
         onClick={buyExam}
-        style={{ minWidth: 220 }}
+        style={fill ? undefined : { minWidth: 220 }}
       >
-        {loading ? "Redirecting to Stripe…" : "Buy this exam — £29"}
+        {loading ? "Redirecting to Stripe…" : buttonLabel}
       </button>
     </div>
   );

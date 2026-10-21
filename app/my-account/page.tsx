@@ -5,11 +5,14 @@ import { ChangePasswordButton } from "@/components/ChangePasswordButton";
 import { MyExamsSection } from "@/components/account/MyExamsSection";
 import { SubscribeButtons } from "@/components/account/SubscribeButtons";
 import { PerExamPicker } from "@/components/account/PerExamPicker";
+import { PricingCard } from "@/components/PricingCard";
+import { PRELAUNCH_TIERS } from "@/components/PricingSection";
 import { fetchAcaCourseData } from "@/lib/practice/courses";
 import type { PracticeExamGroup } from "@/lib/practice/types";
 import { DeleteAccountModal } from "@/components/account/DeleteAccountModal";
 import { ScrollReveal } from "@/components/ScrollReveal";
 import { SUBSCRIPTIONS_ENABLED } from "@/lib/features";
+import { LIVE_COURSES } from "@/lib/constants";
 import { requireOnboardedSession } from "@/lib/auth0";
 import { fetchProfileData } from "@/lib/profile";
 import type { ProfileResponse } from "@/lib/profileCache";
@@ -128,7 +131,7 @@ export default async function MyAccountPage({
               <p style={{ fontSize: 13, color: "var(--color-text-secondary)", marginBottom: 14 }}>
                 {SUBSCRIPTIONS_ENABLED
                   ? "See what you have purchased"
-                  : "Plans open when GetChartered launches in late summer 2026"}
+                  : "Plans open when GetChartered launches"}
               </p>
 
               {SUBSCRIPTIONS_ENABLED && profileData ? (
@@ -220,19 +223,30 @@ function PlanStatus({
   const purchasedExamGroups = examOptions.filter((exam) => purchasedExams.includes(exam.code));
   const remainingExamOptions = examOptions.filter((exam) => !purchasedExams.includes(exam.code));
 
+  const perExamTier = PRELAUNCH_TIERS.find((t) => t.title === "Per Exam")!;
+  const annualTier = PRELAUNCH_TIERS.find((t) => t.title === "Annual")!;
+
   if (purchasedExamGroups.length > 0) {
     return (
       <div className="space-y-6">
         <div className="card" style={{ padding: "24px" }}>
           <h3 className="mb-4" style={{ fontWeight: 700, color: "var(--color-text)", fontSize: "14px" }}>
-            Exams purchased
+            Your exams
           </h3>
-          <div className="space-y-2">
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
             {purchasedExamGroups.map((exam) => (
               <div
                 key={exam.code}
                 className="flex items-center gap-2"
-                style={{ fontSize: 14, color: "var(--color-text-secondary)" }}
+                style={{
+                  fontSize: 14,
+                  fontWeight: 500,
+                  color: "var(--color-text)",
+                  padding: "8px 14px",
+                  borderRadius: 999,
+                  backgroundColor: "rgba(0, 173, 181, 0.10)",
+                  border: "1px solid rgba(0, 173, 181, 0.35)",
+                }}
               >
                 <span style={{ color: "var(--color-success)" }}>✓</span>
                 {exam.name}
@@ -242,16 +256,66 @@ function PlanStatus({
         </div>
 
         {remainingExamOptions.length > 0 && (
-          <div className="card" style={{ padding: "24px" }}>
-            <p className="text-sm" style={{ color: "var(--color-text-secondary)", marginBottom: 10 }}>
-              Buy access to another exam — £29
-            </p>
-            <PerExamPicker exams={remainingExamOptions} />
-            <div style={{ marginTop: 16, paddingTop: 16, borderTop: "1px solid var(--color-border-subtle)" }}>
-              <SubscribeButtons autoSubscribePlan={autoSubscribePlan} />
+          <div>
+            <h3 className="mb-3" style={{ fontWeight: 700, color: "var(--color-text)", fontSize: "14px" }}>
+              Add more access
+            </h3>
+            <div className="pricing-tier-grid" style={{ marginTop: 0, gap: 16 }}>
+              <PricingCard
+                title={perExamTier.title}
+                description={perExamTier.description}
+                price={perExamTier.price}
+                period={perExamTier.period}
+                features={perExamTier.features}
+                compact
+                action={
+                  <PerExamPicker
+                    exams={remainingExamOptions}
+                    buttonLabel="Purchase another exam — £29"
+                    fill
+                  />
+                }
+              />
+              <PricingCard
+                title={annualTier.title}
+                description={annualTier.description}
+                price={annualTier.price}
+                period={annualTier.period}
+                priceSubtext={annualTier.priceSubtext}
+                features={annualTier.features}
+                highlighted
+                compact
+                action={<SubscribeButtons autoSubscribePlan={autoSubscribePlan} fill />}
+              />
             </div>
           </div>
         )}
+      </div>
+    );
+  }
+
+  // A course with no question bank yet can't be bought (the checkout Lambda
+  // refuses it), so don't offer purchase buttons — show the waitlist instead.
+  // LIVE_COURSES (lib/constants.ts) is the single list to extend.
+  const course = profileData.course;
+  if (course && !LIVE_COURSES.includes(course)) {
+    return (
+      <div className="card" style={{ padding: "24px" }}>
+        <div className="text-center py-10">
+          <div
+            className="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-4"
+            style={{ backgroundColor: "rgba(0, 173, 181, 0.12)" }}
+          >
+            <Sparkles size={24} style={{ color: "var(--accent-blue)" }} />
+          </div>
+          <h3 className="text-title mb-2" style={{ fontWeight: 600, color: "var(--color-text)" }}>
+            {course} isn&apos;t available yet
+          </h3>
+          <p className="text-body" style={{ color: "var(--color-text-secondary)" }}>
+            We currently only have {LIVE_COURSES.join(" and ")} question banks. You&apos;re on the
+            waitlist for {course}, and we&apos;ll let you know when it&apos;s ready.
+          </p>
+        </div>
       </div>
     );
   }
@@ -379,7 +443,7 @@ function WaitlistPlaceholder() {
           You&apos;re on the waitlist
         </p>
         <p style={{ fontSize: 12, color: "var(--color-text-secondary)", marginTop: 2 }}>
-          Free during our beta, launching publicly in late summer 2026 —
+          Free during our beta, launching publicly soon —
           you&apos;ll be among the first to know when plans open.
         </p>
       </div>

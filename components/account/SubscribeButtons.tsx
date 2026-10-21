@@ -27,9 +27,11 @@ interface SubscribeButtonsProps {
   // goes straight to Stripe instead of making an already-decided user click
   // a second button.
   autoSubscribePlan?: "annual";
+  /** Full-width button, for use inside a pricing card. */
+  fill?: boolean;
 }
 
-export function SubscribeButtons({ autoSubscribePlan }: SubscribeButtonsProps = {}) {
+export function SubscribeButtons({ autoSubscribePlan, fill = false }: SubscribeButtonsProps = {}) {
   const { showToast } = useToast();
   // Starts "loading" when arriving with ?subscribe=annual so the server-rendered
   // page shows the redirect screen straight away instead of flashing the
@@ -86,15 +88,15 @@ export function SubscribeButtons({ autoSubscribePlan }: SubscribeButtonsProps = 
         Taking you to secure checkout…
       </div>
     )}
-    <div style={{ display: "flex", flexDirection: "column", gap: 10, alignItems: "center" }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: 10, alignItems: fill ? "stretch" : "center" }}>
       {PLANS.map((p) => (
         <button
           key={p.key}
           type="button"
-          className="btn btn-primary btn-sm"
+          className={fill ? "btn btn-primary btn-md btn-full" : "btn btn-primary btn-sm"}
           disabled={loadingPlan !== null}
           onClick={() => subscribe(p.key)}
-          style={{ minWidth: 220 }}
+          style={fill ? undefined : { minWidth: 220 }}
         >
           {loadingPlan === p.key ? "Redirecting to Stripe…" : p.label}
         </button>
