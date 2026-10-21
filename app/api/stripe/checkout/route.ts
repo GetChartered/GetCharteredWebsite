@@ -52,6 +52,14 @@ export async function POST(request: Request) {
 
   if (!response.ok || typeof url !== "string" || !url) {
     console.error("[POST /api/stripe/checkout] backend returned a non-OK or unexpected response", response.status, data);
+    // The Lambda's 4xx messages are written for users ("ACCA isn't available
+    // to purchase yet.", "Choose your qualification before purchasing."), so
+    // pass them through. Anything else (5xx, network, unexpected body) stays
+    // the generic message, since the user can't act on it.
+    const backendMessage = (data as { error?: unknown } | null)?.error;
+    if (response.status >= 400 && response.status < 500 && typeof backendMessage === "string" && backendMessage) {
+      return NextResponse.json({ error: backendMessage }, { status: response.status });
+    }
     return NextResponse.json(
       { error: "Checkout isn't available right now — please try again later." },
       { status: 502 }

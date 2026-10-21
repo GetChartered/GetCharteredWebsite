@@ -1015,6 +1015,24 @@ body {
   min-width: 140px;
 }
 
+/* Compact variant (account page): tighter header/description/button spacing,
+   no hover zoom, and the action slot's controls stretch to the card width. */
+.pricing-card--compact:hover {
+  transform: none;
+  box-shadow: var(--shadow-md, 0 8px 20px rgba(0, 0, 0, 0.1));
+}
+.pricing-card--compact .pricing-card-header {
+  margin-bottom: 12px;
+}
+.pricing-card--compact .pricing-card-description {
+  min-height: 0;
+  margin-bottom: 16px;
+}
+.pricing-card--compact .pricing-card-button {
+  display: block;
+  margin-bottom: 16px;
+}
+
 .pricing-card-features {
   display: flex;
   flex-direction: column;
