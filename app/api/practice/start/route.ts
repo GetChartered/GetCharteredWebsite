@@ -64,72 +64,6 @@ async function fetchRawQuestionBatch(args: {
   return { ok: true, raw: rawTyped };
 }
 
-// Best-effort re-ordering via /learning/priority. This endpoint hasn't been
-// called from the website before this feature, so its response shape is
-// treated as unverified: log it raw and fall back to fetch order on ANY
-// mismatch or failure. Note also that the mobile app's real usage passes a
-// synthetic reservoir-bucket string (e.g. "__MIXED__") as `module` for mixed
-// practice rather than the real module list — that looks like it may not
-// carry real per-module semantics backend-side. We send the actual joined
-// module list instead, which is the more defensible guess, but this is
-// flagged as unverified.
-async function orderByPriority(args: {
-  rawQuestions: RawGcQuestion[];
-  moduleParam: string;
-  priorityMode: "mixed" | "weak";
-}): Promise<RawGcQuestion[]> {
-  const { rawQuestions, moduleParam, priorityMode } = args;
-
-  try {
-    const priorityResponse = await callGcApi("/learning/priority", {
-      method: "POST",
-      body: JSON.stringify({
-        course: COURSE,
-        module: moduleParam,
-        mode: priorityMode,
-        limit: rawQuestions.length,
-      }),
-    });
-    const priorityData = await priorityResponse.json().catch(() => null);
-
-    const ranking = (priorityData as { questions?: unknown } | null)?.questions;
-    if (!priorityResponse.ok || !Array.isArray(ranking) || ranking.length === 0) {
-      console.warn(
-        "[practice/start] /learning/priority returned an unexpected shape or failed — using GetCharteredQuestions order.",
-        { status: priorityResponse.status }
-      );
-      return rawQuestions;
-    }
-
-    const byId = new Map<string, RawGcQuestion>();
-    for (const q of rawQuestions) {
-      const id = questionIdOf(q);
-      if (id) byId.set(id, q);
-    }
-
-    const reordered: RawGcQuestion[] = [];
-    for (const entry of ranking as { questionId?: unknown }[]) {
-      const id = entry?.questionId;
-      if (typeof id === "string") {
-        const match = byId.get(id);
-        if (match && !reordered.includes(match)) reordered.push(match);
-      }
-    }
-    // Never drop questions the ranking didn't mention.
-    for (const q of rawQuestions) {
-      if (!reordered.includes(q)) reordered.push(q);
-    }
-
-    return reordered.length > 0 ? reordered : rawQuestions;
-  } catch (err) {
-    console.warn(
-      "[practice/start] /learning/priority call threw — using GetCharteredQuestions order.",
-      err
-    );
-    return rawQuestions;
-  }
-}
-
 // POST /api/practice/start — fetches a practice question batch (any mode)
 // and returns it pre-normalised and ordered.
 // Body: { modules: string[], mode?: BackendPracticeMode, numQuestions?: number }.
@@ -159,11 +93,6 @@ export async function POST(request: Request) {
 
   const sessionId = randomUUID();
   const moduleParam = modules.join(",");
-  // Priority-ranking mode is distinct from the backend practice mode: only
-  // Focus Areas asks the learning engine to weight toward weak spots, mirroring
-  // the mobile app's `mode === "focus" ? "weak" : "mixed"`.
-  const priorityMode: "mixed" | "weak" = mode === "focus_areas" ? "weak" : "mixed";
-
   // Over-fetch and backfill: normalisation drops some raw questions (missing
   // fields, unsupported multi-part type, ungradeable), so a single fetch of
   // exactly `numQuestions` raw questions can land short of the target. Retry
@@ -192,9 +121,8 @@ export async function POST(request: Request) {
     }
 
     totalRawFetched += batch.raw.length;
-    const orderedRaw = await orderByPriority({ rawQuestions: batch.raw, moduleParam, priorityMode });
-
-    for (const raw of orderedRaw) {
+    // GetCharteredQuestions already schedules the batch for this user; serve it in the order returned.
+    for (const raw of batch.raw) {
       if (questions.length >= numQuestions) break;
 
       const rawId = questionIdOf(raw);
